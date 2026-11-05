@@ -1,6 +1,9 @@
 @echo off
 setlocal
 
+rem Anchor working directory to project root if called from scripts directory
+if exist "%~dp0..\PSOOP" cd /d "%~dp0.."
+
 echo ========================================================
 echo [PSOOP] Building Java Swing/AWT Module...
 echo ========================================================

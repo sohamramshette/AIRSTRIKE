@@ -144,3 +144,4 @@ choco install nasm -y
 - **MinGW GCC 6.3.0 and MinGW as** provide an intact, functional 32-bit C++ and 80386 assembly pipeline.
 - **Java 26.0.2** provides a complete desktop Java Swing & AWT development environment.
 - **GLUT & OpenGL** are verified and operational.
+

@@ -1,6 +1,9 @@
 @echo off
 setlocal
 
+rem Anchor working directory to project root if called from scripts directory
+if exist "%~dp0..\COA" cd /d "%~dp0.."
+
 echo ========================================================
 echo [COA] Building Computer Organization and Architecture Module...
 echo Target: 32-bit 80386 Assembly Language - No x86-64 substitution

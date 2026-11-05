@@ -1,4 +1,9 @@
 # AIRSTRIKE: Build Script for COA (80386 Assembly Module)
+$projectRoot = Split-Path -Parent $PSScriptRoot
+if (Test-Path (Join-Path $projectRoot "COA")) {
+    Set-Location $projectRoot
+}
+
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "[COA] Building Computer Organization & Architecture Module..." -ForegroundColor Cyan
 Write-Host "Target: 32-bit 80386 Assembly Language (No x86-64 substitution)" -ForegroundColor Cyan

@@ -1,6 +1,9 @@
 @echo off
 setlocal
 
+rem Anchor working directory to project root if called from scripts directory
+if exist "%~dp0..\CGL" cd /d "%~dp0.."
+
 echo ========================================================
 echo [CGL] Building Computer Graphics Lab OpenGL/GLUT Module...
 echo ========================================================

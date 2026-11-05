@@ -1,4 +1,9 @@
 # AIRSTRIKE: Build Script for CGL (OpenGL / GLUT Module)
+$projectRoot = Split-Path -Parent $PSScriptRoot
+if (Test-Path (Join-Path $projectRoot "CGL")) {
+    Set-Location $projectRoot
+}
+
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "[CGL] Building Computer Graphics Lab (OpenGL/GLUT) Module..." -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan

@@ -1,4 +1,9 @@
 # AIRSTRIKE: Build Script for PL (C++ Module)
+$projectRoot = Split-Path -Parent $PSScriptRoot
+if (Test-Path (Join-Path $projectRoot "PL")) {
+    Set-Location $projectRoot
+}
+
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "[PL] Building Programming Laboratory (C++17) Module..." -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan

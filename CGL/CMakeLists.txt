@@ -37,3 +37,4 @@ else()
     add_executable(cgl_demo ${CGL_SOURCES})
     target_link_libraries(cgl_demo PRIVATE glut32 glu32 opengl32)
 endif()
+

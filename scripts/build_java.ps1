@@ -1,4 +1,9 @@
 # AIRSTRIKE: Build Script for PSOOP (Java Module)
+$projectRoot = Split-Path -Parent $PSScriptRoot
+if (Test-Path (Join-Path $projectRoot "PSOOP")) {
+    Set-Location $projectRoot
+}
+
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "[PSOOP] Building Java (Swing/AWT) Module..." -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan

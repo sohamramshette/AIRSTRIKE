@@ -25,3 +25,4 @@ if(NOT COA_ASM_SOURCES)
 else()
     add_executable(coa_runner ${COA_ASM_SOURCES})
 endif()
+
