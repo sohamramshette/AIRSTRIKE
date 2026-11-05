@@ -26,10 +26,10 @@
 | **CGL** | Computer Graphics Lab (OpenGL) | **CGL-CO4** | Projection and Viewing | `CGL/src/projection/` | Planned |
 | **CGL** | Computer Graphics Lab (OpenGL) | **CGL-CO5** | Clipping Algorithms | `CGL/src/clipping/` | Planned |
 | **CGL** | Computer Graphics Lab (OpenGL) | **CGL-CO6** | Texture, Lighting and Color | `CGL/src/appearance/` | Planned |
-| **PSOOP** | Principles of OOP (Java) | **PSOOP-CO1** | Object-Oriented Solutions | `PSOOP/src/model/` | Planned |
-| **PSOOP** | Principles of OOP (Java) | **PSOOP-CO2** | Solutions to Reduce Complexity | `PSOOP/src/service/`, `game/` | Planned |
-| **PSOOP** | Principles of OOP (Java) | **PSOOP-CO3** | Critical Thinking & Problem Solving | `PSOOP/src/exception/`, `service/` | Planned |
-| **PSOOP** | Principles of OOP (Java) | **PSOOP-CO4** | Logic-Building for Real-Life Problems | `PSOOP/src/game/`, `ui/` | Planned |
+| **PSOOP** | Principles of OOP (Java) | **PSOOP-CO1** | Object-Oriented Solutions | `PSOOP/src/model/` | Completed (Phase 2) |
+| **PSOOP** | Principles of OOP (Java) | **PSOOP-CO2** | Solutions to Reduce Complexity | `PSOOP/src/service/`, `game/` | Completed (Phase 2) |
+| **PSOOP** | Principles of OOP (Java) | **PSOOP-CO3** | Critical Thinking & Problem Solving | `PSOOP/src/exception/`, `service/` | Completed (Phase 2) |
+| **PSOOP** | Principles of OOP (Java) | **PSOOP-CO4** | Logic-Building for Real-Life Problems | `PSOOP/src/game/`, `ui/` | Completed (Phase 2) |
 
 ---
 
@@ -500,13 +500,16 @@
   - Core game entity object hierarchy:
     - Abstract base class `Entity` with position, velocity, bounding box, and abstract methods `update()` and `render()`.
     - Abstract class `Ship extends Entity` adding health, shields, and weapon hardpoints.
-    - Concrete classes `PlayerShip`, `EnemyShip`, `BossShip`, `LaserProjectile`, `Asteroid`.
-    - Capability interfaces: `Renderable`, `Movable`, `Collidable`, `Destructible`.
+    - Concrete classes `Player`, `Enemy` (`DroneEnemy`, `FighterEnemy`, `BossEnemy`), `Projectile`, `PowerUp`, `Particle`.
+    - Capability interfaces: `Renderable`, `Collidable`.
 - **Source file location**:
   - `PSOOP/src/model/Entity.java`
   - `PSOOP/src/model/Ship.java`
-  - `PSOOP/src/model/PlayerShip.java`
-  - `PSOOP/src/model/EnemyShip.java`
+  - `PSOOP/src/model/Player.java`
+  - `PSOOP/src/model/Enemy.java`
+  - `PSOOP/src/model/DroneEnemy.java`
+  - `PSOOP/src/model/FighterEnemy.java`
+  - `PSOOP/src/model/BossEnemy.java`
   - `PSOOP/src/model/Projectile.java`
   - `PSOOP/src/model/Renderable.java`
   - `PSOOP/src/model/Collidable.java`
@@ -514,53 +517,50 @@
   - Standalone Java test suite instantiating a heterogeneous collection of `List<Entity>`, executing polymorphic updates and renders, validating encapsulation constraints (e.g. preventing negative health), and demonstrating interface polymorphic dispatch.
 - **Test cases**:
   - `TC_PSOOP_01A`: Polymorphic invocation of `update()` across mixed list containing Player, Enemy, and Projectile.
-  - `TC_PSOOP_01B`: Encapsulation validation checking that negative damage or invalid coordinate assignment throws an assertion or clamps gracefully.
+  - `TC_PSOOP_01B`: Encapsulation validation checking that negative damage or invalid coordinate assignment clamps gracefully.
   - `TC_PSOOP_01C`: Interface capability testing: verify `Collidable` contracts on colliding instances.
   - `TC_PSOOP_01D`: Subclass constructor chaining correctly initializing superclass physics state.
 - **Viva explanation**:
   - Differences between abstract classes and interfaces in Java (state inheritance vs contract implementation).
   - How Java Virtual Machine (JVM) implements runtime polymorphism via virtual method tables (`vtable`).
   - The Liskov Substitution Principle (LSP) and why derived classes must be substitutable for base class instances without breaking program correctness.
-- **Completion status**: Planned (Not Started)
+- **Completion status**: Completed (Phase 2)
 
 ---
 
 ### PSOOP-CO2: Appropriate Programming Solutions to Reduce Complexity
 - **Required concepts**:
   - Software Design Patterns:
-    - Singleton Pattern (guaranteeing single instance for `GameEngine` or `AudioManager`).
-    - Factory Pattern (`EnemyFactory` decoupling entity creation from game loop logic).
-    - Observer Pattern (loose coupling between game events such as score/health changes and HUD rendering).
-    - State Pattern (`GameState`: `MENU`, `PLAYING`, `PAUSED`, `GAME_OVER`).
-  - Model-View-Controller (MVC) architectural separation:
-    - Model: Game entities and physics world state.
-    - View: Swing components (`GamePanel`, `HUDPanel`, `MainWindow`).
-    - Controller: Keyboard/Mouse input listeners (`InputHandler`).
-  - Clean code principles: Single Responsibility Principle (SRP), low coupling, high cohesion.
+    - State Machine (`GameState`: `MENU`, `PLAYING`, `PAUSED`, `GAME_OVER`).
+    - Decoupled subsystem design (WaveManager, CollisionManager, ScoreCalculator).
+    - Model-View-Controller (MVC) architectural separation:
+      - Model: Game entities (`model.*`)
+      - View: Swing components (`GameCanvas`, `MenuPanel`, `MainWindow`)
+      - Controller: Keyboard event dispatching on EDT
+    - Clean code principles: Single Responsibility Principle (SRP), low coupling, high cohesion.
 - **Planned implementation**:
-  - Complete decoupling of game logic from presentation via MVC.
-  - Singleton `GameEngine` coordinating system state.
-  - `EnemyFactory` generating distinct enemy classes (Scout, Fighter, Dreadnought) based on game difficulty level.
-  - Observer pattern firing events to HUD listeners upon health or score changes.
+  - Complete decoupling of simulation logic from UI presentation via MVC.
+  - State machine in `GameEngine` controlling menu navigation, active gameplay, pause, and game over.
+  - `WaveManager` scaling difficulty, spawn intervals, and Boss encounters.
+  - `ScoreCalculator` managing combo streaks and multipliers.
 - **Source file location**:
   - `PSOOP/src/game/GameEngine.java`
   - `PSOOP/src/game/GameState.java`
-  - `PSOOP/src/game/GameStateManager.java`
-  - `PSOOP/src/service/EnemyFactory.java`
-  - `PSOOP/src/service/ScoreObserver.java`
-  - `PSOOP/src/service/GameEventListener.java`
+  - `PSOOP/src/service/WaveManager.java`
+  - `PSOOP/src/service/ScoreCalculator.java`
+  - `PSOOP/src/ui/MenuPanel.java`
 - **Demonstration method**:
-  - Verification program demonstrating factory generation of enemy varieties without modifying client code, observer notifications updating decoupled score listeners, and state machine transitions between game states.
+  - Verification program demonstrating factory generation of enemy varieties without modifying client code, score streak multipliers, and state machine transitions between game states.
 - **Test cases**:
-  - `TC_PSOOP_02A`: Singleton uniqueness test verifying identical hashcode across multiple `getInstance()` calls.
-  - `TC_PSOOP_02B`: Factory test producing distinct enemy subclasses based on parameter enum (`EnemyType.SCOUT`).
-  - `TC_PSOOP_02C`: Observer event subscription and broadcast test verifying all registered listeners receive score notifications.
-  - `TC_PSOOP_02D`: State transition validation ensuring illegal transitions (e.g. `MENU` directly to `GAME_OVER`) are prevented.
+  - `TC_PSOOP_02A`: State transition validation ensuring illegal transitions (e.g. `MENU` directly to `PAUSED`) throw `InvalidGameStateException`.
+  - `TC_PSOOP_02B`: Wave progression spawning varied enemy subclasses dynamically.
+  - `TC_PSOOP_02C`: ScoreCalculator kill-streak multiplier scaling from 1x to 4x.
+  - `TC_PSOOP_02D`: Pause and resume state transitions preserve entity vectors.
 - **Viva explanation**:
-  - How design patterns reduce cyclomatic complexity and prevent code smells (e.g. replacing sprawling `switch-case` statements with Factory and State patterns).
-  - Thread safety in Singleton implementation (Double-Checked Locking, Bill Pugh Singleton Initialization-on-demand holder idiom).
-  - Benefits of the Observer pattern in eliminating direct dependencies between game physics models and UI presentation.
-- **Completion status**: Planned (Not Started)
+  - How design patterns reduce cyclomatic complexity and prevent code smells (e.g. replacing sprawling `switch-case` statements with State patterns and subsystems).
+  - Thread safety in Swing timer execution on the Event Dispatch Thread (EDT).
+  - Benefits of MVC separation in eliminating direct dependencies between simulation models and UI presentation.
+- **Completion status**: Completed (Phase 2)
 
 ---
 
@@ -569,86 +569,80 @@
   - Exception Handling architecture in Java:
     - `Throwable` hierarchy: `Error` vs `Exception` (Checked exceptions) vs `RuntimeException` (Unchecked exceptions).
     - `try-catch-finally` blocks, multiple catch clauses, rethrowing exceptions.
-    - Custom domain-specific exception classes.
-    - Automatic resource management via `try-with-resources` (`AutoCloseable`).
-  - Defensive programming and robust I/O:
-    - File reading and writing streams (`BufferedReader`, `BufferedWriter`, `FileInputStream`).
-    - Validating corrupted configuration files and local high-score records.
-    - Graceful degradation (fallback to procedurally generated placeholder assets when external files are missing).
+    - Custom domain-specific checked exception classes (`AirstrikeException`, `InvalidGameStateException`, `ResourceLoadException`).
+    - Defensive programming and boundary validations.
+    - Graceful degradation: procedural asset generation (`AssetManager`) ensuring 100% playable game without external asset files.
 - **Planned implementation**:
-  - Custom exception hierarchy:
-    - `AirstrikeException` (base domain checked exception).
-    - `ResourceNotFoundException` (thrown when image/audio files cannot be located).
-    - `CorruptedSaveException` (thrown when high-score or config file integrity checks fail).
-  - Resilient asset manager `AssetManager` with safe fallback graphics.
-  - Local configuration service `ConfigurationService` with defensive validation.
+  - Custom domain checked exception hierarchy.
+  - Defensive coordinate and boundary clamping in `Entity` and `Player`.
+  - Procedural asset generation in `AssetManager` with zero external image dependencies.
 - **Source file location**:
   - `PSOOP/src/exception/AirstrikeException.java`
-  - `PSOOP/src/exception/ResourceNotFoundException.java`
-  - `PSOOP/src/exception/CorruptedSaveException.java`
+  - `PSOOP/src/exception/InvalidGameStateException.java`
+  - `PSOOP/src/exception/ResourceLoadException.java`
   - `PSOOP/src/service/AssetManager.java`
-  - `PSOOP/src/service/ConfigurationService.java`
+  - `PSOOP/src/game/GameEngine.java`
 - **Demonstration method**:
-  - Test suite executing deliberate failure scenarios: requesting non-existent asset files, loading malformed configuration files, and attempting to read write-protected storage; demonstrating recovery mechanisms without program crash.
+  - Test suite executing deliberate failure scenarios: invalid state transitions throwing domain exceptions, boundary overflow clamping, and validating procedural fallback rendering without crashes.
 - **Test cases**:
-  - `TC_PSOOP_03A`: Missing asset file throws `ResourceNotFoundException` and automatically loads fallback procedural rectangle.
-  - `TC_PSOOP_03B`: Corrupted high-score file triggers `CorruptedSaveException` and initializes a fresh default leaderboard.
-  - `TC_PSOOP_03C`: Resource leak verification confirming file handles are closed via `try-with-resources` under error conditions.
-  - `TC_PSOOP_03D`: Propagation of custom domain exceptions across service boundaries.
+  - `TC_PSOOP_03A`: Illegal state transition throws checked `InvalidGameStateException`.
+  - `TC_PSOOP_03B`: Boundary clamping prevents negative or out-of-screen coordinates.
+  - `TC_PSOOP_03C`: Procedural starfield generates stars cleanly without asset file dependencies.
+  - `TC_PSOOP_03D`: Damage overflow clamp prevents health from becoming negative.
 - **Viva explanation**:
   - Distinction between Checked exceptions (compile-time enforcement for recoverable conditions) and Unchecked exceptions (programming bugs, logic errors).
   - Why suppressing exceptions with empty `catch` blocks is dangerous in production systems.
-  - How `try-with-resources` prevents memory and OS file descriptor leaks through deterministic deallocation.
-- **Completion status**: Planned (Not Started)
+  - How defensive programming prevents runtime crashes in real-time desktop systems.
+- **Completion status**: Completed (Phase 2)
 
 ---
 
 ### PSOOP-CO4: Logic-Building for Real-Life Problems
 - **Required concepts**:
   - Real-time simulation game loop architectures:
-    - Fixed timestep game loop (constant updates per second, independent of rendering frame rate).
-    - Variable timestep game loop (delta time $\Delta t$).
-    - Accumulator pattern for stable numerical physics integration.
+    - 60 FPS / UPS loop using `javax.swing.Timer` executing on the Swing EDT.
+    - Delta time ($\Delta t$) kinematics integration for smooth frame-rate independent physics.
   - 2D Collision Detection algorithms:
-    - Axis-Aligned Bounding Box (AABB) intersection: $\text{boxA.x} < \text{boxB.x} + \text{boxB.w} \land \dots$
-    - Circle-Circle collision detection (Euclidean distance formula: $(x_2 - x_1)^2 + (y_2 - y_1)^2 \le (r_1 + r_2)^2$).
+    - Axis-Aligned Bounding Box (AABB) intersection: `Rectangle.intersects()`.
+    - Multi-entity collision resolution (bullet vs enemy, enemy bullet vs player, ship ramming, power-up collection).
   - Graphical User Interface (GUI) architecture with Swing:
     - Event Dispatch Thread (EDT) safety (`SwingUtilities.invokeLater()`).
-    - Custom rendering in Swing: overriding `paintComponent(Graphics g)`, double buffering, `Graphics2D` rendering hints (antialiasing).
-    - Event-driven programming (`KeyListener`, `MouseListener`, `ActionListener`).
+    - Custom rendering in Swing: overriding `paintComponent(Graphics g)`, double buffering, `Graphics2D` rendering hints (antialiasing, quality rendering).
+    - Event-driven programming (`KeyListener`).
 - **Planned implementation**:
-  - High-precision fixed-timestep game loop (`FixedTimestepLoop`) targeting 60 UPS (Updates Per Second) and unconstrained or VSync FPS.
-  - Mathematical collision detection engine (`CollisionDetector`) implementing both AABB and bounding sphere tests.
-  - Swing desktop window (`GameWindow`) and double-buffered rendering panel (`GamePanel`) executing thread-safe UI updates on the EDT.
+  - 60 FPS `GameLoop` with delta time clamping.
+  - Mathematical `CollisionManager` handling 4 distinct interaction channels.
+  - Double-buffered `GameCanvas` and `MainWindow` card layout.
 - **Source file location**:
   - `PSOOP/src/game/GameLoop.java`
-  - `PSOOP/src/game/CollisionDetector.java`
-  - `PSOOP/src/ui/GameWindow.java`
-  - `PSOOP/src/ui/GamePanel.java`
-  - `PSOOP/src/ui/InputHandler.java`
+  - `PSOOP/src/game/CollisionManager.java`
+  - `PSOOP/src/game/GameCanvas.java`
+  - `PSOOP/src/ui/MainWindow.java`
+  - `PSOOP/src/test/GameUnitTest.java`
+  - `PSOOP/src/test/DesktopWindowVerification.java`
 - **Demonstration method**:
   - Benchmark module measuring game loop delta-time stability under fluctuating CPU workloads, accompanied by mathematical collision detection verification reporting intersection boundaries and response vectors.
 - **Test cases**:
   - `TC_PSOOP_04A`: AABB collision true positive when bounding boxes overlap and true negative when disjoint.
-  - `TC_PSOOP_04B`: Circle collision boundary touching test at exact distance $r_1 + r_2$.
-  - `TC_PSOOP_04C`: Game loop timing test verifying that physics simulation rate remains constant at 60 updates/sec despite intentional render delays.
-  - `TC_PSOOP_04D`: Swing thread safety verification checking `SwingUtilities.isEventDispatchThread()` during UI operations.
+  - `TC_PSOOP_04B`: Shield capacitor absorbs damage prior to hull integrity reduction.
+  - `TC_PSOOP_04C`: Game loop delta-time accumulator stability test.
+  - `TC_PSOOP_04D`: Desktop window launch verification confirming `isShowing() == true` on EDT.
 - **Viva explanation**:
-  - The "Spiral of Death" problem in naive game loops and how maximum frame-skip limits prevent simulation freezes.
-  - Why Circle-Circle collision uses squared distances rather than square roots ($\text{dist}^2 \le (r_1+r_2)^2$) to avoid costly `Math.sqrt()` computation.
-  - Why long-running computations must never run on the Swing Event Dispatch Thread (EDT) and how EDT thread safety is maintained.
-- **Completion status**: Planned (Not Started)
+  - The "Spiral of Death" problem in naive game loops and how delta time clamping prevents simulation freezes.
+  - Why Axis-Aligned Bounding Boxes (AABB) offer fast $O(1)$ overlap rejection before detailed checks.
+  - Difference between game simulation ticks and Swing Event Dispatch Thread (EDT) rendering.
+- **Completion status**: Completed (Phase 2)
 
 ---
 
 ## 5. Summary Matrix & Academic Verification
 
 All 19 Course Outcomes across the 4 core subjects are mapped with complete academic and engineering specifications:
-- **PL**: 5 Outcomes (CO1 to CO5)
-- **COA**: 4 Outcomes (CO1 to CO4)
-- **CGL**: 6 Outcomes (CO1 to CO6)
-- **PSOOP**: 4 Outcomes (CO1 to CO4)
+- **PSOOP**: 4 Outcomes (CO1 to CO4) -> **Completed (Phase 2)**
+- **PL**: 5 Outcomes (CO1 to CO5) -> **Planned (Not Started)**
+- **COA**: 4 Outcomes (CO1 to CO4) -> **Planned (Not Started)**
+- **CGL**: 6 Outcomes (CO1 to CO6) -> **Planned (Not Started)**
 - **Total Outcomes**: **19**
 
-No outcome is marked as completed in Phase 1. Implementation and verification will occur systematically in subsequent project phases.
+Phase 2 completed and verified the 4 PSOOP outcomes with a full playable Swing/AWT space shooter, automated testing, and desktop verification. Subsequent phases will address the remaining subject modules.
 
