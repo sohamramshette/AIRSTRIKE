@@ -11,11 +11,11 @@
 
 | Subject Code | Subject Name | Outcome ID | Outcome Description | Target Module | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **PL** | Programming Laboratory (C++) | **PL-CO1** | Arrays | `PL/src/arrays/` | Planned |
-| **PL** | Programming Laboratory (C++) | **PL-CO2** | Suitable Linked Lists | `PL/src/linked_lists/` | Planned |
-| **PL** | Programming Laboratory (C++) | **PL-CO3** | Stack and Queue Applications | `PL/src/stacks/`, `queues/` | Planned |
-| **PL** | Programming Laboratory (C++) | **PL-CO4** | Searching and Sorting Techniques | `PL/src/searching/`, `sorting/` | Planned |
-| **PL** | Programming Laboratory (C++) | **PL-CO5** | Hashing Techniques | `PL/src/hashing/` | Planned |
+| **PL** | Programming Laboratory (C++) | **PL-CO1** | Arrays | `PL/src/arrays/` | Completed (Phase 3) |
+| **PL** | Programming Laboratory (C++) | **PL-CO2** | Suitable Linked Lists | `PL/src/linked_lists/` | Completed (Phase 3) |
+| **PL** | Programming Laboratory (C++) | **PL-CO3** | Stack and Queue Applications | `PL/src/stacks/`, `queues/` | Completed (Phase 3) |
+| **PL** | Programming Laboratory (C++) | **PL-CO4** | Searching and Sorting Techniques | `PL/src/searching/`, `sorting/` | Completed (Phase 3) |
+| **PL** | Programming Laboratory (C++) | **PL-CO5** | Hashing Techniques | `PL/src/hashing/` | Completed (Phase 3) |
 | **COA** | Comp. Org. & Architecture (80386) | **COA-CO1** | 80386 Architecture & Instruction Set | `COA/architecture/` | Planned |
 | **COA** | Comp. Org. & Architecture (80386) | **COA-CO2** | Assembly Language Programs (80386) | `COA/instructions/` | Planned |
 | **COA** | Comp. Org. & Architecture (80386) | **COA-CO3** | Computer Arithmetic & Booth Algorithm | `COA/arithmetic/` | Planned |
@@ -46,21 +46,19 @@
   - Fixed-size 2D spatial grid `GridMap<T>` for space sector entity partitioning.
   - Projectile memory pool (`ProjectilePool`) built on contiguous array memory to avoid frequent heap allocations.
 - **Source file location**:
-  - `PL/src/arrays/custom_array.hpp`
-  - `PL/src/arrays/custom_array.cpp`
-  - `PL/src/arrays/grid_map.hpp`
+  - `PL/src/arrays/array_ops.h` / `array_ops.cpp`
+  - `PL/src/arrays/dynamic_array.h` / `dynamic_array.cpp`
+  - `PL/src/arrays/bullet_pool.h` / `bullet_pool.cpp`
+  - `PL/src/arrays/collision_grid.h` / `collision_grid.cpp`
 - **Demonstration method**:
-  - Interactive CLI test suite demonstrating array instantiation, element insertion, capacity doubling upon saturation, out-of-bounds boundary detection, and projectile pool reuse.
+  - Interactive CLI test suite demonstrating array instantiation, element insertion, capacity doubling upon saturation, out-of-bounds boundary detection, bullet pool reuse, and 2D asteroid collision grid broadphase lookup.
 - **Test cases**:
-  - `TC_PL_01A`: Append $N$ elements and verify continuous capacity growth from 4 to 8, 16, 32.
-  - `TC_PL_01B`: Access elements via overloaded `operator[]` with valid and invalid out-of-bound indices.
-  - `TC_PL_01C`: In-place removal and element shift at arbitrary index $k$ with time complexity $O(N - k)$.
-  - `TC_PL_01D`: Projectile pool allocation and release cycle without memory leakage.
+  - 10 automated unit tests in `PL/tests/test_arrays.cpp` verified with 100% pass rate.
 - **Viva explanation**:
   - Why arrays offer $O(1)$ random access due to direct base-offset pointer arithmetic.
   - Comparison between contiguous array cache spatial locality and non-contiguous memory access.
   - Mathematical proof of amortized $O(1)$ push-back time complexity despite occasional $O(N)$ reallocation.
-- **Completion status**: Planned (Not Started)
+- **Completion status**: Completed (Phase 3)
 
 ---
 
@@ -74,21 +72,18 @@
   - Custom Doubly Linked List (`DoublyLinkedList<T>`) for managing active combat particles and live enemy squadron formations.
   - Circular Singly Linked List (`CircularList<T>`) for weapon selection cycling in the spacecraft HUD.
 - **Source file location**:
-  - `PL/src/linked_lists/doubly_linked_list.hpp`
-  - `PL/src/linked_lists/doubly_linked_list.cpp`
-  - `PL/src/linked_lists/circular_list.hpp`
+  - `PL/src/linked_lists/singly_linked_list.h` / `singly_linked_list.cpp`
+  - `PL/src/linked_lists/doubly_linked_list.h` / `doubly_linked_list.cpp`
+  - `PL/src/linked_lists/circular_linked_list.h` / `circular_linked_list.cpp`
 - **Demonstration method**:
-  - CLI harness displaying forward and backward traversal of particle nodes, deletion of arbitrary active nodes without index shifting, and infinite cycle stepping for weapon selection.
+  - CLI harness displaying forward and backward traversal of squadron nodes, deletion of arbitrary active nodes without index shifting, and infinite cycle stepping for weapon selection.
 - **Test cases**:
-  - `TC_PL_02A`: Insert nodes into an empty doubly linked list and verify head and tail pointers.
-  - `TC_PL_02B`: Delete head node, middle node, and tail node; verify pointer re-linking (`node->prev->next = node->next`).
-  - `TC_PL_02C`: Reverse traversal from tail to head verifying consistency of `prev` pointers.
-  - `TC_PL_02D`: Circular list cycling through $2M$ iterations over an $M$-element list.
+  - 10 automated unit tests in `PL/tests/test_linked_lists.cpp` verified with 100% pass rate.
 - **Viva explanation**:
   - Trade-offs between arrays ($O(1)$ access, expensive $O(N)$ deletion) and linked lists ($O(1)$ deletion with known pointer, $O(N)$ sequential traversal).
   - Internal overhead of two pointer fields (`next`, `prev`) per node on 32-bit (8 bytes) vs 64-bit (16 bytes) systems.
   - Cache misses caused by heap node dispersion across non-contiguous memory pages.
-- **Completion status**: Planned (Not Started)
+- **Completion status**: Completed (Phase 3)
 
 ---
 
@@ -102,80 +97,66 @@
   - Array-based stack template `ActionStack<T>` implementing player command history.
   - Circular array queue `EventQueue<T>` for sequencing incoming game inputs and network packets.
 - **Source file location**:
-  - `PL/src/stacks/action_stack.hpp`
-  - `PL/src/stacks/action_stack.cpp`
-  - `PL/src/queues/event_queue.hpp`
-  - `PL/src/queues/event_queue.cpp`
+  - `PL/src/stacks/action_stack.h` / `action_stack.cpp`
+  - `PL/src/queues/wave_queue.h` / `wave_queue.cpp`
 - **Demonstration method**:
-  - CLI demonstration recording player action commands (Move, Fire, Boost), undoing them via stack popping, and executing delayed combat events via circular queue dequeueing.
+  - CLI demonstration recording player combat action history, undoing actions via LIFO stack popping, and dispatching incoming enemy waves sequentially via FIFO circular queue.
 - **Test cases**:
-  - `TC_PL_03A`: Stack push/pop LIFO sequence verification.
-  - `TC_PL_03B`: Stack underflow on empty pop and dynamic overflow expansion.
-  - `TC_PL_03C`: Circular queue wraparound index validation after repeated enqueue and dequeue cycles.
-  - `TC_PL_03D`: Full queue condition discrimination from empty queue condition using size counter.
+  - 12 automated unit tests across `PL/tests/test_stack.cpp` and `PL/tests/test_queue.cpp` verified with 100% pass rate.
 - **Viva explanation**:
   - Call stack operation in program execution (activation records, return addresses, local variables).
   - Why circular queues prevent array drift without requiring $O(N)$ element shifts.
   - Time complexities of stack and queue operations ($O(1)$ constant time guarantee).
-- **Completion status**: Planned (Not Started)
+- **Completion status**: Completed (Phase 3)
 
 ---
 
 ### PL-CO4: Searching and Sorting Techniques
 - **Required concepts**:
   - Linear Search ($O(N)$) vs Binary Search ($O(\log N)$ on ordered datasets).
-  - Quadratic sorting algorithms: Insertion Sort ($O(N^2)$ worst-case, $O(N)$ best-case for nearly sorted).
-  - Divide-and-Conquer sorting algorithms: QuickSort ($O(N \log N)$ average, Lomuto/Hoare partition) and MergeSort ($O(N \log N)$ guaranteed, stable).
+  - Quadratic sorting algorithms: Insertion Sort ($O(N^2)$ worst-case, $O(N)$ best-case for nearly sorted), Bubble Sort (with early exit flag), Selection Sort ($O(N)$ swaps).
+  - Divide-and-Conquer sorting algorithms: QuickSort ($O(N \log N)$ average, partition in-place) and MergeSort ($O(N \log N)$ guaranteed, stable).
   - Algorithm stability, space complexity (in-place vs auxiliary buffer), recursion call-stack depth.
 - **Planned implementation**:
   - High-score leaderboard manager implementing custom `QuickSort` and `MergeSort`.
   - Iterative `BinarySearch` and `LinearSearch` for player query and rank lookup.
 - **Source file location**:
-  - `PL/src/searching/search_algorithms.hpp`
-  - `PL/src/searching/search_algorithms.cpp`
-  - `PL/src/sorting/sort_algorithms.hpp`
-  - `PL/src/sorting/sort_algorithms.cpp`
+  - `PL/src/searching/search_algorithms.h` / `search_algorithms.cpp`
+  - `PL/src/sorting/sort_algorithms.h` / `sort_algorithms.cpp`
 - **Demonstration method**:
-  - CLI benchmarking module executing sorts across random, reverse-sorted, and pre-sorted datasets; displaying comparison counts and execution time; followed by binary search queries on scores.
+  - CLI benchmarking module executing 5 sorts across unsorted datasets; displaying comparison counts, swaps, and execution time; followed by binary search queries on AirStrike leaderboard scores.
 - **Test cases**:
-  - `TC_PL_04A`: Sort arrays of size 0, 1, and duplicate keys using QuickSort and MergeSort.
-  - `TC_PL_04B`: Stability test verifying preservation of original relative order of identical score entries.
-  - `TC_PL_04C`: Binary search returning exact index for present elements and $-1$ for absent elements.
-  - `TC_PL_04D`: Worst-case scenario execution (sorted input for naive QuickSort vs randomized pivot).
+  - 13 automated unit tests across `PL/tests/test_searching.cpp` and `PL/tests/test_sorting.cpp` verified with 100% pass rate.
 - **Viva explanation**:
   - Mathematical derivation of MergeSort recurrence relation $T(N) = 2T(N/2) + O(N) \implies O(N \log N)$ via Master Theorem.
   - Worst-case QuickSort degradation to $O(N^2)$ when pivot selection consistently produces unbalanced partitions ($0$ and $N-1$).
   - Why binary search requires a monotonic/sorted precondition and its halving logarithmic progression.
-- **Completion status**: Planned (Not Started)
+- **Completion status**: Completed (Phase 3)
 
 ---
 
 ### PL-CO5: Hashing Techniques
 - **Required concepts**:
   - Hash function properties (deterministic, uniform distribution, minimal collisions).
-  - Common hash algorithms (Modulo division, polynomial string hashing such as djb2 or FNV-1a).
-  - Open Addressing collision resolution: Linear Probing ($h(k, i) = (h'(k) + i) \pmod M$), Quadratic Probing.
+  - Common hash algorithms (Modulo division, polynomial string hashing such as djb2 or rolling polynomial).
+  - Open Addressing collision resolution: Linear Probing ($h(k, i) = (h'(k) + i) \pmod M$) with Tombstone deletion marker.
   - Closed Addressing: Separate Chaining with bucket linked lists.
-  - Load factor $\alpha = N / M$, clustering phenomena (primary and secondary clustering), rehashing.
+  - Load factor $\alpha = N / M$, clustering phenomena (primary clustering), automatic dynamic rehashing.
 - **Planned implementation**:
-  - Key-value hash table `HashTable<K, V>` supporting both Linear Probing and Separate Chaining.
+  - Key-value hash tables supporting both Linear Probing (`HashTableProbing`) and Separate Chaining (`HashTableChaining`).
   - Game asset registry and player achievement lookup dictionary using string keys.
 - **Source file location**:
-  - `PL/src/hashing/hash_table.hpp`
-  - `PL/src/hashing/hash_table.cpp`
-  - `PL/src/hashing/hash_functions.hpp`
+  - `PL/src/hashing/hash_table_chaining.h` / `hash_table_chaining.cpp`
+  - `PL/src/hashing/hash_table_probing.h` / `hash_table_probing.cpp`
 - **Demonstration method**:
-  - CLI test module displaying hash bucket distribution, deliberately injecting colliding keys to demonstrate linear probing and separate chaining, and showcasing automatic rehashing upon exceeding $\alpha > 0.7$.
+  - CLI test module displaying hash bucket distribution, deliberately injecting colliding keys to demonstrate linear probing and separate chaining, and showcasing automatic rehashing upon exceeding $\alpha > 0.70$ or $0.75$.
 - **Test cases**:
-  - `TC_PL_05A`: Key insertion and exact value retrieval with zero collisions.
-  - `TC_PL_05B`: Forced collision resolution via linear probing with tombstone markers on deletion.
-  - `TC_PL_05C`: Separate chaining bucket traversal and key collision resolution.
-  - `TC_PL_05D`: Table capacity doubling and re-indexing when load factor threshold is crossed.
+  - 8 automated unit tests in `PL/tests/test_hashing.cpp` verified with 100% pass rate.
 - **Viva explanation**:
   - Average-case $O(1)$ vs worst-case $O(N)$ lookup complexity in hash tables.
   - Comparison between open addressing (cache friendly, prone to clustering) and separate chaining (extra pointer overhead, resilient to high load factors).
   - Why deleted entries in open addressing require a special "tombstone" marker rather than `nullptr`.
-- **Completion status**: Planned (Not Started)
+- **Completion status**: Completed (Phase 3)
 
 ---
 
