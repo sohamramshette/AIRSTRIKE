@@ -137,6 +137,9 @@ public class GameEngine {
 
         // 3. Update active Enemies
         for (Enemy e : enemies) {
+            if (e instanceof model.BossEnemy boss) {
+                boss.setPatrolBounds(30, Math.max(300, screenWidth - boss.getWidth() - 30));
+            }
             e.update(delta);
             e.performAttack(delta, projectiles, player);
             if (e.isOffScreen(screenHeight)) {
@@ -369,3 +372,4 @@ public class GameEngine {
     public ScoreCalculator getScoreCalculator() { return scoreCalculator; }
     public WaveManager getWaveManager() { return waveManager; }
 }
+

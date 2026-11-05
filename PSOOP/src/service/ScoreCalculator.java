@@ -87,3 +87,4 @@ public class ScoreCalculator {
     public int getKillStreak() { return killStreak; }
     public int getMultiplier() { return multiplier; }
 }
+

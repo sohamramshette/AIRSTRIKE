@@ -48,3 +48,4 @@ public class Particle extends Entity {
         g.fillOval((int) Math.round(x), (int) Math.round(y), currentSize, currentSize);
     }
 }
+

@@ -134,3 +134,4 @@ public class MenuPanel extends JPanel {
         g2d.drawString(ver, (w - fm3.stringWidth(ver)) / 2, 152);
     }
 }
+

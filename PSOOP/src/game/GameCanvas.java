@@ -31,6 +31,32 @@ public class GameCanvas extends JPanel {
         setFocusable(true);
 
         setupInputBindings();
+        setupFocusHandlers();
+    }
+
+    private void setupFocusHandlers() {
+        // Regain keyboard focus if user clicks anywhere on canvas
+        addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                requestFocusInWindow();
+            }
+        });
+
+        // Clear active input flags if canvas loses focus
+        addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                Player player = engine.getPlayer();
+                if (player != null) {
+                    player.setMoveLeft(false);
+                    player.setMoveRight(false);
+                    player.setMoveUp(false);
+                    player.setMoveDown(false);
+                }
+                engine.setShooting(false);
+            }
+        });
     }
 
     private void setupInputBindings() {
@@ -110,3 +136,4 @@ public class GameCanvas extends JPanel {
         engine.render(g2d, getWidth(), getHeight());
     }
 }
+

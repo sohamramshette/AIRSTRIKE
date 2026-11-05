@@ -87,3 +87,4 @@ public class FighterEnemy extends Enemy {
         }
     }
 }
+

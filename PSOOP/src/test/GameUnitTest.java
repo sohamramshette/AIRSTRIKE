@@ -53,6 +53,11 @@ public class GameUnitTest {
         testLevelProgression();
         testPauseAndResume();
         testGameOverCondition();
+        testPowerUpCollectionAndEffects();
+        testBossAttacksAndPhases();
+        testIllegalStateTransitions();
+        testEntityPruning();
+        testStreakResetOnDamage();
 
         System.out.println("========================================================");
         System.out.println("TEST RESULTS: " + testsPassed + " / " + testsTotal + " PASSED");
@@ -244,4 +249,114 @@ public class GameUnitTest {
         assertTrue("Game Over Trigger", !hasLives && !player.isActive() && player.getLives() == 0,
                 "Player should have 0 lives and be inactive after final life loss");
     }
+
+    // 12. Power-Up Collection & Effects Test
+    private static void testPowerUpCollectionAndEffects() {
+        Player player = new Player(300, 300);
+        player.setHealth(50);
+        player.setShield(20);
+        double initialSpeed = player.getSpeed();
+
+        CollisionManager cm = new CollisionManager();
+        List<PowerUp> powerUps = new ArrayList<>();
+        List<Particle> particles = new ArrayList<>();
+        ScoreCalculator scoreCalc = new ScoreCalculator();
+
+        // Health Pack
+        PowerUp hp = new PowerUp(305, 305, PowerUpType.HEALTH_PACK);
+        powerUps.add(hp);
+        cm.checkPlayerVsPowerUps(player, powerUps, particles, scoreCalc);
+        assertTrue("Health PowerUp Effect", player.getHealth() == 90 && !hp.isActive(), "Health pack should restore 40 health");
+
+        // Shield Boost
+        PowerUp sb = new PowerUp(305, 305, PowerUpType.SHIELD_BOOST);
+        powerUps.add(sb);
+        cm.checkPlayerVsPowerUps(player, powerUps, particles, scoreCalc);
+        assertTrue("Shield PowerUp Effect", player.getShield() == 70 && !sb.isActive(), "Shield boost should recharge 50 shield");
+
+        // Weapon Upgrade
+        PowerUp wu = new PowerUp(305, 305, PowerUpType.WEAPON_UPGRADE);
+        powerUps.add(wu);
+        cm.checkPlayerVsPowerUps(player, powerUps, particles, scoreCalc);
+        assertTrue("Weapon Upgrade Effect", player.getWeaponLevel() == 2 && !wu.isActive(), "Weapon level should advance to 2");
+
+        // Speed Boost
+        PowerUp spd = new PowerUp(305, 305, PowerUpType.SPEED_BOOST);
+        powerUps.add(spd);
+        cm.checkPlayerVsPowerUps(player, powerUps, particles, scoreCalc);
+        assertTrue("Speed Boost Effect", player.getSpeed() > initialSpeed && !spd.isActive(), "Speed should increase after speed boost");
+    }
+
+    // 13. Boss Attacks & Phases Test
+    private static void testBossAttacksAndPhases() {
+        BossEnemy boss = new BossEnemy(300, 45, "Test Titan");
+        List<Projectile> projectiles = new ArrayList<>();
+
+        // Phase 0: 5-way spread fan
+        boss.performAttack(0.016, projectiles, null);
+        assertTrue("Boss Phase 0 Spread Shot", projectiles.size() == 5, "Boss phase 0 should fire 5-way spread fan");
+
+        // Advance phase
+        boss.update(4.5); // Advance past 4.0s phase timer
+        projectiles.clear();
+        boss.setShootCooldownMs(0); // Reset cooldown for test
+        boss.performAttack(0.016, projectiles, null);
+        assertTrue("Boss Phase 1 Dual Cannons", projectiles.size() == 2, "Boss phase 1 should fire 2 heavy plasma beams");
+    }
+
+    // 14. Illegal State Transitions Test
+    private static void testIllegalStateTransitions() {
+        GameEngine engine = new GameEngine(800, 600);
+        boolean caughtException = false;
+        try {
+            engine.setState(GameState.PAUSED); // Illegal: Cannot pause from MENU
+        } catch (InvalidGameStateException e) {
+            caughtException = true;
+        }
+        assertTrue("Illegal State Exception", caughtException, "Engine should reject MENU -> PAUSED transition");
+    }
+
+    // 15. Entity Pruning (Memory Leak Prevention) Test
+    private static void testEntityPruning() {
+        GameEngine engine = new GameEngine(800, 600);
+        engine.startNewGame();
+
+        // Add an off-screen projectile and a dead enemy
+        Projectile offscreenBullet = new Projectile(400, 900, 6, 16, 0, 500, false, 10);
+        engine.getProjectiles().add(offscreenBullet);
+
+        DroneEnemy deadDrone = new DroneEnemy(200, 200);
+        deadDrone.setActive(false);
+        engine.getEnemies().add(deadDrone);
+
+        engine.update(0.016);
+
+        assertTrue("Offscreen Bullet Pruned", !engine.getProjectiles().contains(offscreenBullet),
+                "Offscreen projectiles should be automatically pruned");
+        assertTrue("Dead Enemy Pruned", !engine.getEnemies().contains(deadDrone),
+                "Inactive enemies should be automatically pruned");
+    }
+
+    // 16. Streak Reset on Damage Test
+    private static void testStreakResetOnDamage() {
+        CollisionManager cm = new CollisionManager();
+        ScoreCalculator scoreCalc = new ScoreCalculator();
+        Player player = new Player(200, 200);
+        List<Particle> particles = new ArrayList<>();
+
+        scoreCalc.addScore(100);
+        scoreCalc.addScore(100);
+        scoreCalc.addScore(100);
+        int preStreak = scoreCalc.getKillStreak();
+
+        // Enemy bullet hits player
+        List<Projectile> enemyBullets = new ArrayList<>();
+        enemyBullets.add(new Projectile(205, 205, 5, 14, 0, 300, false, 15));
+
+        cm.checkEnemyBulletsVsPlayer(enemyBullets, player, particles, scoreCalc);
+
+        assertTrue("Streak Reset on Hit", preStreak > 0 && scoreCalc.getKillStreak() == 0,
+                "Combo streak should reset to 0 upon player taking damage");
+    }
 }
+

@@ -66,3 +66,4 @@ public class Projectile extends Entity {
     public boolean isPlayerBullet() { return isPlayerBullet; }
     public int getDamage() { return damage; }
 }
+

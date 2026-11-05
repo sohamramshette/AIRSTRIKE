@@ -238,3 +238,4 @@ AIRSTRIKE requires zero external bitmap or audio dependencies:
 - **Boss Dreadnought**: Massive heavy obsidian command vessel with gold trim, pulsing core power reactor, dual wing cannons, and on-screen health bar.
 - **Parallax Starfield**: Multi-layered depth simulation with background, midground, and foreground stars scrolling at varying speeds with subtle cosmic nebula dust.
 - **HUD**: Antialiased health bar, shield capacitor bar, vessel lives count, weapon tier, current score, high score, sector level, and active streak multipliers.
+

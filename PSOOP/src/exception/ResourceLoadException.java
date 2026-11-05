@@ -21,3 +21,4 @@ public class ResourceLoadException extends AirstrikeException {
         return resourceName;
     }
 }
+

@@ -90,3 +90,4 @@ public class InstructionsDialog extends JDialog {
         setContentPane(content);
     }
 }
+

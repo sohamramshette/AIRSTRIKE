@@ -66,3 +66,4 @@ public class PowerUp extends Entity {
 
     public PowerUpType getType() { return type; }
 }
+

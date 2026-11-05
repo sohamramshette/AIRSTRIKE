@@ -72,3 +72,4 @@ public abstract class Entity implements Renderable, Collidable {
     public double getCenterX() { return x + width / 2.0; }
     public double getCenterY() { return y + height / 2.0; }
 }
+

@@ -117,3 +117,4 @@ public class WaveManager {
     public boolean isBossSpawned() { return bossSpawned; }
     public boolean isWaveClearNotice() { return waveClearNotice; }
 }
+

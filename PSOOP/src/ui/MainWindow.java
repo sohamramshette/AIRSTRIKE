@@ -74,3 +74,4 @@ public class MainWindow extends JFrame {
     public GameEngine getEngine() { return engine; }
     public GameCanvas getGameCanvas() { return gameCanvas; }
 }
+

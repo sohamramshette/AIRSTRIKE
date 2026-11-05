@@ -17,6 +17,8 @@ public class BossEnemy extends Enemy {
     private double phaseTimer;
     private boolean movingRight;
     private final String bossName;
+    private int patrolMinX;
+    private int patrolMaxX;
 
     public BossEnemy(double x, double y, String bossName) {
         // width 116, height 78, health 550, shield 150, speed 80, cooldown 900ms, score 2500
@@ -25,6 +27,13 @@ public class BossEnemy extends Enemy {
         this.attackPhase = 0;
         this.phaseTimer = 0.0;
         this.movingRight = true;
+        this.patrolMinX = 30;
+        this.patrolMaxX = 650;
+    }
+
+    public void setPatrolBounds(int minX, int maxX) {
+        this.patrolMinX = minX;
+        this.patrolMaxX = maxX;
     }
 
     @Override
@@ -32,12 +41,12 @@ public class BossEnemy extends Enemy {
         // Horizontal patrol across upper sector
         if (movingRight) {
             x += speed * delta;
-            if (x + width > 750) {
+            if (x >= patrolMaxX) {
                 movingRight = false;
             }
         } else {
             x -= speed * delta;
-            if (x < 50) {
+            if (x <= patrolMinX) {
                 movingRight = true;
             }
         }
@@ -150,9 +159,10 @@ public class BossEnemy extends Enemy {
     }
 
     private void renderBossHealthBar(Graphics2D g) {
-        int barW = 400;
+        int screenW = (g.getClipBounds() != null) ? g.getClipBounds().width : 800;
+        int barW = Math.min(480, Math.max(300, screenW - 200));
         int barH = 14;
-        int barX = 200;
+        int barX = (screenW - barW) / 2;
         int barY = 32;
 
         // Background container
@@ -185,3 +195,4 @@ public class BossEnemy extends Enemy {
     public String getBossName() { return bossName; }
     public int getAttackPhase() { return attackPhase; }
 }
+

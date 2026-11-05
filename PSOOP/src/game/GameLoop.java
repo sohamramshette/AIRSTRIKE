@@ -67,3 +67,4 @@ public class GameLoop implements ActionListener {
 
     public boolean isRunning() { return running; }
 }
+

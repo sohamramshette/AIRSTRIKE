@@ -70,3 +70,4 @@ public class DroneEnemy extends Enemy {
         g.fillOval(px + 15, py + 18, 2, 2);
     }
 }
+

@@ -118,3 +118,4 @@ public abstract class Ship extends Entity {
     public long getShootCooldownMs() { return shootCooldownMs; }
     public void setShootCooldownMs(long ms) { this.shootCooldownMs = ms; }
 }
+

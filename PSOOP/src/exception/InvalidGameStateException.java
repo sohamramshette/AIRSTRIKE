@@ -16,3 +16,4 @@ public class InvalidGameStateException extends AirstrikeException {
         return attemptedTransition;
     }
 }
+

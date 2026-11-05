@@ -22,3 +22,4 @@ public enum PowerUpType {
     public String getLabel() { return label; }
     public Color getColor() { return color; }
 }
+

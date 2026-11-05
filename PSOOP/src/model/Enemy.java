@@ -33,3 +33,4 @@ public abstract class Enemy extends Ship {
 
     public int getScoreValue() { return scoreValue; }
 }
+
