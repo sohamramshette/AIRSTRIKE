@@ -1,8 +1,10 @@
 package ui;
 
+import database.SessionManager;
 import game.GameCanvas;
 import game.GameEngine;
 import game.GameLoop;
+import service.AuthService;
 
 import java.awt.CardLayout;
 import java.awt.Dimension;
@@ -11,7 +13,8 @@ import javax.swing.JPanel;
 
 /**
  * Main application window for AIRSTRIKE.
- * Houses CardLayout navigation between the Main Menu and active Combat Canvas.
+ * Houses CardLayout navigation between the Main Menu and active Combat Canvas,
+ * as well as Supabase Authentication and Pilot Profile management.
  */
 public class MainWindow extends JFrame {
 
@@ -21,6 +24,7 @@ public class MainWindow extends JFrame {
     private final GameCanvas gameCanvas;
     private final MenuPanel menuPanel;
     private final GameLoop gameLoop;
+    private final AuthService authService;
 
     public MainWindow() {
         super("AIRSTRIKE – 2D Space Shooter & Academic Demonstration System");
@@ -31,9 +35,10 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
 
         // Subsystems
+        this.authService = new AuthService();
         this.engine = new GameEngine(800, 650);
         this.gameCanvas = new GameCanvas(engine, this);
-        this.menuPanel = new MenuPanel(this);
+        this.menuPanel = new MenuPanel(this, authService);
         this.gameLoop = new GameLoop(engine, gameCanvas);
 
         // CardLayout container
@@ -71,7 +76,12 @@ public class MainWindow extends JFrame {
         dialog.setVisible(true);
     }
 
+    public void showAuthDialog() {
+        AuthDialog dialog = new AuthDialog(this, authService);
+        dialog.setVisible(true);
+    }
+
     public GameEngine getEngine() { return engine; }
     public GameCanvas getGameCanvas() { return gameCanvas; }
+    public AuthService getAuthService() { return authService; }
 }
-

@@ -1,0 +1,21 @@
+# ==============================================================================
+# AIRSTRIKE Supabase Configuration Template
+# ==============================================================================
+# Instructions:
+# 1. Copy this file to 'config/supabase.properties'
+# 2. Replace the placeholder values below with your Supabase Project settings
+# 3. Find these values in your Supabase Dashboard -> Project Settings -> API
+# 
+# SECURITY WARNING:
+# - Only use your 'anon' public key here.
+# - NEVER use or expose the 'service_role' secret key in client-side applications!
+# ==============================================================================
+
+# Supabase Project URL (e.g., https://xyzcompany.supabase.co)
+supabase.url=https://YOUR_PROJECT_ID.supabase.co
+
+# Supabase Anonymous/Public API Key
+supabase.key=YOUR_SUPABASE_ANON_KEY
+
+# Optional Connection Timeout in milliseconds (default: 8000)
+supabase.timeout.ms=8000

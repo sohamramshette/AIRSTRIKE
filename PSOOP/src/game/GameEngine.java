@@ -282,25 +282,31 @@ public class GameEngine {
         // Score & Level (Top Right)
         int rightX = screenWidth - 220;
         g.setColor(new Color(12, 18, 30, 200));
-        g.fillRoundRect(rightX - 10, startY - 14, 210, 72, 8, 8);
+        g.fillRoundRect(rightX - 10, startY - 14, 210, 86, 8, 8);
         g.setColor(new Color(40, 80, 130));
-        g.drawRoundRect(rightX - 10, startY - 14, 210, 72, 8, 8);
+        g.drawRoundRect(rightX - 10, startY - 14, 210, 86, 8, 8);
+
+        g.setColor(new Color(80, 230, 160));
+        g.setFont(new Font("SansSerif", Font.BOLD, 11));
+        String pilotName = database.SessionManager.getInstance().getCurrentUsername().toUpperCase();
+        if (pilotName.length() > 18) pilotName = pilotName.substring(0, 18) + "...";
+        g.drawString("PILOT: " + pilotName, rightX, startY);
 
         g.setColor(Color.WHITE);
-        g.setFont(new Font("SansSerif", Font.BOLD, 16));
-        g.drawString("SCORE: " + scoreCalculator.getScore(), rightX, startY + 6);
+        g.setFont(new Font("SansSerif", Font.BOLD, 15));
+        g.drawString("SCORE: " + scoreCalculator.getScore(), rightX, startY + 18);
 
         g.setColor(new Color(160, 220, 255));
         g.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        g.drawString("HIGH SCORE: " + scoreCalculator.getHighScore(), rightX, startY + 24);
+        g.drawString("HIGH SCORE: " + scoreCalculator.getHighScore(), rightX, startY + 36);
 
         g.setColor(new Color(255, 220, 80));
-        g.drawString("SECTOR: " + waveManager.getCurrentLevel(), rightX, startY + 42);
+        g.drawString("SECTOR: " + waveManager.getCurrentLevel(), rightX, startY + 54);
 
         if (scoreCalculator.getMultiplier() > 1) {
             g.setColor(new Color(255, 90, 40));
             g.setFont(new Font("SansSerif", Font.BOLD, 12));
-            g.drawString(scoreCalculator.getMultiplier() + "x STREAK!", rightX + 110, startY + 42);
+            g.drawString(scoreCalculator.getMultiplier() + "x STREAK!", rightX + 110, startY + 54);
         }
     }
 
@@ -340,6 +346,12 @@ public class GameEngine {
         FontMetrics fm = g.getFontMetrics();
         String title = "VESSEL DESTROYED";
         g.drawString(title, (screenWidth - fm.stringWidth(title)) / 2, midY - 60);
+
+        g.setColor(new Color(80, 230, 160));
+        g.setFont(new Font("SansSerif", Font.BOLD, 15));
+        FontMetrics fmPilot = g.getFontMetrics();
+        String pilotStr = "PILOT: " + database.SessionManager.getInstance().getCurrentUsername().toUpperCase();
+        g.drawString(pilotStr, (screenWidth - fmPilot.stringWidth(pilotStr)) / 2, midY - 30);
 
         g.setColor(Color.WHITE);
         g.setFont(new Font("SansSerif", Font.BOLD, 20));

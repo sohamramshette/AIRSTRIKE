@@ -108,8 +108,16 @@ public class CaptureScreenshots {
                     window.showMainMenu();
                     captureComponent(window.getContentPane(), new File(OUTPUT_DIR, "leaderboard_placeholder.png"));
 
+                    // 7. Capture Pilot Authentication Dialog
+                    System.out.println("[SCREENSHOT] 7. Capturing Pilot Authentication Dialog...");
+                    ui.AuthDialog authDialog = new ui.AuthDialog(window, window.getAuthService());
+                    authDialog.pack();
+                    authDialog.setSize(480, 520);
+                    captureComponent(authDialog.getContentPane(), new File(OUTPUT_DIR, "auth_dialog.png"));
+                    authDialog.dispose();
+
                     window.dispose();
-                    System.out.println("[SCREENSHOT] All 6 screenshots successfully captured in " + OUTPUT_DIR);
+                    System.out.println("[SCREENSHOT] All 7 screenshots successfully captured in " + OUTPUT_DIR);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
