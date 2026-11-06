@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2022", "DOM"],
+    "skipLibCheck": true,
+    "strict": false,
+    "outDir": "test-dist",
+    "noEmit": false,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*", "tests/**/*"]
+}

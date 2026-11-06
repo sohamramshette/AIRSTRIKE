@@ -54,3 +54,4 @@ Write-Host "Executable    : release\AIRSTRIKE\AIRSTRIKE.exe"
 Write-Host "Zip Archive   : release\AIRSTRIKE_Windows_x64.zip ($([math]::Round($zip.Length/1MB, 2)) MB)"
 Write-Host "Requirements  : Standalone! Zero Java installation required by students."
 Write-Host "==============================================================================" -ForegroundColor Green
+

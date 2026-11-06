@@ -58,5 +58,13 @@ config/supabase.properties
 dist/
 release/
 
+# Web artifacts
+node_modules/
+web/dist/
+web/test-dist/
+web/.env
+web/.env.local
+
+
 
 

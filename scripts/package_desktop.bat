@@ -75,3 +75,4 @@ echo Zip Archive   : release\AIRSTRIKE_Windows_x64.zip
 echo Requirements  : Standalone! Zero Java installation required by students.
 echo ==============================================================================
 exit /b 0
+

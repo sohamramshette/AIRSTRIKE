@@ -190,3 +190,4 @@ REVOKE SELECT ON public.leaderboard FROM anon;
 -- Revert view if needed
 DROP VIEW IF EXISTS public.leaderboard;
 */
+

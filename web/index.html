@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AIRSTRIKE - Orbital Defense Initiative</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./src/styles/main.css" />
+</head>
+<body>
+  <div id="app-container">
+    <div id="viewport-container">
+      <canvas id="game-canvas" width="800" height="650"></canvas>
+
+      <!-- Main Menu Overlay -->
+      <div id="main-menu-overlay" class="ui-overlay">
+        <div class="cyber-card">
+          <h1 class="game-title">AIRSTRIKE</h1>
+          <p class="game-subtitle">ORBITAL DEFENSE INITIATIVE</p>
+
+          <div class="pilot-status-pill">
+            <span>STATUS: <span id="pilot-callsign-display" class="pilot-tag">CADET (GUEST)</span></span>
+            <button id="auth-action-btn" class="pilot-btn-action">LOGIN / REGISTER</button>
+          </div>
+
+          <button id="btn-start-game" class="cyber-btn btn-primary">LAUNCH MISSION</button>
+          <button id="btn-open-leaderboard" class="cyber-btn">GLOBAL LEADERBOARD</button>
+          <button id="btn-open-history" class="cyber-btn">PILOT FLIGHT LOGS</button>
+
+          <div class="key-hint">
+            <span><span class="key-badge">WASD / ARROWS</span> MOVE</span>
+            <span><span class="key-badge">SPACE</span> FIRE</span>
+            <span><span class="key-badge">P</span> PAUSE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pause Overlay -->
+      <div id="pause-overlay" class="ui-overlay hidden">
+        <div class="cyber-card">
+          <h2 class="game-title" style="font-size: 32px;">TACTICAL PAUSE</h2>
+          <p class="game-subtitle">COMBAT SUSPENDED</p>
+
+          <button id="btn-resume-game" class="cyber-btn btn-primary">RESUME MISSION</button>
+          <button id="btn-restart-game" class="cyber-btn">RESTART SECTOR</button>
+          <button id="btn-menu-from-pause" class="cyber-btn btn-danger">ABORT TO HEADQUARTERS</button>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameover-overlay" class="ui-overlay hidden">
+        <div class="cyber-card">
+          <h2 class="game-title" style="font-size: 34px; color: #EF4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);">VESSEL LOST</h2>
+          <p class="game-subtitle" style="color: #F87171;">MISSION TERMINATED</p>
+
+          <div style="width: 100%; margin: 12px 0 20px; font-family: var(--font-mono); font-size: 14px; background: rgba(0,0,0,0.4); border-radius: 8px; padding: 14px 18px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="color: var(--text-muted);">FINAL SCORE:</span>
+              <span id="gameover-score" style="color: var(--cyan-neon); font-weight: bold; font-size: 16px;">0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="color: var(--text-muted);">SECTOR REACHED:</span>
+              <span id="gameover-sector" style="color: #FFFFFF; font-weight: bold;">1</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="color: var(--text-muted);">FLIGHT TIME:</span>
+              <span id="gameover-time" style="color: #FFFFFF; font-weight: bold;">0s</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="color: var(--text-muted);">HOSTILES NEUTRALIZED:</span>
+              <span id="gameover-kills" style="color: #FFFFFF; font-weight: bold;">0</span>
+            </div>
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: var(--text-muted);">
+              <span id="gameover-sync-status">Score saving in progress...</span>
+            </div>
+          </div>
+
+          <button id="btn-play-again" class="cyber-btn btn-primary">DEPLOY AGAIN</button>
+          <button id="btn-menu-from-gameover" class="cyber-btn">RETURN TO HEADQUARTERS</button>
+        </div>
+      </div>
+
+      <!-- Auth Modal -->
+      <div id="auth-modal" class="modal-overlay hidden">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h3 id="auth-modal-title" class="modal-title">PILOT AUTHENTICATION</h3>
+            <button id="auth-modal-close" class="modal-close-btn">&times;</button>
+          </div>
+
+          <div class="auth-tabs">
+            <div id="tab-login" class="auth-tab active">SIGN IN</div>
+            <div id="tab-register" class="auth-tab">REGISTER NEW PILOT</div>
+          </div>
+
+          <form id="auth-form" onsubmit="return false;">
+            <div id="field-callsign-group" class="form-group" style="display: none;">
+              <label class="form-label">PILOT CALLSIGN</label>
+              <input type="text" id="auth-input-callsign" class="form-input" placeholder="e.g. STAR_VIPER" autocomplete="nickname" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ACADEMY EMAIL</label>
+              <input type="email" id="auth-input-email" class="form-input" placeholder="pilot@college.edu" autocomplete="email" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">SECURITY PASSWORD</label>
+              <input type="password" id="auth-input-password" class="form-input" placeholder="Minimum 6 characters" autocomplete="current-password" required />
+            </div>
+
+            <div id="auth-feedback" style="font-family: var(--font-mono); font-size: 12px; margin-bottom: 12px; min-height: 16px; color: var(--cyan-neon);"></div>
+
+            <button type="submit" id="auth-submit-btn" class="cyber-btn btn-primary">AUTHENTICATE PILOT</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Leaderboard Modal -->
+      <div id="leaderboard-modal" class="modal-overlay hidden">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h3 class="modal-title">GLOBAL HALL OF FAME</h3>
+            <button id="leaderboard-modal-close" class="modal-close-btn">&times;</button>
+          </div>
+
+          <p id="leaderboard-source-notice" style="font-size: 12px; font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 10px;">
+            Fetching cloud telemetry...
+          </p>
+
+          <table class="cyber-table">
+            <thead>
+              <tr>
+                <th style="width: 15%;">RANK</th>
+                <th style="width: 55%;">PILOT CALLSIGN</th>
+                <th style="width: 30%; text-align: right;">BEST SCORE</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+
+          <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
+            <button id="btn-refresh-leaderboard" class="cyber-btn" style="width: auto; padding: 6px 16px; font-size: 13px;">REFRESH</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flight Logs / Match History Modal -->
+      <div id="history-modal" class="modal-overlay hidden">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h3 class="modal-title">PILOT FLIGHT LOGS</h3>
+            <button id="history-modal-close" class="modal-close-btn">&times;</button>
+          </div>
+
+          <table class="cyber-table">
+            <thead>
+              <tr>
+                <th>SECTOR</th>
+                <th>SCORE</th>
+                <th>DURATION</th>
+                <th style="text-align: right;">DATE</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Controls & Mute Bar -->
+      <div class="control-bar">
+        <button id="btn-sound-toggle" class="icon-btn" title="Toggle Audio (M)">🔊</button>
+        <button id="btn-fullscreen-toggle" class="icon-btn" title="Fullscreen">⛶</button>
+      </div>
+
+      <!-- On-Screen Virtual Touch Controls for Mobile/Tablets -->
+      <div id="touch-controls">
+        <div class="touch-dpad">
+          <div style="display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 4px;">
+            <div></div>
+            <button id="touch-up" class="virtual-btn" style="width: 44px; height: 44px;">▲</button>
+            <div></div>
+            <button id="touch-left" class="virtual-btn" style="width: 44px; height: 44px;">◀</button>
+            <div></div>
+            <button id="touch-right" class="virtual-btn" style="width: 44px; height: 44px;">▶</button>
+            <div></div>
+            <button id="touch-down" class="virtual-btn" style="width: 44px; height: 44px;">▼</button>
+            <div></div>
+          </div>
+        </div>
+        <div class="touch-fire-zone">
+          <button id="touch-fire" class="virtual-btn" style="width: 72px; height: 72px; background: rgba(0, 229, 255, 0.3);">FIRE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container"></div>
+  </div>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>
