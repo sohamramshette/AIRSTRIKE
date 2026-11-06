@@ -225,3 +225,4 @@ public class LeaderboardDialog extends JDialog {
         }
     }
 }
+

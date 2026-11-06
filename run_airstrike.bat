@@ -1,122 +1,60 @@
 @echo off
 setlocal
 
-if "%1"=="" goto :interactive_menu
+rem Anchor working directory to project root
+if exist "%~dp0bin" cd /d "%~dp0"
+
+if "%1"=="" goto :delegate_master
 if /i "%1"=="java" goto :run_java
 if /i "%1"=="psoop" goto :run_java
 if /i "%1"=="pl" goto :run_pl
 if /i "%1"=="coa" goto :run_coa
 if /i "%1"=="cgl" goto :run_cgl
 if /i "%1"=="build" goto :run_build
-if /i "%1"=="verify" goto :run_build
-if /i "%1"=="env" goto :view_env
+if /i "%1"=="test" goto :run_tests
+if /i "%1"=="verify" goto :run_tests
+if /i "%1"=="docs" goto :open_docs
 
-:interactive_menu
-cls
-echo ==============================================================================
-echo                 AIRSTRIKE - 2D SPACE SHOOTER LAUNCHER
-echo                 Academic Demonstration and Verification System
-echo ==============================================================================
-echo   [1] Launch PSOOP Java Game Client - Swing / AWT
-echo   [2] Launch PL C++ Data Structures and Algorithms Suite
-echo   [3] Launch COA 80386 32-bit Assembly Demonstrations
-echo   [4] Launch CGL OpenGL and GLUT Graphics Demonstrations
-echo   [5] Build and Verify All Modules - build_all.bat
-echo   [6] View Environment Report
-echo   [7] Exit
-echo ==============================================================================
-set /p CHOICE="Enter option [1-7]: "
-
-if "%CHOICE%"=="1" goto :run_java
-if "%CHOICE%"=="2" goto :run_pl
-if "%CHOICE%"=="3" goto :run_coa
-if "%CHOICE%"=="4" goto :run_cgl
-if "%CHOICE%"=="5" goto :run_build
-if "%CHOICE%"=="6" goto :view_env
-if "%CHOICE%"=="7" goto :exit_launcher
-echo [ERROR] Invalid choice.
-pause
-goto :interactive_menu
+:delegate_master
+call airstrike.bat
+exit /b %ERRORLEVEL%
 
 :run_java
 echo.
 echo [PSOOP] Launching Java Game Client...
-if not exist "bin\java\main\Main.class" (
-    echo [NOTICE] Java binary not found in bin\java.
-    echo In Phase 1 Foundation, modules are scaffolded.
-    echo Once Phase 2 implementation begins, Main.class will be compiled.
-    if "%1"=="" pause
-    if not "%1"=="" exit /b 0
-    goto :interactive_menu
-)
-java -cp bin\java main.Main
-if "%1"=="" pause
-if not "%1"=="" exit /b 0
-goto :interactive_menu
+if not exist "bin\java\main\Main.class" call scripts\build_java.bat
+start "AIRSTRIKE - Java Combat Client" java -cp bin\java main.Main
+exit /b 0
 
 :run_pl
 echo.
 echo [PL] Launching C++ Data Structures Runner...
-if not exist "bin\pl\pl_test_runner.exe" (
-    echo [NOTICE] PL binary not found at bin\pl\pl_test_runner.exe.
-    echo In Phase 1 Foundation, modules are scaffolded.
-    if "%1"=="" pause
-    if not "%1"=="" exit /b 0
-    goto :interactive_menu
-)
+if not exist "bin\pl\pl_test_runner.exe" call scripts\build_pl.bat
 bin\pl\pl_test_runner.exe
-if "%1"=="" pause
-if not "%1"=="" exit /b 0
-goto :interactive_menu
+exit /b 0
 
 :run_coa
 echo.
 echo [COA] Launching 80386 Assembly Demonstrations...
-if not exist "bin\coa\coa_runner.exe" (
-    echo [NOTICE] COA binary not found at bin\coa\coa_runner.exe.
-    echo In Phase 1 Foundation, modules are scaffolded.
-    if "%1"=="" pause
-    if not "%1"=="" exit /b 0
-    goto :interactive_menu
-)
+if not exist "bin\coa\coa_runner.exe" call scripts\build_coa.bat
 bin\coa\coa_runner.exe
-if "%1"=="" pause
-if not "%1"=="" exit /b 0
-goto :interactive_menu
+exit /b 0
 
 :run_cgl
 echo.
 echo [CGL] Launching OpenGL and GLUT Demonstrations...
-if not exist "bin\cgl\cgl_demo.exe" (
-    echo [NOTICE] CGL binary not found at bin\cgl\cgl_demo.exe.
-    echo In Phase 1 Foundation, modules are scaffolded.
-    if "%1"=="" pause
-    if not "%1"=="" exit /b 0
-    goto :interactive_menu
-)
-bin\cgl\cgl_demo.exe
-if "%1"=="" pause
-if not "%1"=="" exit /b 0
-goto :interactive_menu
+if not exist "bin\cgl\cgl_runner.exe" call scripts\build_cgl.bat
+start "AIRSTRIKE - Computer Graphics Lab (OpenGL)" bin\cgl\cgl_runner.exe
+exit /b 0
 
 :run_build
-echo.
 call build_all.bat
-if "%1"=="" pause
-if not "%1"=="" exit /b 0
-goto :interactive_menu
+exit /b %ERRORLEVEL%
 
-:view_env
-echo.
-if exist "docs\setup\ENVIRONMENT_REPORT.md" (
-    type docs\setup\ENVIRONMENT_REPORT.md
-) else (
-    echo [ERROR] docs\setup\ENVIRONMENT_REPORT.md not found.
-)
-if "%1"=="" pause
-if not "%1"=="" exit /b 0
-goto :interactive_menu
+:run_tests
+call test_all.bat
+exit /b %ERRORLEVEL%
 
-:exit_launcher
-echo Exiting AIRSTRIKE launcher.
+:open_docs
+start "" "docs\FINAL_PROJECT_AUDIT.md"
 exit /b 0

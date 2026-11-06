@@ -2,7 +2,7 @@
 setlocal
 
 echo ==============================================================================
-echo                 AIRSTRIKE - MASTER BUILD SYSTEM - PHASE 1
+echo                 AIRSTRIKE - MASTER BUILD SYSTEM - ALL 4 MODULES
 echo ==============================================================================
 echo Target Modules:
 echo   1. PSOOP : Java + Swing + AWT

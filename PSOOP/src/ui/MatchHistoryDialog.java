@@ -244,3 +244,4 @@ public class MatchHistoryDialog extends JDialog {
         return btn;
     }
 }
+

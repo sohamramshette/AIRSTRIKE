@@ -1,193 +1,226 @@
 # AIRSTRIKE – 2D Space Shooter & Academic Demonstration System
 
-![Build Status](https://img.shields.io/badge/status-phase__1__foundation-blue.svg)
+![Status](https://img.shields.io/badge/status-complete__verified-brightgreen.svg)
+![COs](https://img.shields.io/badge/Course%20Outcomes-19%20of%2019%20Verified-blue.svg)
+![Tests](https://img.shields.io/badge/Automated%20Tests-302%20Passing%20(100%25)-success.svg)
 ![Java](https://img.shields.io/badge/Java-26%20%7C%20Swing%20%7C%20AWT-orange.svg)
 ![C++](https://img.shields.io/badge/C++-17%20Standard-brightgreen.svg)
 ![Assembly](https://img.shields.io/badge/Assembly-80386%2032--bit-red.svg)
 ![OpenGL](https://img.shields.io/badge/OpenGL-GLUT%20%2B%20GLU-blue.svg)
+![Database](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-darkblue.svg)
 
 ---
 
-## 1. Project Introduction
+## 1. Project Overview
 
-**AIRSTRIKE** is a multi-subject academic software engineering project and 2D space combat demonstration system. Built entirely from scratch, it rigorously satisfies all **19 Course Outcomes (COs)** across four core undergraduate computer science subjects:
+**AIRSTRIKE** is an integrated multi-subject academic software engineering system and 2D space shooter demonstration platform. Built entirely from scratch, it exhaustively demonstrates all **19 Course Outcomes (COs)** across four core computer science subjects:
 
-1. **PSOOP (Principles of Object-Oriented Programming)**: Java + Swing + AWT
-2. **PL (Programming Laboratory)**: Standard C++ (C++17)
-3. **COA (Computer Organization and Architecture)**: 80386 32-bit Assembly Language
-4. **CGL (Computer Graphics Laboratory)**: C++ + OpenGL + GLUT
+1. **Principles of Software Object-Oriented Programming (PSOOP)**: Java 26 / Swing / AWT (4 Course Outcomes)
+2. **Programming Laboratory (PL)**: Standard C++17 (5 Course Outcomes)
+3. **Computer Organization and Architecture (COA)**: Pure 32-bit Intel 80386 Assembly Language (4 Course Outcomes)
+4. **Computer Graphics Laboratory (CGL)**: C++17 with OpenGL and GLUT (6 Course Outcomes)
+5. **Cloud Backend**: Supabase PostgreSQL with PostgREST and Row-Level Security (RLS)
 
-### Crucial Architectural Principle
+### Crucial Architectural Principle: The Autonomy Rule
 > [!IMPORTANT]
-> **Zero Inter-Language Coupling**: The Java and C++ modules operate completely independently. There are **no JNI bindings**, **no TCP/UDP socket bridges**, and **no cross-language pipes**. Each subject is independently compiled, inspected, and verified with its own native toolchain.
+> **Strict Subject Independence**: The Java and C++ modules operate completely independently. There are **no JNI bindings**, **no TCP/UDP socket bridges**, and **no cross-language pipes**. Each subject module is an autonomous, self-contained subsystem with its own compilers, toolchains, build targets, test runners, and entry points.
 
 ---
 
-## 2. Technology Stack
+## 2. Technology Stack & Four Autonomous Subjects
 
-| Subject / Domain | Core Language | Frameworks / Libraries | Target Subsystem / Toolchain |
+| Subject | Technology / Stack | Toolchain | Academic Focus |
 | :--- | :--- | :--- | :--- |
-| **PSOOP** | Java (Java SE 26 / 17+) | Swing, AWT | JVM Desktop, Event Dispatch Thread (EDT) |
-| **PL** | C++ (C++17 standard) | Custom Data Structures | MinGW GCC 6.3.0 (`-std=c++17`) |
-| **COA** | 80386 Assembly | Protected Mode 32-bit Flat Model | MinGW GNU Assembler (`as` / `gcc -m32`) / NASM |
-| **CGL** | C++ (C++17) | OpenGL 1.x-2.x, GLUT, GLU | MinGW GCC + `libglut32.a` + `glut32.dll` |
-| **Database (Future Phase)** | SQL / HTTP | PostgreSQL + PostgREST | Supabase Cloud Backend |
-| **Version Control** | Git | Git CLI | Local Repository |
+| **PSOOP** | Java SE 26 / Swing / AWT | `javac` / JVM | Inheritance, design patterns, 60 FPS loop, EDT multithreading, cloud REST client |
+| **PL** | ISO C++17 Standard | MinGW `g++` | Manual memory management, Rule of 5, arrays, linked lists, stacks, queues, sorts, hashing |
+| **COA** | 32-bit Intel 80386 Assembly | MinGW `gcc -m32` / GAS | GPRs, flags, SIB addressing, Booth's multiplication, restoring division, 5-stage pipeline |
+| **CGL** | C++17 + OpenGL + GLUT | MinGW `g++` + `opengl32` | 8 primitives, affine transformations, Bresenham, midpoint curves, viewing, clipping, Phong/BMP |
+| **Cloud** | Supabase PostgreSQL | PostgREST / TLS 1.3 | Online pilot auth, match saving, personal flight logs, global Hall of Fame leaderboard |
 
 ---
 
-## 3. Project Directory Structure
+## 3. Summary of 19 Course Outcomes
+
+| Subject | CO ID | Official Course Outcome Topic | Target Subsystem / Files | Status |
+| :--- | :--- | :--- | :--- | :---: |
+| **PSOOP** | **PSOOP-CO1** | Object-Oriented Solutions & Inheritance | `PSOOP/src/model/*.java` | **VERIFIED** |
+| **PSOOP** | **PSOOP-CO2** | Solutions to Reduce Complexity (Services & Patterns) | `PSOOP/src/service/*.java`, `game/*.java` | **VERIFIED** |
+| **PSOOP** | **PSOOP-CO3** | Critical Thinking & Problem Solving (Exceptions & Net) | `PSOOP/src/exception/*.java`, `database/*.java` | **VERIFIED** |
+| **PSOOP** | **PSOOP-CO4** | Logic-Building for Real-Life Problems (Game Loop & UI) | `PSOOP/src/game/GameEngine.java`, `ui/*.java` | **VERIFIED** |
+| **PL** | **PL-CO1** | Arrays (DynamicArray, BulletPool, Spatial Grid) | `PL/src/arrays/*.cpp` | **VERIFIED** |
+| **PL** | **PL-CO2** | Suitable Linked Lists (Singly, Doubly, Circular) | `PL/src/linked_lists/*.cpp` | **VERIFIED** |
+| **PL** | **PL-CO3** | Stack & Queue Applications (ActionStack, WaveQueue) | `PL/src/stacks/*.cpp`, `queues/*.cpp` | **VERIFIED** |
+| **PL** | **PL-CO4** | Searching & Sorting Techniques (5 Sorts, 2 Searches) | `PL/src/searching/*.cpp`, `sorting/*.cpp` | **VERIFIED** |
+| **PL** | **PL-CO5** | Hashing Techniques (Chaining, Linear Probing, Rehashing)| `PL/src/hashing/*.cpp` | **VERIFIED** |
+| **COA** | **COA-CO1** | 80386 Architecture & Instruction Set (Registers, Flags) | `COA/src/co1_architecture/arch_demo.s` | **VERIFIED** |
+| **COA** | **COA-CO2** | Assembly Language Programs (10 Core 80386 Programs) | `COA/src/co2_assembly_programs/*.s` | **VERIFIED** |
+| **COA** | **COA-CO3** | Computer Arithmetic (Booth's & Restoring Division) | `COA/src/co3_arithmetic/*.s` | **VERIFIED** |
+| **COA** | **COA-CO4** | Control Unit & 5-Stage Instruction Pipelining | `COA/src/co4_control_unit/*.s` | **VERIFIED** |
+| **CGL** | **CGL-CO1** | OpenGL Graphics Primitives (8 Fundamental Primitives) | `CGL/src/primitives/space_primitives.cpp` | **VERIFIED** |
+| **CGL** | **CGL-CO2** | Geometric Transformations (Affine, Pivot, Non-comm) | `CGL/src/transformations/transform_demo.cpp` | **VERIFIED** |
+| **CGL** | **CGL-CO3** | 2D/3D Algorithms (Bresenham 8 Octants, Curves, 3D Mesh)| `CGL/src/algorithms/raster_algorithms.cpp` | **VERIFIED** |
+| **CGL** | **CGL-CO4** | Projection & Viewing (Ortho vs Perspective, Camera) | `CGL/src/projection/viewing_demo.cpp` | **VERIFIED** |
+| **CGL** | **CGL-CO5** | Clipping Algorithms (Cohen-Suth, Liang-B, Suth-Hodg) | `CGL/src/clipping/clipping_algorithms.cpp` | **VERIFIED** |
+| **CGL** | **CGL-CO6** | Texture, Lighting & Color (Local BMP, Phong, HSV) | `CGL/src/appearance/lighting_texture_demo.cpp` | **VERIFIED** |
+
+---
+
+## 4. System Requirements & Prerequisites
+
+- **Operating System**: Windows 10 or Windows 11 (64-bit or 32-bit).
+- **Java**: Java Development Kit (JDK) 11 or higher (verified on JDK 26.0.2).
+- **C/C++ & Assembly**: MinGW GCC 6.3.0 or higher with 32-bit compilation support (`-m32`).
+- **Graphics**: OpenGL 1.4+ compatible graphics card + `freeglut` / `glut32.dll`.
+
+Ensure tools are present in your `PATH`:
+```cmd
+where javac java gcc g++
+```
+
+---
+
+## 5. Quick Start: Master Unified Launcher
+
+Launch the all-in-one terminal dashboard:
+
+```cmd
+airstrike.bat
+```
+
+*(Or in PowerShell: `.\airstrike.ps1`)*
+
+```
+==============================================================================
+                     AIRSTRIKE - UNIFIED MASTER LAUNCHER
+                 Academic Demonstration & Verification System
+==============================================================================
+  Four Integrated Subjects - 19 Course Outcomes - Supabase Cloud Database
+==============================================================================
+  [1] PSOOP - Java Space Shooter (Swing / AWT GUI)
+  [2] PL    - Data Structures and Algorithms (C++17 CLI)
+  [3] COA   - 80386 Assembly Programs (32-bit Assembly CLI)
+  [4] CGL   - Computer Graphics Laboratory (OpenGL / GLUT)
+  [5] Build All Modules (build_all.bat)
+  [6] Run All Tests (test_all.bat)
+  [7] Open Project Documentation
+  [8] Exit
+==============================================================================
+```
+
+---
+
+## 6. Build & Test Commands
+
+### Master Build (All 4 Modules)
+```cmd
+build_all.bat
+```
+
+### Master Test Runner (All 19 Course Outcomes)
+```cmd
+test_all.bat
+```
+
+### Automated Test Matrix:
+```
+==============================================================================
+                     MASTER ACADEMIC TEST VERIFICATION MATRIX
+==============================================================================
+  Module   Subject                           Assertions   Status
+  ----------------------------------------------------------------------------
+  PSOOP    Java Swing and Supabase Backend       143       PASSED
+  PL       C++17 Data Structures and Algos        53       PASSED
+  COA      80386 32-bit Assembly and Booth        41       PASSED
+  CGL      OpenGL Raster, Viewing and Lighting    65       PASSED
+  ----------------------------------------------------------------------------
+  TOTAL    All 19 Course Outcomes                302       100% PASS
+==============================================================================
+```
+
+### Individual Module Commands:
+- **PSOOP (Java)**:
+  - Build: `scripts\build_java.bat`
+  - Tests: `scripts\test_psoop.bat`
+  - Run Game: `java -cp bin\java main.Main`
+- **PL (C++17)**:
+  - Build: `scripts\build_pl.bat`
+  - Tests: `bin\pl\pl_test_runner.exe --test`
+  - Run CLI: `bin\pl\pl_test_runner.exe`
+- **COA (80386 Assembly)**:
+  - Build: `scripts\build_coa.bat`
+  - Tests: `bin\coa\coa_runner.exe --test`
+  - Run CLI: `bin\coa\coa_runner.exe`
+- **CGL (OpenGL)**:
+  - Build: `scripts\build_cgl.bat`
+  - Tests: `bin\cgl\cgl_runner.exe --test`
+  - Run GUI: `bin\cgl\cgl_runner.exe`
+
+---
+
+## 7. Supabase Cloud Configuration
+
+To connect online pilot authentication, match history, and the global leaderboard:
+
+1. Create a `supabase.properties` file in the project root:
+   ```properties
+   supabase.url=https://your-project-id.supabase.co
+   supabase.key=your-anon-publishable-key-here
+   supabase.timeout_ms=8000
+   ```
+2. **Security Guarantee**:
+   - Only use the **publishable / anonymous key**.
+   - Administrative `service_role` keys are strictly prohibited and rejected by `SupabaseConfig.java`.
+   - `supabase.properties` is protected by `.gitignore` and never committed to git.
+   - If offline or unconfigured, AIRSTRIKE seamlessly operates in local **Guest Pilot** mode.
+
+---
+
+## 8. Repository Structure
 
 ```
 AIRSTRIKE/
-├── PSOOP/                     # Principles of Object-Oriented Programming (Java)
-│   ├── src/
-│   │   ├── main/              # Application entry point
-│   │   ├── model/             # Entity hierarchy (Ship, Player, Enemy, Projectile)
-│   │   ├── game/              # GameEngine (Singleton), GameLoop, CollisionDetector
-│   │   ├── ui/                # GameWindow, GamePanel, HUD, Canvas
-│   │   ├── service/           # EnemyFactory, ScoreObserver, AssetManager
-│   │   ├── database/          # Database client abstractions (future phase)
-│   │   ├── exception/         # Custom exception hierarchy
-│   │   └── test/              # Unit & verification tests
-│   └── resources/
-│       ├── images/            # Sprites and background textures
-│       ├── sounds/            # Sound effects and audio
-│       └── fonts/             # Custom typography
-├── PL/                        # Programming Laboratory (C++17)
-│   ├── src/
-│   │   ├── arrays/            # Custom dynamic array (no std::vector)
-│   │   ├── linked_lists/      # Custom doubly & circular linked lists
-│   │   ├── stacks/            # Custom action undo/redo stack
-│   │   ├── queues/            # Custom circular event queue
-│   │   ├── searching/         # Binary & linear search implementations
-│   │   ├── sorting/           # QuickSort, MergeSort, InsertionSort
-│   │   └── hashing/           # Custom hash table (Linear Probing, Chaining)
-│   ├── tests/                 # Unit & performance benchmarks
-│   └── CMakeLists.txt         # PL CMake build definition
-├── COA/                       # Computer Organization & Architecture (80386 ASM)
-│   ├── architecture/          # 32-bit register and status flag operations
-│   ├── instructions/          # Data transfer, arithmetic, logic, procedures
-│   ├── arithmetic/            # Booth's multiplication, non-restoring division
-│   ├── control_unit/          # Control word & signal generation
-│   ├── pipelining/            # Hazard detection (RAW, stalls, branch flushes)
-│   ├── simulator/             # Cycle-accurate instruction trace simulator
-│   ├── tests/                 # Assembly verification test suite
-│   ├── CMakeLists.txt         # COA CMake build definition
-│   └── Makefile               # Direct MinGW 32-bit Makefile
-├── CGL/                       # Computer Graphics Laboratory (OpenGL / GLUT)
-│   ├── src/
-│   │   ├── primitives/        # Points, lines, triangles, polygon primitives
-│   │   ├── transformations/   # 2D/3D affine matrix transformations
-│   │   ├── algorithms/        # Bresenham's line, Midpoint circle, Scanline fill
-│   │   ├── objects/           # Spacecraft and asteroid geometric meshes
-│   │   ├── projection/        # Orthographic and perspective camera viewing
-│   │   ├── clipping/          # Cohen-Sutherland & Sutherland-Hodgman clipping
-│   │   └── appearance/        # Phong reflection model, lighting, texturing
-│   ├── resources/
-│   │   ├── textures/          # Bitmap textures
-│   │   └── shaders/           # Shader assets
-│   ├── tests/                 # Graphics test harness
-│   └── CMakeLists.txt         # CGL CMake build definition
-├── database/                  # SQL schemas & migration scripts (future phase)
-├── integration/
-│   └── launcher/              # Integration launcher resources
-├── docs/                      # Academic documentation & viva preparation
-│   ├── architecture/          # System design specifications
-│   ├── PL/                    # PL laboratory manuals & reports
-│   ├── COA/                   # COA laboratory manuals & instruction sheets
-│   ├── CGL/                   # CGL graphics theory & algorithm proofs
-│   ├── PSOOP/                 # PSOOP UML class diagrams & design patterns
-│   ├── viva/                  # Oral examination Q&A preparation
-│   ├── screenshots/           # Verification screenshots
-│   └── setup/
-│       └── ENVIRONMENT_REPORT.md # Hardware/software inspection report
-├── scripts/                   # Automated build & compilation scripts
-│   ├── build_java.bat / .ps1
-│   ├── build_pl.bat / .ps1
-│   ├── build_coa.bat / .ps1
-│   └── build_cgl.bat / .ps1
-├── bin/                       # Compiled executables and binaries
-│   ├── java/
-│   ├── pl/
-│   ├── coa/
-│   └── cgl/
-├── README.md                  # Project overview and instructions
-├── ARCHITECTURE.md            # In-depth architectural blueprint
-├── CO_MAPPING.md              # 19-outcome course mapping specification
-├── .gitignore                 # Git ignore rules
-├── build_all.bat              # Master Windows CMD build script
-├── build_all.ps1              # Master Windows PowerShell build script
-├── run_airstrike.bat          # Master Windows launcher
-└── run_airstrike.sh           # Master POSIX/Bash launcher
+├── bin/                          # Output binaries for all 4 modules
+├── CGL/                          # Computer Graphics Lab (C++17 / OpenGL)
+│   ├── assets/textures/          # Local 24-bit BMP texture files
+│   ├── src/                      # Primitives, transforms, raster, viewing, clipping, appearance
+│   └── tests/                    # 65 automated graphics unit tests
+├── COA/                          # Computer Organization & Architecture (80386 ASM)
+│   ├── src/                      # co1_architecture, co2_programs, co3_arithmetic, co4_pipeline
+│   └── tests/                    # 41 automated assembly tests
+├── PL/                           # Programming Laboratory (C++17)
+│   ├── src/                      # arrays, linked_lists, stacks, queues, searching, sorting, hashing
+│   └── tests/                    # 53 automated data structure tests
+├── PSOOP/                        # Principles of OOP (Java 26 / Swing / AWT)
+│   ├── src/                      # model, game, ui, service, database, exception, test
+│   └── resources/                # Procedural visual & sound parameters
+├── docs/                         # Comprehensive academic documentation
+│   ├── screenshots/FINAL/        # Visual demonstration evidence
+│   ├── SUPABASE/                 # Cloud database and security audits
+│   ├── FINAL_PROJECT_AUDIT.md    # Comprehensive technical audit
+│   ├── CO_VERIFICATION_MATRIX.md # Detailed 19 CO verification matrix
+│   ├── PROJECT_ARCHITECTURE.md   # System architectural blueprint
+│   ├── BUILD_AND_RUN.md          # Multi-module build and execution guide
+│   └── FINAL_DEMONSTRATION_GUIDE.md # Viva presentation walkthrough & Q&A
+├── scripts/                      # Build and test automation scripts
+├── airstrike.bat / .ps1          # Unified Master Launcher
+├── build_all.bat / .ps1          # Master compiler script
+└── test_all.bat / .ps1           # Master automated test suite (302 assertions)
 ```
 
 ---
 
-## 4. Setup Instructions
+## 9. Verification Artifacts & Evidence
 
-### 4.1. Prerequisites Verified on System
-The following tools are already detected on this host:
-- **Java SE Development Kit**: Oracle JDK 26 (`javac`, `java`)
-- **C++ Compiler**: MinGW GCC 6.3.0 (`g++`, `mingw32-make`)
-- **OpenGL & GLUT**: MinGW `libglut32.a`, `libglu32.a`, `libopengl32.a`, `glut32.dll`
-- **80386 Assembler**: MinGW GNU Assembler (`as.exe` / `gcc -m32`)
-- **Git**: Git for Windows 2.55.0
-
-See [docs/setup/ENVIRONMENT_REPORT.md](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/docs/setup/ENVIRONMENT_REPORT.md) for full environmental details.
-
-### 4.2. Optional Tools Installation
-If you wish to use CMake or NASM:
-```powershell
-# Using Chocolatey in an Administrator terminal:
-choco install cmake --installargs 'ADD_CMAKE_TO_PATH=User' -y
-choco install nasm -y
-```
-
----
-
-## 5. Build and Run Instructions
-
-### 5.1. Master Build
-To compile and verify all modules in one command:
-```cmd
-# Via Windows Command Prompt:
-build_all.bat
-
-# Via PowerShell:
-.\build_all.ps1
-```
-
-### 5.2. Individual Module Compilation
-Each module can be built independently without affecting other modules:
-- **Java (PSOOP)**: `scripts\build_java.bat` (or `.\scripts\build_java.ps1`)
-- **C++ Data Structures (PL)**: `scripts\build_pl.bat` (or `.\scripts\build_pl.ps1`)
-- **80386 Assembly (COA)**: `scripts\build_coa.bat` (or `.\scripts\build_coa.ps1`)
-- **OpenGL Graphics (CGL)**: `scripts\build_cgl.bat` (or `.\scripts\build_cgl.ps1`)
-
-### 5.3. Running Airstrike
-Launch the interactive master menu:
-```cmd
-run_airstrike.bat
-```
-Or run a specific module directly:
-```cmd
-# Run Java Game Client
-run_airstrike.bat java
-
-# Run C++ PL Data Structures Suite
-run_airstrike.bat pl
-
-# Run COA 80386 Assembly Demonstrations
-run_airstrike.bat coa
-
-# Run CGL OpenGL Demonstrations
-run_airstrike.bat cgl
-```
-
----
-
-## 6. Academic Mapping (Course Outcomes)
-
-For complete details on all 19 Course Outcomes, including theoretical concepts, source file locations, demonstration procedures, test cases, and viva Q&A explanations, refer to [CO_MAPPING.md](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/CO_MAPPING.md).
-
+High-resolution visual evidence for presentation and evaluation is cataloged under [`docs/screenshots/FINAL/`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/docs/screenshots/FINAL):
+- `launcher_menu.png`: Unified Master Launcher terminal dashboard
+- `main_menu.png`: Java Swing combat command menu
+- `active_gameplay.png`: Active 2D space shooter combat scene
+- `boss_battle.png`: Boss encounter with phased attacks
+- `game_over_screen.png`: Match summary and cloud transmission status
+- `auth_dialog.png`: Starfleet Pilot Registry (Login & Registration)
+- `match_history_dialog.png`: Pilot flight log archives retrieved from Supabase
+- `leaderboard_dialog.png`: Global Hall of Fame leaderboard with Gold/Silver/Bronze medals
+- `pl_terminal_demo.png`: C++17 data structures test verification
+- `coa_terminal_demo.png`: 80386 assembly test verification
+- `cgl_co1_primitives.bmp` through `cgl_integrated_scene.bmp`: OpenGL graphics demonstrations
+- `unified_test_matrix.png`: Master test results summary (302/302 passed)

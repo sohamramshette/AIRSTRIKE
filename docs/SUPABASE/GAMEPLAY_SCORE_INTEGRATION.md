@@ -372,3 +372,4 @@ Test Execution Complete: 50 / 50 Passed (100.0%)
 .\scripts\run_game.bat
 ```
 *(Or in PowerShell: `& java -cp bin\java ui.MainWindow`)*
+

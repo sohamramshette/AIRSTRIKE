@@ -2,7 +2,7 @@
 # Builds and verifies all four independent subject modules.
 
 Write-Host "==============================================================================" -ForegroundColor Cyan
-Write-Host "                AIRSTRIKE - MASTER BUILD SYSTEM (PHASE 1)                     " -ForegroundColor Cyan
+Write-Host "                AIRSTRIKE - MASTER BUILD SYSTEM (ALL 4 MODULES)               " -ForegroundColor Cyan
 Write-Host "==============================================================================" -ForegroundColor Cyan
 Write-Host "Target Modules:" -ForegroundColor White
 Write-Host "  1. PSOOP : Java + Swing + AWT" -ForegroundColor Gray
