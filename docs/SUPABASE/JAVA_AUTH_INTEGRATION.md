@@ -98,16 +98,22 @@ classDiagram
         -JTextField loginEmailField
         -JPasswordField loginPasswordField
         -JTextField regCallsignField
+        -JTextField regEmailField
+        -JPasswordField regPasswordField
+        -JPasswordField regConfirmPasswordField
         -JLabel statusBanner
         +executeLogin()
         +executeRegister()
+        +selectTab(String)
     }
 
     class MenuPanel {
         -MainWindow mainWindow
         -AuthService authService
         -JLabel pilotStatusLabel
-        -JButton pilotAuthBtn
+        -JButton pilotLoginBtn
+        -JButton pilotRegisterBtn
+        -JButton pilotLogoutBtn
         +updatePilotStatus()
     }
 
@@ -169,16 +175,17 @@ Provides JSON processing capabilities using standard Java:
 
 ### 4.1. Pilot Authentication Dialog (`ui.AuthDialog`)
 A customized Swing modal styled to match AIRSTRIKE's sci-fi aesthetic:
-- **Tabbed Interface**: Easily toggle between **PILOT LOGIN** and **NEW REGISTRATION**.
-- **Responsive Status Banner**: Displays clear visual states (Blue for progress, Green for success, Red for errors, Orange for confirmation pending).
+- **Tabbed Interface & Direct Navigation**: Easily toggle between **PILOT LOGIN** and **NEW REGISTRATION** with quick-switch cross-navigation links.
+- **Registration Form Verification**: Captures Callsign, Email, Password, and Confirm Password with automatic client-side equality and length checks.
+- **Responsive Status Banner**: Displays clear visual states (Blue for progress, Green for success, Red for errors, Amber for confirmation pending).
 - **Asynchronous Execution**: Disables action buttons during transmission, freeing the EDT and updating UI state on completion.
 - **Offline / Guest Button**: Allows players to bypass login and immediately enter combat.
 
 ### 4.2. Pilot Status Header (`ui.MenuPanel`)
-- Positioned prominently below the main title banner.
-- Displays current pilot status:
-  - **Unauthenticated**: `PILOT: GUEST / OFFLINE` with a `[ LOGIN ]` button.
-  - **Authenticated**: `PILOT: <CALLSIGN>` with a `[ LOGOUT ]` button.
+- Positioned prominently below the main title banner:
+  - **Logged-out State**: Displays `PILOT: GUEST / OFFLINE` along with separate `[ LOGIN ]` and `[ REGISTER ]` buttons.
+  - **Logged-in State**: Displays `PILOT: <CALLSIGN>` along with a `[ LOGOUT ]` button.
+- Clicking **Logout** immediately clears the local session, calls Supabase `/auth/v1/logout`, and returns the player directly to the login dialog.
 - Dynamically responds to login/logout events via `SessionManager.addListener`.
 
 ### 4.3. In-Game HUD & Game Over Screen (`game.GameEngine`)
@@ -192,7 +199,7 @@ A customized Swing modal styled to match AIRSTRIKE's sci-fi aesthetic:
 | Security Requirement | Implementation |
 |---|---|
 | No Hardcoded Keys | Credentials read at runtime from properties or environment |
-| Client-Safe Keys Only | Strictly rejects `service_role` keys |
+| Client-Safe Keys Only | Strictly rejects `service_role` keys with SecurityException |
 | Secret File Hygiene | `config/supabase.properties` and `supabase.properties` added to `.gitignore` |
 | Safe Example Config | `config/supabase.properties.example` tracked in repository |
 | Redacted Logging | Tokens and API keys masked in `toString()` |
@@ -203,7 +210,7 @@ A customized Swing modal styled to match AIRSTRIKE's sci-fi aesthetic:
 ## 6. Verification & Automated Test Results
 
 ### 6.1. Supabase Authentication Test Suite (`test.SupabaseAuthTest`)
-A dedicated suite covering 50 discrete test specifications:
+A dedicated suite covering 53 discrete test specifications including all 9 core mandatory tests:
 
 ```
 ========================================================
@@ -235,39 +242,49 @@ A dedicated suite covering 50 discrete test specifications:
   [PASS] UserSession Email Check
   [PASS] UserSession.toString() Protects Access Token
   [PASS] UserSession.toString() Protects Refresh Token
-  [PASS] Initial State is Logged Out
-  [PASS] SessionManager Logged In Status
-  [PASS] SessionManager Username Retrieved
-  [PASS] SessionManager Listener Dispatched
-  [PASS] SessionManager Cleared Back to Guest
-  [PASS] Signup Token Present
-  [PASS] Signup User ID Extracted
-  [PASS] Signup Email Extracted
-  [PASS] Registration Email Confirmation Pending Detected
-  [PASS] Duplicate Registration (Empty Identities) Detected
-  [PASS] Login Access Token Parsed
-  [PASS] Login User UUID Parsed
-  [PASS] Login Metadata Username Parsed
-  [PASS] Login Expiration In Seconds Parsed
-  [PASS] Invalid Login Credentials Error Extracted
-  [PASS] PostgREST Array Parsed (1 row)
-  [PASS] Profile Username Extracted from PostgREST Row
-  [PASS] Empty PostgREST Array Handled Gracefully
+
+--- [Section 8] Nine Mandatory Specification Tests ---
+  [PASS] Req 1: Registration Success Status
+  [PASS] Req 1: Registration User ID Parsed
+  [PASS] Req 1: Registration Callsign Retained
+  [PASS] Req 2: Email Confirmation Pending Detected
+  [PASS] Req 3: Login Access Token Parsed
+  [PASS] Req 3: Login User UUID Stored in SessionManager
+  [PASS] Req 3: Login Username Stored in SessionManager
+  [PASS] Req 3: SessionManager Reports Logged In
+  [PASS] Req 4: Incorrect Password Error Parsed
+  [PASS] Req 4: Incorrect Password Yields INVALID_CREDENTIALS Status
+  [PASS] Req 5: Duplicate Registration Detected
+  [PASS] Req 6: Profile PostgREST Array Parsed
+  [PASS] Req 6: Profile Callsign Retrieved
+  [PASS] Req 6: Profile Fallback Handled When Empty
+  [PASS] Req 7: Pre-Logout Authenticated State
+  [PASS] Req 7: SessionManager Cleared on Logout
+  [PASS] Req 7: Reverted to Guest Callsign
+  [PASS] Req 7: Cleared User ID
+  [PASS] Req 8: Network Failure Yields NETWORK_ERROR Result
+  [PASS] Req 8: Network Failure Handled Without Uncaught Exception
+  [PASS] Req 9: UserSession.isExpired() Returns True for Past Expiry
+  [PASS] Req 9: SessionManager.isLoggedIn() Rejects Expired Session
+  [PASS] Req 9: Expired Session Auto-Cleared to Guest
+
+--- Additional Service Validation & Live Handshake ---
   [PASS] AuthService Rejects Invalid Email Format
   [PASS] AuthService Rejects Password Under 6 Chars
   [PASS] AuthService Rejects Empty Login Fields
-  [PASS] Offline Network Failure Yields NETWORK_ERROR Result
-  [PASS] Offline Handled Without Throwing Uncaught Exception
   [INFO] Detected configured Supabase URL: https://qbhotsqwpxbmtpqbgpjy.supabase.co
   [PASS] Live Supabase Endpoint Handshake Reached (HTTP 200)
   [INFO] Successfully reached live Supabase Auth service! Server responded 200 OK.
 ========================================================
-TEST RESULTS: 50 / 50 PASSED (100.0%)
+TEST RESULTS: 53 / 53 PASSED (100.0%)
 ========================================================
 ```
 
 ### 6.2. Core Gameplay Test Suite (`test.GameUnitTest`)
 All 40 regression tests continue to pass with 100% success:
+`TEST RESULTS: 40 / 40 PASSED`
+
+Total verification: **93 / 93 tests passing (100%)**.
 `TEST RESULTS: 40 / 40 PASSED`
 
 Total verification: **90 / 90 tests passing (100%)**.
@@ -296,3 +313,4 @@ Total verification: **90 / 90 tests passing (100%)**.
 # or directly with java:
 java -cp bin\java main.Main
 ```
+

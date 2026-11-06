@@ -30,10 +30,11 @@ import javax.swing.SwingUtilities;
  * Authentication dialog for AIRSTRIKE pilots.
  *
  * Provides:
- * - Tabbed pilot login and registration interfaces.
+ * - Tabbed and cross-linked pilot login and registration interfaces.
+ * - Registration form with Email, Password, and Confirm Password verification.
  * - Asynchronous background authentication without freezing Swing EDT.
  * - Dynamic feedback banner for authentication status, errors, and email confirmation.
- * - Direct "Play Offline (Guest)" entry to ensure uninterrupted gameplay.
+ * - Direct "Play Offline (Guest)" entry to ensure uninterrupted space combat.
  */
 public class AuthDialog extends JDialog {
 
@@ -53,16 +54,21 @@ public class AuthDialog extends JDialog {
     private JTextField regCallsignField;
     private JTextField regEmailField;
     private JPasswordField regPasswordField;
+    private JPasswordField regConfirmPasswordField;
     private JButton regSubmitBtn;
 
     // Status Banner
     private JLabel statusBanner;
 
     public AuthDialog(JFrame parent, AuthService authService) {
+        this(parent, authService, "LOGIN");
+    }
+
+    public AuthDialog(JFrame parent, AuthService authService, String initialTab) {
         super(parent, "STARFLEET REGISTRY – PILOT AUTHENTICATION", true);
         this.authService = authService;
 
-        setSize(480, 520);
+        setSize(480, 560);
         setLocationRelativeTo(parent);
         setResizable(false);
         getContentPane().setBackground(new Color(13, 17, 30));
@@ -85,7 +91,7 @@ public class AuthDialog extends JDialog {
         JPanel footerPanel = buildFooterPanel();
         add(footerPanel, BorderLayout.SOUTH);
 
-        selectTab("LOGIN");
+        selectTab(initialTab != null ? initialTab : "LOGIN");
     }
 
     private JPanel buildHeaderPanel() {
@@ -159,7 +165,7 @@ public class AuthDialog extends JDialog {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) executeLogin();
             }
         });
-        gbc.insets = new Insets(0, 0, 20, 0);
+        gbc.insets = new Insets(0, 0, 18, 0);
         panel.add(loginPasswordField, gbc);
 
         // Submit Button
@@ -167,26 +173,32 @@ public class AuthDialog extends JDialog {
         loginSubmitBtn.addActionListener(e -> executeLogin());
         panel.add(loginSubmitBtn, gbc);
 
+        // Registration Navigation link
+        JButton toRegBtn = createLinkButton("Need an account? Enlist as a new pilot ->");
+        toRegBtn.addActionListener(e -> selectTab("REGISTER"));
+        gbc.insets = new Insets(10, 0, 0, 0);
+        panel.add(toRegBtn, gbc);
+
         return panel;
     }
 
     private JPanel buildRegisterPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(new Color(13, 17, 30));
-        panel.setBorder(BorderFactory.createEmptyBorder(14, 30, 8, 30));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 30, 10, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.weightx = 1.0;
-        gbc.insets = new Insets(4, 0, 2, 0);
+        gbc.insets = new Insets(2, 0, 2, 0);
 
         // Callsign Field
         JLabel callsignLbl = createFieldLabel("CALLSIGN / DISPLAY NAME");
         panel.add(callsignLbl, gbc);
 
         regCallsignField = createStyledTextField();
-        gbc.insets = new Insets(0, 0, 10, 0);
+        gbc.insets = new Insets(0, 0, 8, 0);
         panel.add(regCallsignField, gbc);
 
         // Email Field
@@ -195,11 +207,11 @@ public class AuthDialog extends JDialog {
         panel.add(emailLbl, gbc);
 
         regEmailField = createStyledTextField();
-        gbc.insets = new Insets(0, 0, 10, 0);
+        gbc.insets = new Insets(0, 0, 8, 0);
         panel.add(regEmailField, gbc);
 
         // Password Field
-        JLabel passLbl = createFieldLabel("NEW SECURITY PASSWORD (MIN 6 CHARACTERS)");
+        JLabel passLbl = createFieldLabel("SECURITY PASSWORD (MIN 6 CHARACTERS)");
         gbc.insets = new Insets(2, 0, 2, 0);
         panel.add(passLbl, gbc);
 
@@ -207,16 +219,37 @@ public class AuthDialog extends JDialog {
         regPasswordField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) regConfirmPasswordField.requestFocusInWindow();
+            }
+        });
+        gbc.insets = new Insets(0, 0, 8, 0);
+        panel.add(regPasswordField, gbc);
+
+        // Confirm Password Field
+        JLabel confirmPassLbl = createFieldLabel("CONFIRM SECURITY PASSWORD");
+        gbc.insets = new Insets(2, 0, 2, 0);
+        panel.add(confirmPassLbl, gbc);
+
+        regConfirmPasswordField = createStyledPasswordField();
+        regConfirmPasswordField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) executeRegister();
             }
         });
-        gbc.insets = new Insets(0, 0, 16, 0);
-        panel.add(regPasswordField, gbc);
+        gbc.insets = new Insets(0, 0, 14, 0);
+        panel.add(regConfirmPasswordField, gbc);
 
         // Submit Button
         regSubmitBtn = createActionButton("REGISTER NEW PILOT", new Color(60, 220, 120));
         regSubmitBtn.addActionListener(e -> executeRegister());
         panel.add(regSubmitBtn, gbc);
+
+        // Login Navigation link
+        JButton toLoginBtn = createLinkButton("Already have clearance? Pilot Login ->");
+        toLoginBtn.addActionListener(e -> selectTab("LOGIN"));
+        gbc.insets = new Insets(8, 0, 0, 0);
+        panel.add(toLoginBtn, gbc);
 
         return panel;
     }
@@ -256,7 +289,7 @@ public class AuthDialog extends JDialog {
         return footer;
     }
 
-    private void selectTab(String tabName) {
+    public void selectTab(String tabName) {
         cardLayout.show(cardsPanel, tabName);
         if ("LOGIN".equals(tabName)) {
             tabLoginBtn.setBackground(new Color(0, 180, 255));
@@ -304,9 +337,15 @@ public class AuthDialog extends JDialog {
         String callsign = regCallsignField.getText().trim();
         String email = regEmailField.getText().trim();
         String pass = new String(regPasswordField.getPassword());
+        String confirmPass = new String(regConfirmPasswordField.getPassword());
 
-        if (email.isEmpty() || pass.isEmpty()) {
-            setStatus("Please fill in email and password.", new Color(255, 90, 90));
+        if (email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
+            setStatus("Please provide email, password, and confirm password.", new Color(255, 90, 90));
+            return;
+        }
+
+        if (!pass.equals(confirmPass)) {
+            setStatus("Passwords do not match.", new Color(255, 90, 90));
             return;
         }
 
@@ -372,10 +411,10 @@ public class AuthDialog extends JDialog {
         field.setForeground(Color.WHITE);
         field.setCaretColor(new Color(0, 210, 255));
         field.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        field.setPreferredSize(new Dimension(380, 36));
+        field.setPreferredSize(new Dimension(380, 34));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(40, 56, 90), 1),
-                BorderFactory.createEmptyBorder(4, 10, 4, 10)
+                BorderFactory.createEmptyBorder(3, 10, 3, 10)
         ));
         return field;
     }
@@ -386,10 +425,10 @@ public class AuthDialog extends JDialog {
         field.setForeground(Color.WHITE);
         field.setCaretColor(new Color(0, 210, 255));
         field.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        field.setPreferredSize(new Dimension(380, 36));
+        field.setPreferredSize(new Dimension(380, 34));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(40, 56, 90), 1),
-                BorderFactory.createEmptyBorder(4, 10, 4, 10)
+                BorderFactory.createEmptyBorder(3, 10, 3, 10)
         ));
         return field;
     }
@@ -401,8 +440,21 @@ public class AuthDialog extends JDialog {
         btn.setBackground(accentColor.darker());
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(380, 40));
-        btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        btn.setPreferredSize(new Dimension(380, 38));
+        btn.setBorder(BorderFactory.createEmptyBorder(6, 16, 6, 16));
+        return btn;
+    }
+
+    private JButton createLinkButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        btn.setForeground(new Color(120, 180, 240));
+        btn.setBackground(new Color(13, 17, 30));
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setHorizontalAlignment(SwingConstants.CENTER);
         return btn;
     }
 }

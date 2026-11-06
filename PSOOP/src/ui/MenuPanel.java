@@ -34,7 +34,9 @@ public class MenuPanel extends JPanel {
     private final AuthService authService;
 
     private JLabel pilotStatusLabel;
-    private JButton pilotAuthBtn;
+    private JButton pilotLoginBtn;
+    private JButton pilotRegisterBtn;
+    private JButton pilotLogoutBtn;
 
     public MenuPanel(MainWindow mainWindow) {
         this(mainWindow, new AuthService());
@@ -103,9 +105,9 @@ public class MenuPanel extends JPanel {
     }
 
     private JPanel buildPilotStatusBar() {
-        JPanel bar = new JPanel(new BorderLayout(10, 0));
+        JPanel bar = new JPanel(new BorderLayout(8, 0));
         bar.setBackground(new Color(18, 24, 40));
-        bar.setPreferredSize(new Dimension(320, 38));
+        bar.setPreferredSize(new Dimension(360, 38));
         bar.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(40, 65, 110), 1),
                 BorderFactory.createEmptyBorder(4, 12, 4, 8)
@@ -116,25 +118,37 @@ public class MenuPanel extends JPanel {
         pilotStatusLabel.setForeground(new Color(160, 190, 230));
         bar.add(pilotStatusLabel, BorderLayout.CENTER);
 
-        pilotAuthBtn = new JButton("LOGIN");
-        pilotAuthBtn.setFont(new Font("SansSerif", Font.BOLD, 11));
-        pilotAuthBtn.setForeground(Color.WHITE);
-        pilotAuthBtn.setBackground(new Color(35, 55, 95));
-        pilotAuthBtn.setFocusPainted(false);
-        pilotAuthBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        pilotAuthBtn.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
-        pilotAuthBtn.addActionListener(e -> handlePilotAuthAction());
-        bar.add(pilotAuthBtn, BorderLayout.EAST);
+        JPanel btnPanel = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 4, 0));
+        btnPanel.setOpaque(false);
 
+        pilotLoginBtn = createBarButton("LOGIN", new Color(35, 55, 95));
+        pilotLoginBtn.addActionListener(e -> mainWindow.showAuthDialog("LOGIN"));
+        btnPanel.add(pilotLoginBtn);
+
+        pilotRegisterBtn = createBarButton("REGISTER", new Color(40, 85, 60));
+        pilotRegisterBtn.addActionListener(e -> mainWindow.showAuthDialog("REGISTER"));
+        btnPanel.add(pilotRegisterBtn);
+
+        pilotLogoutBtn = createBarButton("LOGOUT", new Color(110, 35, 45));
+        pilotLogoutBtn.addActionListener(e -> {
+            authService.logout();
+            mainWindow.showAuthDialog("LOGIN");
+        });
+        btnPanel.add(pilotLogoutBtn);
+
+        bar.add(btnPanel, BorderLayout.EAST);
         return bar;
     }
 
-    private void handlePilotAuthAction() {
-        if (SessionManager.getInstance().isLoggedIn()) {
-            authService.logout();
-        } else {
-            mainWindow.showAuthDialog();
-        }
+    private JButton createBarButton(String text, Color bg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 11));
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(bg);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        return btn;
     }
 
     public void updatePilotStatus() {
@@ -142,13 +156,15 @@ public class MenuPanel extends JPanel {
         if (session.isAuthenticated()) {
             pilotStatusLabel.setText("PILOT: " + session.getUsername().toUpperCase());
             pilotStatusLabel.setForeground(new Color(80, 250, 120)); // Active Green
-            pilotAuthBtn.setText("LOGOUT");
-            pilotAuthBtn.setBackground(new Color(110, 35, 45));
+            pilotLoginBtn.setVisible(false);
+            pilotRegisterBtn.setVisible(false);
+            pilotLogoutBtn.setVisible(true);
         } else {
             pilotStatusLabel.setText("PILOT: GUEST / OFFLINE");
             pilotStatusLabel.setForeground(new Color(160, 190, 230)); // Cool Blue
-            pilotAuthBtn.setText("LOGIN");
-            pilotAuthBtn.setBackground(new Color(35, 55, 95));
+            pilotLoginBtn.setVisible(true);
+            pilotRegisterBtn.setVisible(true);
+            pilotLogoutBtn.setVisible(false);
         }
     }
 

@@ -19,3 +19,4 @@ supabase.key=YOUR_SUPABASE_ANON_KEY
 
 # Optional Connection Timeout in milliseconds (default: 8000)
 supabase.timeout.ms=8000
+

@@ -32,3 +32,4 @@ Write-Host "`n========================================================" -Foregro
 Write-Host "[SUCCESS] All PSOOP Java test suites passed!" -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Green
 exit 0
+

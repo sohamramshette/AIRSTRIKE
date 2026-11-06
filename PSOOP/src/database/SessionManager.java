@@ -42,7 +42,28 @@ public class SessionManager {
     }
 
     public boolean isLoggedIn() {
-        return activeSession.get().isAuthenticated();
+        UserSession session = activeSession.get();
+        if (session == null || !session.isAuthenticated()) {
+            return false;
+        }
+        if (session.isExpired()) {
+            clearSession();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Inspects active session expiration. If expired, automatically clears session,
+     * informs listeners, and returns true.
+     */
+    public boolean checkAndHandleExpiredSession() {
+        UserSession session = activeSession.get();
+        if (session != null && session.isAuthenticated() && session.isExpired()) {
+            clearSession();
+            return true;
+        }
+        return false;
     }
 
     public String getCurrentUsername() {
@@ -95,3 +116,4 @@ public class SessionManager {
         }
     }
 }
+

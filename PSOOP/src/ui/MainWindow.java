@@ -77,7 +77,11 @@ public class MainWindow extends JFrame {
     }
 
     public void showAuthDialog() {
-        AuthDialog dialog = new AuthDialog(this, authService);
+        showAuthDialog("LOGIN");
+    }
+
+    public void showAuthDialog(String defaultTab) {
+        AuthDialog dialog = new AuthDialog(this, authService, defaultTab);
         dialog.setVisible(true);
     }
 
