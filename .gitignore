@@ -54,4 +54,9 @@ config/supabase.properties
 *.env
 .env
 
+# Packaging and Distribution Artifacts
+dist/
+release/
+
+
 

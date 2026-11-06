@@ -102,4 +102,8 @@ public class MainWindow extends JFrame {
     public GameCanvas getGameCanvas() { return gameCanvas; }
     public AuthService getAuthService() { return authService; }
     public MatchService getMatchService() { return matchService; }
+
+    public static void main(String[] args) {
+        main.Main.main(args);
+    }
 }
