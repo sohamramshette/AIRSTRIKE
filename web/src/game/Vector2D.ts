@@ -44,3 +44,4 @@ export class Vector2D {
     return Math.sqrt(dx * dx + dy * dy);
   }
 }
+

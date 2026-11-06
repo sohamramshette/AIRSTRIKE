@@ -107,3 +107,4 @@ export class Starfield {
     ctx.restore();
   }
 }
+

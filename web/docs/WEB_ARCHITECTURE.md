@@ -119,3 +119,4 @@ The web client communicates with the existing Supabase project:
   - **Guest Isolation**: Guest matches remain in local memory/`localStorage` and are never uploaded to the database, fulfilling strict project safety guidelines.
 - **Leaderboard Telemetry**: `GET /rest/v1/leaderboard`.
   - **Graceful Fallback**: If anonymous RLS permissions return HTTP 401 (pending backend approval Phase 7.2A), the service detects status 401 / code `42501` and seamlessly presents the Academy Standby Records with an informative notice.
+

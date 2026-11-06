@@ -87,3 +87,4 @@ export class PowerUp extends Entity {
     ctx.restore();
   }
 }
+

@@ -28,3 +28,4 @@ export abstract class Entity {
   public abstract update(dt: number): void;
   public abstract render(ctx: CanvasRenderingContext2D): void;
 }
+

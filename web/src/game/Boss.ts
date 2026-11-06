@@ -214,3 +214,4 @@ export class Boss extends Enemy {
     ctx.restore();
   }
 }
+

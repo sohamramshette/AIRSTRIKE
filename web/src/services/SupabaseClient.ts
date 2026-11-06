@@ -17,3 +17,4 @@ export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON
     detectSessionInUrl: true
   }
 });
+

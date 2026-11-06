@@ -61,3 +61,4 @@ export abstract class Enemy extends Entity {
 
   public abstract fire(playerX: number, playerY: number): Projectile[];
 }
+

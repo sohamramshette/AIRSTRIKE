@@ -132,3 +132,4 @@ export class Fighter extends Enemy {
     ctx.restore();
   }
 }
+

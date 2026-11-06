@@ -332,3 +332,4 @@ export class Player extends Entity {
     ctx.restore();
   }
 }
+

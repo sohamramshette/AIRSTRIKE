@@ -59,3 +59,4 @@ export class Projectile extends Entity {
     ctx.restore();
   }
 }
+

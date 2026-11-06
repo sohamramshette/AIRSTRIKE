@@ -34,3 +34,4 @@ describe('Supabase Web Services Unit Tests', () => {
     assert.ok(Array.isArray(guestMatches));
   });
 });
+

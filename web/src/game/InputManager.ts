@@ -33,23 +33,25 @@ export class InputManager {
 
     window.addEventListener('keydown', (e: KeyboardEvent) => {
       this.keys[e.code] = true;
+      this.keys[e.key] = true;
 
-      if (e.code === 'Space') {
+      if (e.code === 'Space' || e.key === ' ') {
         this.firePressed = true;
         e.preventDefault();
-      } else if (e.code === 'KeyP' || e.code === 'Escape') {
+      } else if (e.code === 'KeyP' || e.key === 'p' || e.key === 'P' || e.code === 'Escape' || e.key === 'Escape') {
         this.pauseRequested = true;
         e.preventDefault();
-      } else if (e.code === 'KeyR') {
+      } else if (e.code === 'KeyR' || e.key === 'r' || e.key === 'R') {
         this.restartRequested = true;
-      } else if (e.code === 'KeyM') {
+      } else if (e.code === 'KeyM' || e.key === 'm' || e.key === 'M') {
         this.muteRequested = true;
       }
     });
 
     window.addEventListener('keyup', (e: KeyboardEvent) => {
       this.keys[e.code] = false;
-      if (e.code === 'Space') {
+      this.keys[e.key] = false;
+      if (e.code === 'Space' || e.key === ' ') {
         this.firePressed = false;
       }
     });
@@ -122,10 +124,10 @@ export class InputManager {
     let x = 0;
     let y = 0;
 
-    if (this.keys['KeyA'] || this.keys['ArrowLeft']) x -= 1;
-    if (this.keys['KeyD'] || this.keys['ArrowRight']) x += 1;
-    if (this.keys['KeyW'] || this.keys['ArrowUp']) y -= 1;
-    if (this.keys['KeyS'] || this.keys['ArrowDown']) y += 1;
+    if (this.keys['KeyA'] || this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) x -= 1;
+    if (this.keys['KeyD'] || this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) x += 1;
+    if (this.keys['KeyW'] || this.keys['ArrowUp'] || this.keys['w'] || this.keys['W']) y -= 1;
+    if (this.keys['KeyS'] || this.keys['ArrowDown'] || this.keys['s'] || this.keys['S']) y += 1;
 
     // Merge virtual touch control input
     if (Math.abs(this.virtualMoveX) > 0.05) x = this.virtualMoveX;

@@ -81,3 +81,4 @@ VITE_SUPABASE_URL=https://qbhotsqwpxbmtpqbgpjy.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_45YsUzEdi6crovilqrubwg_Z6QgVVsM
 ```
 *(Only the publishable anon key is ever used; service-role and secret keys are never exposed on the web client).*
+

@@ -176,3 +176,4 @@ takeDamage(amount, bypassShield):
 | **Save Match** | `POST /rest/v1/matches` | `{ user_id, score, level_reached, duration_seconds }` | `Authorization: Bearer <jwt>`, `Prefer: return=representation` |
 | **Get History**| `GET /rest/v1/matches?select=id,score,level_reached,duration_seconds,created_at&user_id=eq.<id>&order=created_at.desc` | None | `Authorization: Bearer <jwt>` |
 | **Leaderboard**| `GET /rest/v1/leaderboard?select=username,best_score&order=best_score.desc&limit=10` | None | `apikey: <publishable-key>` |
+
