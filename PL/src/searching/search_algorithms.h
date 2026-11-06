@@ -41,3 +41,4 @@ namespace SearchAlgorithms {
 }
 
 #endif // SEARCH_ALGORITHMS_H
+

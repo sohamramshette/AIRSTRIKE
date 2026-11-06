@@ -185,3 +185,4 @@ void CircularLinkedList::clear() {
     head = activeWeapon = nullptr;
     count = 0;
 }
+

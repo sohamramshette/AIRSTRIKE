@@ -16,10 +16,10 @@
 | **PL** | Programming Laboratory (C++) | **PL-CO3** | Stack and Queue Applications | `PL/src/stacks/`, `queues/` | Completed (Phase 3) |
 | **PL** | Programming Laboratory (C++) | **PL-CO4** | Searching and Sorting Techniques | `PL/src/searching/`, `sorting/` | Completed (Phase 3) |
 | **PL** | Programming Laboratory (C++) | **PL-CO5** | Hashing Techniques | `PL/src/hashing/` | Completed (Phase 3) |
-| **COA** | Comp. Org. & Architecture (80386) | **COA-CO1** | 80386 Architecture & Instruction Set | `COA/architecture/` | Planned |
-| **COA** | Comp. Org. & Architecture (80386) | **COA-CO2** | Assembly Language Programs (80386) | `COA/instructions/` | Planned |
-| **COA** | Comp. Org. & Architecture (80386) | **COA-CO3** | Computer Arithmetic & Booth Algorithm | `COA/arithmetic/` | Planned |
-| **COA** | Comp. Org. & Architecture (80386) | **COA-CO4** | Control Unit & Instruction Pipelining | `COA/control_unit/`, `pipelining/` | Planned |
+| **COA** | Comp. Org. & Architecture (80386) | **COA-CO1** | 80386 Architecture & Instruction Set | `COA/src/co1_architecture/` | Completed (Phase 4) |
+| **COA** | Comp. Org. & Architecture (80386) | **COA-CO2** | Assembly Language Programs (80386) | `COA/src/co2_assembly_programs/` | Completed (Phase 4) |
+| **COA** | Comp. Org. & Architecture (80386) | **COA-CO3** | Computer Arithmetic & Booth Algorithm | `COA/src/co3_arithmetic/` | Completed (Phase 4) |
+| **COA** | Comp. Org. & Architecture (80386) | **COA-CO4** | Control Unit & Instruction Pipelining | `COA/src/co4_control_unit/` | Completed (Phase 4) |
 | **CGL** | Computer Graphics Lab (OpenGL) | **CGL-CO1** | OpenGL Graphics Primitives | `CGL/src/primitives/` | Planned |
 | **CGL** | Computer Graphics Lab (OpenGL) | **CGL-CO2** | Geometric Transformations | `CGL/src/transformations/` | Planned |
 | **CGL** | Computer Graphics Lab (OpenGL) | **CGL-CO3** | 2D and 3D Algorithms | `CGL/src/algorithms/` | Planned |
@@ -168,116 +168,107 @@
   - Sub-register partitioning (`AX`, `AH`, `AL` within `EAX`).
   - Segment registers (`CS`, `DS`, `SS`, `ES`, `FS`, `GS`) and flat memory model under 32-bit protected mode.
   - EFLAGS register flags: Zero Flag (ZF), Carry Flag (CF), Sign Flag (SF), Overflow Flag (OF), Parity Flag (PF).
+  - Addressing modes: Immediate, Register, Direct, Register Indirect, and Based-Indexed-Scaled (SIB: `[Base + Index*Scale + Disp]`).
   - Instruction set basics: Data transfer (`MOV`, `XCHG`, `PUSH`, `POP`), Arithmetic (`ADD`, `SUB`, `INC`, `DEC`), Logic (`AND`, `OR`, `XOR`, `NOT`, `TEST`).
-- **Planned implementation**:
-  - Pure 32-bit 80386 assembly module manipulating registers and bitwise flags.
-  - Spacecraft status register engine decoding ship shields, engine boost, weapons lock, and damage flags via bitwise masks.
+- **Implemented solution**:
+  - Pure 32-bit 80386 assembly module (`arch_demo.s`) displaying and testing all 8 general-purpose registers, sub-register partitioning (`EAX` -> `AX` -> `AH`/`AL`), 4 pointer/index registers, hardware stack push/pop dynamics, 4 condition code flags (`CF`, `ZF`, `SF`, `OF`), segment selectors (`CS`, `DS`, `SS`, `ES`), and 5 distinct addressing modes including 80386 SIB `[EBX + ESI*4 + 8]`.
 - **Source file location**:
-  - `COA/architecture/reg_flags.s`
-  - `COA/instructions/data_movement.s`
-  - `COA/instructions/logic_ops.s`
+  - `COA/src/co1_architecture/arch_demo.s`
+  - `COA/src/common/io.s`
 - **Demonstration method**:
-  - Standalone 32-bit executable printing register bit values, EFLAGS conditions, and demonstrating flag updates after arithmetic instructions.
+  - Console demonstration via menu option `[1]` in `bin/coa/coa_runner.exe` and automated test assertions via `--test`.
 - **Test cases**:
-  - `TC_COA_01A`: Register data movement verifying upper and lower 16-bit register consistency.
-  - `TC_COA_01B`: Addition producing unsigned carry ($CF = 1$) and signed overflow ($OF = 1$).
-  - `TC_COA_01C`: Bitwise `TEST` instruction updating ZF without modifying the destination register.
-  - `TC_COA_01D`: Bitwise mask toggling of spacecraft shield bits using `XOR` and `AND`.
+  - 6 automated unit tests in `COA/tests/test_coa.s` verifying register partitioning, EFLAGS updates, and SIB addressing with 100% pass rate.
 - **Viva explanation**:
-  - Difference between real mode (16-bit segmented, 1 MB limit) and protected mode (32-bit paging, 4 GB flat address space).
-  - Detailed definition of each EFLAGS bit and how conditional jumps (`JE`, `JG`, `JA`) evaluate flag combinations.
-  - Direct effective address calculation formula: $\text{EA} = \text{Base} + (\text{Index} \times \text{Scale}) + \text{Disp}$.
-- **Completion status**: Planned (Not Started)
+  - Difference between real mode (16-bit segmented, 1 MB limit) and protected mode (32-bit flat memory model, 4 GB limit, privilege rings).
+  - Detailed definition of each EFLAGS bit and how conditional branches evaluate flag conditions.
+  - SIB effective address calculation formula: $\text{EA} = \text{Base} + (\text{Index} \times \text{Scale}) + \text{Disp}$.
+- **Completion status**: Completed (Phase 4)
 
 ---
 
 ### COA-CO2: Assembly Language Programs Using 80386 Instructions
 - **Required concepts**:
   - Control flow: Unconditional jumps (`JMP`) and conditional jumps (`JE`, `JNE`, `JL`, `JLE`, `JG`, `JGE`, `JB`, `JAE`).
-  - Loop instructions (`LOOP`, `LOOPE`, `LOOPNE`) and counter-based decrementing.
-  - 80386 String manipulation instructions: `MOVSB`/`MOVSD`, `STOSB`/`STOSD`, `LODSB`/`LODSD`, `CMPSB`/`CMPSD`, `SCASB`/`SCASD` with `REP` prefixes and Direction Flag (`CLD`, `STD`).
-  - Standard C calling convention (cdecl): Stack parameter passing, stack frame allocation (`push ebp; mov ebp, esp; sub esp, N`), register preservation, return value in `EAX`.
-- **Planned implementation**:
-  - 80386 routines for string copying/formatting of game HUD text, array search of high-score tables, and modular procedure execution for combat score calculations.
+  - Arithmetic operations: Addition, subtraction, signed multiplication (`IMUL`), and division with remainder (`IDIV` with `CDQ`).
+  - Array operations: Min/Max finding, array summation & average, linear search with index return, two-pointer in-place reversal, and counting positive, negative, and zero values.
+  - Mathematical series: Recursive factorial via 80386 stack frames, and iterative Fibonacci series generation.
+  - Bitwise logic: `AND`, `OR`, `XOR`, `NOT` on spacecraft subsystem status registers.
+  - Standard C calling convention (cdecl): Stack parameter passing (`[ebp + 8]`), local stack frames (`[ebp - 4]`), register preservation (`EBX`, `ESI`, `EDI`), and return value in `EAX`.
+- **Implemented solution**:
+  - Complete suite of 10 genuine 80386 assembly programs organized across `arithmetic_ops.s`, `array_ops.s`, `math_series.s`, and `logic_ops.s`.
 - **Source file location**:
-  - `COA/instructions/control_flow.s`
-  - `COA/instructions/string_ops.s`
-  - `COA/instructions/procedures.s`
+  - `COA/src/co2_assembly_programs/arithmetic_ops.s`
+  - `COA/src/co2_assembly_programs/array_ops.s`
+  - `COA/src/co2_assembly_programs/math_series.s`
+  - `COA/src/co2_assembly_programs/logic_ops.s`
+  - `COA/src/co2_assembly_programs/co2_menu.s`
 - **Demonstration method**:
-  - Assembly test harness executing loops, searching string characters using `SCASB`, copying memory blocks with `REP MOVSD`, and calling procedures with arguments passed via the stack.
+  - Interactive submenu option `[2]` in `bin/coa/coa_runner.exe` allowing user input or batch automated test execution.
 - **Test cases**:
-  - `TC_COA_02A`: Loop counting down `ECX` from $N$ to 0 and verifying final register values.
-  - `TC_COA_02B`: `REP MOVSD` copying a 64-byte game entity block from source to destination.
-  - `TC_COA_02C`: Conditional branching taking both true and false jump branches correctly.
-  - `TC_COA_02D`: Stack frame setup and teardown verifying `ESP` and `EBP` restoration upon return.
+  - 14 automated unit tests in `COA/tests/test_coa.s` verifying all 10 programs across positive, negative, edge, and recursive conditions with 100% pass rate.
 - **Viva explanation**:
-  - Differences between caller-saved (`EAX`, `ECX`, `EDX`) and callee-saved (`EBX`, `ESI`, `EDI`, `EBP`, `ESP`) registers.
-  - How stack frames organize local variables at negative offsets `[ebp - 4]` and incoming parameters at positive offsets `[ebp + 8]`.
-  - The role of the direction flag (`DF`) in string instructions and why failure to clear `DF` causes memory corruption.
-- **Completion status**: Planned (Not Started)
+  - Differences between caller-saved (`EAX`, `ECX`, `EDX`) and callee-saved (`EBX`, `ESI`, `EDI`, `EBP`, `ESP`) registers under cdecl.
+  - Stack frame organization with negative local offsets and positive parameter offsets.
+  - Importance of `CDQ` sign-extending `EAX` into `EDX:EAX` before signed `IDIV`.
+- **Completion status**: Completed (Phase 4)
 
 ---
 
 ### COA-CO3: Computer Arithmetic Algorithms, Including Booth Multiplication
 - **Required concepts**:
-  - Two's complement signed integer representation, sign extension (`MOVSX`, `CBW`, `CWDE`).
-  - Binary addition and subtraction with borrow/carry (`ADD`, `ADC`, `SUB`, `SBB`).
-  - Booth's Multiplication Algorithm for signed binary integers.
-  - Multiplier bit inspection ($Q_0, Q_{-1}$ pairs: $01 \implies A \leftarrow A + M$, $10 \implies A \leftarrow A - M$, $00/11 \implies \text{no arithmetic}$), followed by Arithmetic Right Shift (ASR) preserving sign bit.
-  - Integer division algorithms (Restoring and Non-Restoring division).
-- **Planned implementation**:
-  - Step-by-step implementation of Booth's Multiplication Algorithm in 80386 assembly with full trace logging.
-  - Signed integer arithmetic calculator for combat score multiplier and projectile penetration mechanics.
+  - Two's complement signed integer representation, sign extension, arithmetic right shifts preserving MSB (`SAR`).
+  - Booth's Multiplication Algorithm for signed binary integers using pairwise recoding: $(Q_0, Q_{-1}) \in \{01 \implies +M,\ 10 \implies -M,\ 00/11 \implies \text{Shift only}\}$.
+  - Restoring Binary Division Algorithm for unsigned integers using shift-left, subtract, sign check, and conditional restore.
+  - Multi-precision binary addition using `ADC` (Add with Carry) across multiple 32-bit words.
+  - Hardware signed arithmetic overflow detection ($OF$ flag condition).
+- **Implemented solution**:
+  - Pure 80386 assembly implementation of Booth's algorithm (`booth_multiplier.s`) generating a complete cycle-by-cycle trace table with binary output.
+  - Pure 80386 assembly implementation of Restoring Division (`restoring_divider.s`) generating a complete cycle-by-cycle trace table with binary output and remainder verification.
+  - Multi-precision 64-bit addition (`carry_overflow.s`) propagating carry between words, and signed overflow tests on $OF$ flag.
 - **Source file location**:
-  - `COA/arithmetic/booth_mult.s`
-  - `COA/arithmetic/division.s`
-  - `COA/arithmetic/signed_math.s`
+  - `COA/src/co3_arithmetic/booth_multiplier.s`
+  - `COA/src/co3_arithmetic/restoring_divider.s`
+  - `COA/src/co3_arithmetic/carry_overflow.s`
+  - `COA/src/co3_arithmetic/co3_menu.s`
 - **Demonstration method**:
-  - Assembly executable taking multiplicand and multiplier values (both positive and negative), executing Booth's algorithm cycle-by-cycle, printing register states ($A, Q, Q_{-1}, \text{Count}$) after each shift, and comparing with standard hardware multiplication (`IMUL`).
+  - Interactive submenu option `[3]` in `bin/coa/coa_runner.exe` showing full binary shift tables and verification formulas ($M \times Q$ and $\text{Dividend} = \text{Quotient} \times \text{Divisor} + \text{Remainder}$).
 - **Test cases**:
-  - `TC_COA_03A`: Positive $\times$ Positive (e.g., $+7 \times +3 = +21$).
-  - `TC_COA_03B`: Positive $\times$ Negative (e.g., $+7 \times -3 = -21$).
-  - `TC_COA_03C`: Negative $\times$ Positive (e.g., $-7 \times +3 = -21$).
-  - `TC_COA_03D`: Negative $\times$ Negative (e.g., $-7 \times -3 = +21$).
-  - `TC_COA_03E`: Non-restoring division test verifying quotient and remainder against hardware `IDIV`.
+  - 12 automated unit tests in `COA/tests/test_coa.s` covering Booth ($+ \times +$, $+ \times -$, $- \times +$, $- \times -$, boundary $-64 \times 2 = -128$), Restoring Division (exact, non-exact, $Q < M$), multi-precision `ADC`, and positive/negative overflow with 100% pass rate.
 - **Viva explanation**:
-  - Why standard unsigned shift-and-add multiplication fails for negative two's complement numbers.
-  - How Booth's algorithm groups blocks of consecutive 1s to replace multiple additions with a single addition and subtraction ($2^{k+1} - 2^m$).
-  - Difference between Arithmetic Shift Right (`SAR` - copies MSB) and Logical Shift Right (`SHR` - inserts 0 into MSB).
-- **Completion status**: Planned (Not Started)
+  - Why standard shift-and-add fails for negative two's complement numbers and how Booth recoding resolves consecutive runs of 1s ($2^{k+1} - 2^m$).
+  - Difference between Arithmetic Shift Right (`SAR`) and Logical Shift Right (`SHR`).
+  - Restoring vs Non-Restoring division cycle trade-offs.
+- **Completion status**: Completed (Phase 4)
 
 ---
 
 ### COA-CO4: Control Signal Generation, Control Unit Organization and Instruction Pipelining
 - **Required concepts**:
-  - Control Unit (CU) architectures: Hardwired Control Unit (combinational logic gates, state machine, high speed) vs Microprogrammed Control Unit (control memory ROM, microinstructions, micro-program counter).
-  - Micro-operations, timing signals, control word generation.
-  - Instruction Cycle stages: Instruction Fetch (IF), Instruction Decode (ID), Execution (EX), Memory Access (MEM), Write Back (WB).
-  - 80386 Pipeline architecture: Prefetch stage, Decode 1, Decode 2, Execute, Segment, Page stages.
-  - Pipeline Hazards:
-    - Structural Hazards (resource contention).
-    - Data Hazards: Read-After-Write (RAW), Write-After-Read (WAR), Write-After-Write (WAW).
-    - Control Hazards: Branch prediction penalties, pipeline stalls/bubbles, branch target buffers.
-  - Hazard mitigation techniques: Operand forwarding, delayed branching, pipeline interlocks.
-- **Planned implementation**:
-  - Cycle-accurate pipeline simulation engine and instruction trace analyzer.
-  - Control signal generator mapping 80386 opcodes to control bus signals (`MEMR`, `MEMW`, `IOR`, `IOW`, `ALU_OP`, `REG_WRITE`).
+  - Control Unit (CU) architectures: Hardwired Control Unit (combinational logic gates, high speed) vs Microprogrammed Control Unit (control memory ROM, microinstructions, flexibility).
+  - Instruction Cycle stages: IF (Fetch), ID (Decode), EX (Execute), MEM (Memory Access), WB (Write Back).
+  - 80386 Control signal truth table for R-type, LW, SW, BEQ, JMP instructions (`RegDst`, `ALUSrc`, `MemToReg`, `RegWrite`, `MemRead`, `MemWrite`, `Branch`, `ALUOp`).
+  - 5-Stage Instruction Pipeline Simulation and Hazard Handling:
+    - Ideal pipeline matrix throughput.
+    - Data Hazards: Read-After-Write (RAW) requiring 2 stall bubbles.
+    - Control Hazards: Branch evaluation requiring pipeline flush (branch penalty).
+    - Performance speedup metrics ($T_{\text{seq}}$ vs $T_{\text{pipe}}$).
+- **Implemented solution**:
+  - Pure 80386 assembly Control Signal generator (`control_unit.s`) decoding opcodes into the standard control bus matrix.
+  - Pure 80386 assembly 5-stage pipeline simulator (`pipeline_sim.s`) visualizing stage matrices for ideal execution, RAW data hazard stall bubbles, branch flush penalty, and quantitative benchmark speedup metrics ($4.80\times$ ideal, $4.67\times$ with hazards for $N=100$).
 - **Source file location**:
-  - `COA/control_unit/control_signals.s`
-  - `COA/pipelining/hazard_detector.s`
-  - `COA/simulator/pipeline_model.cpp`
+  - `COA/src/co4_control_unit/control_unit.s`
+  - `COA/src/co4_control_unit/pipeline_sim.s`
+  - `COA/src/co4_control_unit/co4_menu.s`
 - **Demonstration method**:
-  - CLI pipeline trace demonstration analyzing a stream of 80386 instructions, printing stage allocations per clock cycle ($T_1, T_2, \dots$), detecting RAW data hazards, inserting stalls (bubbles), and calculating final CPI (Cycles Per Instruction) and speedup ratio.
+  - Interactive submenu option `[4]` in `bin/coa/coa_runner.exe` displaying formatted pipeline stage timelines and speedup calculations.
 - **Test cases**:
-  - `TC_COA_04A`: Hazard-free linear instruction sequence achieving ideal pipeline throughput ($\text{CPI} \approx 1$).
-  - `TC_COA_04B`: RAW data hazard sequence (`MOV EAX, [mem]; ADD EBX, EAX`) demonstrating pipeline stall insertion.
-  - `TC_COA_04C`: Control hazard caused by conditional branch (`JNZ`) showing pipeline flush and branch penalty cycles.
-  - `TC_COA_04D`: Control signal table generation for ALU instructions verifying active control wire assertions.
+  - 2 automated unit tests in `COA/tests/test_coa.s` validating control signal truth matrix generation and 5-stage pipeline hazard simulation metrics.
 - **Viva explanation**:
-  - Differences in cost, speed, and flexibility between hardwired and microprogrammed control units.
-  - Theoretical maximum speedup of a $k$-stage pipeline ($S_k = k$) and why real-world pipelines fail to achieve ideal speedup due to stalls and hazards.
-  - Detailed classification of data dependencies: RAW (true dependency), WAR (anti-dependency), and WAW (output dependency).
-- **Completion status**: Planned (Not Started)
+  - Trade-offs between hardwired and microprogrammed control units.
+  - Types of pipeline hazards: Structural, Data (RAW, WAR, WAW), and Control (Branch).
+  - Theoretical vs realized speedup formulas ($S = k / (1 + \text{hazard stalls})$).
+- **Completion status**: Completed (Phase 4)
 
 ---
 

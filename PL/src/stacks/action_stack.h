@@ -54,3 +54,4 @@ public:
 };
 
 #endif // ACTION_STACK_H
+

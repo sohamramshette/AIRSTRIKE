@@ -189,3 +189,4 @@ void DoublyLinkedList::clear() {
     tail = nullptr;
     count = 0;
 }
+

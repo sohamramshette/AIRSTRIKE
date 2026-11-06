@@ -157,3 +157,4 @@ int& DynamicArray::operator[](size_t index) {
 const int& DynamicArray::operator[](size_t index) const {
     return data[index];
 }
+

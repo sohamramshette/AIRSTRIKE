@@ -34,3 +34,4 @@ struct TestSummary {
 };
 
 #endif // TEST_COMMON_H
+

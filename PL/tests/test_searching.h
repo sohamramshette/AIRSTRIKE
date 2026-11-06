@@ -6,3 +6,4 @@
 TestSummary runSearchingTests();
 
 #endif // TEST_SEARCHING_H
+

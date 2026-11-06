@@ -6,3 +6,4 @@
 TestSummary runHashingTests();
 
 #endif // TEST_HASHING_H
+

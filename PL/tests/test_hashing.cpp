@@ -71,3 +71,4 @@ TestSummary runHashingTests() {
 
     return summary;
 }
+

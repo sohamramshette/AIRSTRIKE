@@ -6,3 +6,4 @@
 TestSummary runLinkedListTests();
 
 #endif // TEST_LINKED_LISTS_H
+

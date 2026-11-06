@@ -56,3 +56,4 @@ public:
 };
 
 #endif // WAVE_QUEUE_H
+

@@ -48,6 +48,14 @@ if (-not $asmFiles -or $asmFiles.Count -eq 0) {
     exit 0
 }
 
-Write-Host "[INFO] Found $($asmFiles.Count) assembly source file(s)." -ForegroundColor White
-Write-Host "[SUCCESS] COA 80386 module build configuration ready!" -ForegroundColor Green
+Write-Host "[INFO] Found $($asmFiles.Count) assembly source file(s). Assembling and linking..." -ForegroundColor White
+$outTarget = "$binCoa\coa_runner.exe"
+$sourcePaths = $asmFiles.FullName
+& gcc -m32 -Wall -O2 @sourcePaths -o $outTarget
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] 80386 assembly compilation failed!" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "[SUCCESS] COA 80386 module built successfully at $outTarget!" -ForegroundColor Green
 exit 0

@@ -170,3 +170,4 @@ void CollisionGrid::printRadarGrid() const {
     for (int c = 0; c < COLS; ++c) std::cout << "----";
     std::cout << "+\n";
 }
+

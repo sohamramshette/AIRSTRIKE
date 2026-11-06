@@ -26,3 +26,4 @@ namespace ArrayOps {
 }
 
 #endif // ARRAY_OPS_H
+

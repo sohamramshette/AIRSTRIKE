@@ -108,3 +108,4 @@ void printScores(const PlayerScore scores[], int size, const char* label) {
 }
 
 } // namespace SearchAlgorithms
+

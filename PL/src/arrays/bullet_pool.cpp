@@ -110,3 +110,4 @@ void BulletPool::printStatus() const {
         }
     }
 }
+

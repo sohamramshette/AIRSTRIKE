@@ -172,3 +172,4 @@ void SinglyLinkedList::clear() {
     }
     count = 0;
 }
+
