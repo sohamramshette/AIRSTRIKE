@@ -75,3 +75,4 @@ private:
 } // namespace CGL
 
 #endif // SPACE_SCENE_HPP
+

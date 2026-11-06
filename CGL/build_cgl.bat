@@ -41,3 +41,4 @@ copy /y bin\cgl\cgl_runner.exe bin\cgl\cgl_demo.exe >nul 2>&1
 
 echo [SUCCESS] CGL Module built successfully at bin\cgl\cgl_runner.exe
 exit /b 0
+

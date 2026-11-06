@@ -322,3 +322,4 @@ void SpacePrimitivesDemo::render(int screenWidth, int screenHeight) {
 }
 
 } // namespace CGL
+

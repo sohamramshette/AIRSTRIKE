@@ -38,3 +38,4 @@ private:
 } // namespace CGL
 
 #endif // SPACE_PRIMITIVES_HPP
+

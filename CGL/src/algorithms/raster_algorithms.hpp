@@ -63,3 +63,4 @@ private:
 } // namespace CGL
 
 #endif // RASTER_ALGORITHMS_HPP
+

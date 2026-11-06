@@ -516,3 +516,4 @@ void RasterAlgorithmsDemo::render(int screenWidth, int screenHeight) {
 }
 
 } // namespace CGL
+

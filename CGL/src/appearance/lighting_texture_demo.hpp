@@ -12,11 +12,12 @@ namespace CGL {
  * Covers:
  * - Color Models: RGB, RGBA, HSV conversion
  * - Shading Models: Flat (GL_FLAT) vs Smooth Gouraud (GL_SMOOTH)
- * - Phong Illumination Model (Ambient, Diffuse, Specular components)
+ * - Phong Illumination Model (Ambient, Diffuse, Specular reflection components)
  * - Positional vs Directional Light Sources
  * - Material Properties (Ambient, Diffuse, Specular, Shininess)
+ * - Actual Local Image File Loading (.bmp from CGL/assets/textures/)
  * - Procedural 2D Texture Generation & UV Coordinate Mapping
- * - Texture Filtering (GL_LINEAR vs GL_NEAREST) and Wrapping (GL_REPEAT)
+ * - Texture Filtering (GL_LINEAR vs GL_NEAREST) and Wrapping (GL_REPEAT vs GL_CLAMP)
  */
 class LightingTextureDemo {
 public:
@@ -35,6 +36,8 @@ public:
     void toggleDiffuse();
     void toggleSpecular();
     void toggleFiltering();
+    void toggleWrapping();
+    void toggleTextureSource();
     void adjustShininess(float delta);
     void reset();
 
@@ -46,7 +49,11 @@ public:
     bool isDiffuseOn() const { return diffuseOn; }
     bool isSpecularOn() const { return specularOn; }
     bool isLinearFilter() const { return linearFilter; }
+    bool isRepeatWrap() const { return repeatWrap; }
+    bool isFileTextureMode() const { return useFileTexture; }
+    bool isLocalTexLoaded() const { return localTexLoaded; }
     float getShininess() const { return matShininess; }
+    std::string getLoadedFilePath() const { return loadedFilePath; }
 
     // Color space math helpers
     static Color4 hsvToRgb(float h, float s, float v, float a = 1.0f);
@@ -61,15 +68,24 @@ private:
     bool diffuseOn;
     bool specularOn;
     bool linearFilter;
+    bool repeatWrap;
+    bool useFileTexture;
+    bool localTexLoaded;
 
     float matShininess;
     float animAngle;
     float lightOrbitAngle;
 
-    GLuint hullTextureId;
-    GLuint planetTextureId;
+    GLuint procHullTextureId;
+    GLuint procPlanetTextureId;
+    GLuint localHullTextureId;
+    GLuint localAlienTextureId;
 
+    std::string loadedFilePath;
+
+    void loadLocalTextures();
     void createProceduralTextures();
+    void applyTextureParameters(GLuint texId);
     void setupLighting();
     void renderTexturedSphere(float radius, int slices, int stacks);
     void renderTexturedShip(float size);

@@ -76,3 +76,4 @@ private:
 } // namespace CGL
 
 #endif // CLIPPING_ALGORITHMS_HPP
+

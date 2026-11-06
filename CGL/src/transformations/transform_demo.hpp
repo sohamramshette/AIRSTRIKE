@@ -45,9 +45,15 @@ public:
     // Math helpers for verification
     static void multiplyMatrix4x4(const float a[16], const float b[16], float result[16]);
     static void getTranslationMatrix(float tx, float ty, float tz, float m[16]);
+    static void getRotationXMatrix(float angleDeg, float m[16]);
+    static void getRotationYMatrix(float angleDeg, float m[16]);
     static void getRotationZMatrix(float angleDeg, float m[16]);
     static void getScaleMatrix(float sx, float sy, float sz, float m[16]);
     static void getShear2DMatrix(float shx, float shy, float m[16]);
+    static void getReflectionXMatrix(float m[16]);
+    static void getReflectionYMatrix(float m[16]);
+    static void getArbitraryPivotRotationMatrix(float px, float py, float angleDeg, float m[16]);
+    static Vec3 transformPoint(const float m[16], const Vec3& p);
 
 private:
     float tx, ty;
@@ -71,3 +77,4 @@ private:
 } // namespace CGL
 
 #endif // TRANSFORM_DEMO_HPP
+

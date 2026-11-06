@@ -507,3 +507,4 @@ void SpaceCombatScene::render(int screenWidth, int screenHeight) {
 }
 
 } // namespace CGL
+

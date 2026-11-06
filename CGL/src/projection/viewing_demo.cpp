@@ -255,4 +255,71 @@ void ViewingDemo::render(int screenWidth, int screenHeight) {
     endHUD();
 }
 
+void ViewingDemo::getOrthoMatrix(float l, float r, float b, float t, float n, float f, float m[16]) {
+    for (int i = 0; i < 16; ++i) m[i] = 0.0f;
+    m[0]  = 2.0f / (r - l);
+    m[5]  = 2.0f / (t - b);
+    m[10] = -2.0f / (f - n);
+    m[12] = -(r + l) / (r - l);
+    m[13] = -(t + b) / (t - b);
+    m[14] = -(f + n) / (f - n);
+    m[15] = 1.0f;
+}
+
+void ViewingDemo::getPerspectiveMatrix(float fovyDeg, float aspect, float zNear, float zFar, float m[16]) {
+    for (int i = 0; i < 16; ++i) m[i] = 0.0f;
+    float rad = fovyDeg * 0.5f * static_cast<float>(M_PI) / 180.0f;
+    float f = 1.0f / std::tan(rad);
+    m[0]  = f / aspect;
+    m[5]  = f;
+    m[10] = (zFar + zNear) / (zNear - zFar);
+    m[11] = -1.0f;
+    m[14] = (2.0f * zFar * zNear) / (zNear - zFar);
+    m[15] = 0.0f;
+}
+
+void ViewingDemo::getLookAtMatrix(const Vec3& eye, const Vec3& center, const Vec3& up, float m[16]) {
+    Vec3 f(center.x - eye.x, center.y - eye.y, center.z - eye.z);
+    float lenF = std::sqrt(f.x * f.x + f.y * f.y + f.z * f.z);
+    if (lenF > 1e-7f) { f.x /= lenF; f.y /= lenF; f.z /= lenF; }
+
+    Vec3 upNorm = up;
+    float lenUp = std::sqrt(upNorm.x * upNorm.x + upNorm.y * upNorm.y + upNorm.z * upNorm.z);
+    if (lenUp > 1e-7f) { upNorm.x /= lenUp; upNorm.y /= lenUp; upNorm.z /= lenUp; }
+
+    Vec3 s(f.y * upNorm.z - f.z * upNorm.y,
+           f.z * upNorm.x - f.x * upNorm.z,
+           f.x * upNorm.y - f.y * upNorm.x);
+    float lenS = std::sqrt(s.x * s.x + s.y * s.y + s.z * s.z);
+    if (lenS > 1e-7f) { s.x /= lenS; s.y /= lenS; s.z /= lenS; }
+
+    Vec3 u(s.y * f.z - s.z * f.y,
+           s.z * f.x - s.x * f.z,
+           s.x * f.y - s.y * f.x);
+
+    m[0] = s.x;  m[4] = s.y;  m[8]  = s.z;  m[12] = -(s.x * eye.x + s.y * eye.y + s.z * eye.z);
+    m[1] = u.x;  m[5] = u.y;  m[9]  = u.z;  m[13] = -(u.x * eye.x + u.y * eye.y + u.z * eye.z);
+    m[2] = -f.x; m[6] = -f.y; m[10] = -f.z; m[14] =  (f.x * eye.x + f.y * eye.y + f.z * eye.z);
+    m[3] = 0.0f; m[7] = 0.0f; m[11] = 0.0f; m[15] = 1.0f;
+}
+
+Vec3 ViewingDemo::projectPoint(const float projMatrix[16], const Vec3& p) {
+    float x = projMatrix[0] * p.x + projMatrix[4] * p.y + projMatrix[8]  * p.z + projMatrix[12];
+    float y = projMatrix[1] * p.x + projMatrix[5] * p.y + projMatrix[9]  * p.z + projMatrix[13];
+    float z = projMatrix[2] * p.x + projMatrix[6] * p.y + projMatrix[10] * p.z + projMatrix[14];
+    float w = projMatrix[3] * p.x + projMatrix[7] * p.y + projMatrix[11] * p.z + projMatrix[15];
+
+    if (std::fabs(w) > 1e-7f) {
+        x /= w; y /= w; z /= w;
+    }
+    return Vec3(x, y, z);
+}
+
+Point2D ViewingDemo::viewportMap(const Vec3& ndc, int vpX, int vpY, int vpW, int vpH) {
+    float xs = vpX + (ndc.x + 1.0f) * 0.5f * vpW;
+    float ys = vpY + (ndc.y + 1.0f) * 0.5f * vpH;
+    return Point2D(static_cast<int>(std::round(xs)), static_cast<int>(std::round(ys)));
+}
+
 } // namespace CGL
+

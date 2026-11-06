@@ -490,3 +490,4 @@ void ClippingAlgorithmsDemo::render(int screenWidth, int screenHeight) {
 }
 
 } // namespace CGL
+

@@ -61,3 +61,4 @@ struct Color4 {
 };
 
 #endif // GL_COMMON_H
+

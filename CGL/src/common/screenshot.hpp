@@ -24,3 +24,4 @@ void ensureDirectoryExists(const std::string& path);
 } // namespace CGL
 
 #endif // SCREENSHOT_HPP
+

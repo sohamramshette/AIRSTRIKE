@@ -30,3 +30,4 @@ void endHUD();
 } // namespace CGL
 
 #endif // FONT_RENDERER_HPP
+

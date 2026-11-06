@@ -280,14 +280,16 @@ For each edge $(V_{\text{prev}}, V_{\text{curr}})$:
   $$\mathbf{C}_{\text{out}} = \alpha \cdot \mathbf{C}_{\text{src}} + (1 - \alpha) \cdot \mathbf{C}_{\text{dst}}$$
 * **HSV**: Cylindrical representation parameterized by Hue ($[0, 360^\circ]$), Saturation ($[0, 1]$), and Value ($[0, 1]$). Converted to RGB via piecewise chroma functions.
 
-### 8.2 Shading Models
-* **Flat Shading (`GL_FLAT`)**: A single normal vector is assigned to the entire polygon face. Surfaces exhibit distinct polygonal facets.
-* **Smooth Gouraud Shading (`GL_SMOOTH`)**: Normal vectors are specified at each vertex. Color intensities are calculated at vertices and bilinearly interpolated across fragment interiors.
+### 8.2 Shading Models vs Illumination Models
+It is crucial to distinguish between an **illumination model** and a **shading model**:
+* **Phong Illumination Model**: The mathematical reflection formula combining Ambient, Diffuse (Lambert), and Specular highlights:
+  $$I = I_{\text{ambient}} + I_{\text{diffuse}} + I_{\text{specular}} = k_a L_a + k_d L_d \max(0, \vec{N} \cdot \vec{L}) + k_s L_s \max(0, \vec{R} \cdot \vec{V})^n$$
+* **Gouraud Shading (`GL_SMOOTH`)**: Per-vertex lighting. Surface normals are specified at vertices, the Phong illumination model is calculated at each vertex, and the resulting colors are bilinearly interpolated across the polygon fragments. This is the hardware mode utilized by fixed-function OpenGL.
+* **Phong Shading (Per-Fragment)**: Surface normals are interpolated across polygon fragments, and the reflection equation is evaluated at every individual pixel. Standard fixed-function OpenGL 2.1 does **not** perform Phong shading (which requires custom GLSL fragment shaders).
+* **Flat Shading (`GL_FLAT`)**: A single normal is assigned per polygon face, producing visible polygonal facets.
 
-### 8.3 The Phong Reflection Model
-Computes total surface illumination $I$ as the sum of three distinct components:
-$$I = I_{\text{ambient}} + I_{\text{diffuse}} + I_{\text{specular}}$$
-
+### 8.3 The Phong Reflection Model Components
+Total surface illumination $I$ combines three components:
 1. **Ambient Component ($I_a$)**: Background indirect illumination scattering:
    $$I_a = k_a \cdot L_a$$
 2. **Diffuse Component ($I_d$)**: Lambert's Cosine Law for rough matte surfaces:
@@ -296,12 +298,18 @@ $$I = I_{\text{ambient}} + I_{\text{diffuse}} + I_{\text{specular}}$$
    $$I_s = k_s \cdot L_s \cdot \max(0, \vec{R} \cdot \vec{V})^n$$
    where $\vec{R} = 2(\vec{N} \cdot \vec{L})\vec{N} - \vec{L}$, and $n$ is the material shininess exponent.
 
-### 8.4 Procedural Texture Mapping
-Generated entirely in program memory ($128 \times 128$ RGB) to eliminate missing asset dependencies:
-1. **Spacecraft Hull Texture**: Metallic gray composite panels with darker seams, bright rivets, and yellow hazard stripes.
-2. **Planet Texture**: Atmospheric bands, swirls, and crater formations in turquoise and royal blue.
-
-Textures are uploaded via `glTexImage2D`, with texture coordinate interpolation (`glTexCoord2f`) and interactive toggling of bilinear (`GL_LINEAR`) and nearest-neighbor (`GL_NEAREST`) filtering.
+### 8.4 Actual Image Texture Loading & Texture Mapping
+In compliance with Phase 5.1, `CGL/src/common/image_loader.cpp` implements a zero-dependency 24-bit uncompressed Windows Bitmap (`.bmp`) loader (`loadBMP`):
+* Reads `BITMAPFILEHEADER` and `BITMAPINFOHEADER` from disk.
+* Unpacks pixel rows with 4-byte padding alignment and converts BGR order to RGB.
+* **Actual Local Texture Assets**:
+  - `CGL/assets/textures/space_hull.bmp`: 256×256 24-bit metallic starfighter plating with rivets, circuit traces, and hazard warning chevrons.
+  - `CGL/assets/textures/alien_surface.bmp`: 256×256 24-bit cratered asteroid terrain with glowing magma channels.
+* **Graceful Fallback**: If the local image file is missing or corrupted, the system reports a console warning and falls back cleanly to the procedural in-memory texture generators without crashing.
+* **Texture Parameters**:
+  - Wrapping modes: `GL_REPEAT` (tiled) vs `GL_CLAMP` (clamped borders), toggled via key `[K]`.
+  - Filtering modes: `GL_LINEAR` (bilinear interpolation) vs `GL_NEAREST` (point sampling), toggled via key `[F]`.
+  - Texture source toggle: local file vs procedural in-memory, toggled via key `[U]`.
 
 ---
 
@@ -381,7 +389,13 @@ Run the automated test harness:
 ```bash
 bin/cgl/cgl_runner.exe --test
 ```
-**Result**: 42 out of 42 assertions pass (100% test success rate).
+**Result**: **65 out of 65 assertions pass (100% test success rate)** across all six Course Outcomes:
+* **CGL-CO1**: 4 Assertions (Point2D, Vec2, Color4 data types and equality).
+* **CGL-CO2**: 12 Assertions (4×4 matrices, coordinate transformations for translation, rotation, scaling, reflection across X and Y axes, arbitrary pivot point rotation and invariance, combined transformation coordinates, and coordinate proof of non-commutativity).
+* **CGL-CO3**: 21 Assertions (DDA line, Bresenham across all 8 octants, negative slopes, reverse direction, vertical & horizontal segments, Midpoint circle symmetry & equation adherence, Midpoint ellipse intercepts & regions, Scanline polygon fill interior coverage, 3D cube vertex transformations, and Euler rotations Rx & Ry).
+* **CGL-CO4**: 7 Assertions (Orthographic projection depth invariance, Perspective projection $1/z$ foreshortening ratio, camera LookAt view matrix, and Viewport dimensions mapping NDC to screen pixels).
+* **CGL-CO5**: 10 Assertions (Cohen-Sutherland TBRL outcodes, trivial accept, trivial reject, horizontal edge clipping, Liang-Barsky parametric values $u_1, u_2$ and boundary points, and Sutherland-Hodgman polygon clipping).
+* **CGL-CO6**: 11 Assertions (HSV to RGB conversion, actual local BMP image loading, missing texture graceful handling, procedural in-memory fallback buffers, Phong Ambient, Diffuse, and Specular calculations, reflection vector formula, and Gouraud shading per-vertex bilinear interpolation).
 
 ### 10.2 Captured Screenshot Gallery
 The following screenshots were generated directly by `cgl_runner.exe --screenshot` via `glReadPixels`:
@@ -393,7 +407,7 @@ The following screenshots were generated directly by `cgl_runner.exe --screensho
 | `docs/screenshots/CGL/cgl_co3_algorithms.bmp` | DDA vs Bresenham, Curves & 3D Meshes | **CGL-CO3** |
 | `docs/screenshots/CGL/cgl_co4_projection.bmp` | Split Viewport: Ortho Radar & Cockpit | **CGL-CO4** |
 | `docs/screenshots/CGL/cgl_co5_clipping.bmp` | Boundary Clipping Canvas | **CGL-CO5** |
-| `docs/screenshots/CGL/cgl_co6_appearance.bmp` | Phong Lighting & Procedural Texture | **CGL-CO6** |
+| `docs/screenshots/CGL/cgl_co6_appearance.bmp` | Phong Lighting & Local BMP File Texture | **CGL-CO6** |
 | `docs/screenshots/CGL/cgl_integrated_scene.bmp` | Integrated 2D/3D Space Combat Arena | **All Outcomes** |
 
 ---
@@ -417,16 +431,50 @@ bin\cgl\cgl_runner.exe
 ### Keyboard Controls Summary:
 * `[1]`–`[6]`: Switch between Course Outcome Demos (CO1 to CO6)
 * `[0]`: Switch to Integrated 2D/3D AirStrike Combat Arena
-* `[W]`: Toggle Wireframe in CO1 / Move Ship in Combat Scene
+* `[W]`: Toggle Wireframe in CO1 / Move Ship Up in Combat Scene / Translate Up in CO2
 * `[Arrows]` / `[WASD]`: Maneuver player fighter / translate objects / orbit camera
 * `[Q]` / `[E]`: Rotate object in CO2
 * `[+]` / `[-]`: Scale object / adjust algorithm radius / camera zoom / shininess
 * `[M]`: Cycle modes in CO3 (Lines, Curves, Scanline, 3D) and CO5 (Clipping algorithms)
 * `[P]`: Toggle Pivot Point in CO2 / Toggle Projection (Split, Ortho, Perspective) in CO4
-* `[L]`: Toggle Dynamic Lighting in CO6
-* `[T]`: Toggle Procedural Texture Mapping in CO6
+* `[L]`: Toggle Dynamic Lighting on/off in CO6
+* `[T]`: Toggle Texture Mapping on/off in CO6
+* `[U]`: Toggle Texture Source (Local BMP Image File vs Procedural In-Memory) in CO6
+* `[K]`: Toggle Texture Wrapping (`GL_REPEAT` vs `GL_CLAMP`) in CO6
+* `[F]`: Toggle Reflection in CO2 / Toggle Texture Filtering (`GL_LINEAR` vs `GL_NEAREST`) in CO6
 * `[S]`: Toggle Shading (Flat vs Smooth Gouraud) in CO6 / Toggle Shield in Combat Scene
-* `[F]`: Toggle Reflection in CO2 / Toggle Texture Filtering (Linear vs Nearest) in CO6
+* `[7]` / `[8]` / `[9]`: Toggle Ambient, Diffuse, and Specular light components in CO6
 * `[SPACE]`: Fire Lasers in Combat Scene / Pause animation
 * `[R]`: Reset current demonstration parameters
 * `[ESC]`: Exit application cleanly
+
+---
+
+## 12. Phase 5.1 Technical Audit & Corrections Report
+
+### 12.1 Issues Identified and Addressed
+
+1. **Local Image File Texture Loading**:
+   - *Previous state*: Only procedural in-memory textures were demonstrated.
+   - *Correction*: Developed `CGL/src/common/image_loader.cpp` and `.hpp` implementing a zero-dependency uncompressed 24-bit BMP loader (`loadBMP`). Placed actual image assets `CGL/assets/textures/space_hull.bmp` and `alien_surface.bmp` (256×256 pixels, 24bpp) on disk. Mapped them to the 3D starfighter and sphere with texture coordinates, texture wrapping (`GL_REPEAT`/`GL_CLAMP`), and filtering (`GL_LINEAR`/`GL_NEAREST`). Handled missing files gracefully with fallback to procedural generation.
+2. **Transformation Coordinate Verification**:
+   - *Previous state*: Tests only asserted 4×4 matrix elements.
+   - *Correction*: Added `transformPoint` function and created rigorous tests verifying expected transformed coordinates for translation, rotation, scaling, reflection across X-axis ($(2, 3) \to (2, -3)$), reflection across Y-axis ($(2, 3) \to (-2, 3)$), arbitrary pivot point rotation ($(2, 1) \to (1, 2)$ around pivot $(1, 1)$), pivot invariance, and coordinate proof of non-commutativity ($(2, 1) \neq (0, 3)$).
+3. **Bresenham & Raster Algorithm Test Coverage**:
+   - *Previous state*: Bresenham was tested on Octant 1 and Octant 2.
+   - *Correction*: Expanded test suite to systematically verify all eight octants (Octants 1–8), negative slopes, reverse line traversal, vertical and horizontal lines, Midpoint circle equation adherence, Midpoint ellipse axis intercepts, 3D cube vertex centroid transformations, and 3D Euler rotations Rx and Ry.
+4. **Projection & Viewing Verification**:
+   - *Previous state*: Evaluated simple ratios.
+   - *Correction*: Added pure mathematical matrix generation functions (`getOrthoMatrix`, `getPerspectiveMatrix`, `getLookAtMatrix`, `projectPoint`, `viewportMap`) to `ViewingDemo`. Asserted depth invariance in orthographic view ($X_{\text{ndc}} = 0.5$ regardless of $Z$), perspective $1/z$ foreshortening ratio ($5.0\times$), camera eye-space transformation, and screen viewport mapping.
+5. **Lighting & Shading Technical Accuracy**:
+   - *Previous state*: Report ambiguously referenced Phong shading.
+   - *Correction*: Clarified that fixed-function OpenGL 2.1 implements **Gouraud Shading** (`GL_SMOOTH`), which evaluates the **Phong Illumination Model** (Ambient + Diffuse + Specular reflection equation) per-vertex and interpolates colors across fragments. Explicitly noted that per-fragment Phong shading requires custom GLSL fragment shaders.
+6. **Automated Test Count Expansion**:
+   - Tests increased from 42 to **65 assertions**, all passing with a 100% success rate.
+7. **Screenshot Updates**:
+   - Captured 7 genuine 24-bit BMP screenshots showing actual local BMP texture loading and updated HUD overlays.
+
+### 12.2 Remaining Technical Scope & Academic Limitations
+* **Hardware Profile**: Uses standard fixed-function OpenGL 2.1 / Compatibility Profile and GLUT for maximum portability across college computing laboratory environments without requiring external shader loaders (GLEW/GLAD) or modern Vulkan/DirectX drivers.
+* **Texture Format**: The native file loader supports uncompressed 24-bit and 32-bit Windows Bitmap (`.bmp`) files. Compressed image formats like JPEG or PNG are intentionally omitted to avoid introducing complex third-party dependencies (e.g. `libpng`, `libjpeg`, `zlib`).
+

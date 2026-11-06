@@ -90,6 +90,28 @@ void TransformDemo::getTranslationMatrix(float tx, float ty, float tz, float m[1
     m[14] = tz;
 }
 
+void TransformDemo::getRotationXMatrix(float angleDeg, float m[16]) {
+    for (int i = 0; i < 16; ++i) m[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+    float rad = angleDeg * static_cast<float>(M_PI) / 180.0f;
+    float c = std::cos(rad);
+    float s = std::sin(rad);
+    m[5] = c;
+    m[6] = s;
+    m[9] = -s;
+    m[10] = c;
+}
+
+void TransformDemo::getRotationYMatrix(float angleDeg, float m[16]) {
+    for (int i = 0; i < 16; ++i) m[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+    float rad = angleDeg * static_cast<float>(M_PI) / 180.0f;
+    float c = std::cos(rad);
+    float s = std::sin(rad);
+    m[0] = c;
+    m[2] = -s;
+    m[8] = s;
+    m[10] = c;
+}
+
 void TransformDemo::getRotationZMatrix(float angleDeg, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = (i % 5 == 0) ? 1.0f : 0.0f;
     float rad = angleDeg * static_cast<float>(M_PI) / 180.0f;
@@ -113,6 +135,36 @@ void TransformDemo::getShear2DMatrix(float shx, float shy, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = (i % 5 == 0) ? 1.0f : 0.0f;
     m[4] = shx; // x' = x + shx * y
     m[1] = shy; // y' = y + shy * x
+}
+
+void TransformDemo::getReflectionXMatrix(float m[16]) {
+    getScaleMatrix(1.0f, -1.0f, 1.0f, m); // Invert Y
+}
+
+void TransformDemo::getReflectionYMatrix(float m[16]) {
+    getScaleMatrix(-1.0f, 1.0f, 1.0f, m); // Invert X
+}
+
+void TransformDemo::getArbitraryPivotRotationMatrix(float px, float py, float angleDeg, float m[16]) {
+    float tNeg[16], rz[16], tPos[16], temp[16];
+    getTranslationMatrix(-px, -py, 0.0f, tNeg);
+    getRotationZMatrix(angleDeg, rz);
+    getTranslationMatrix(px, py, 0.0f, tPos);
+
+    multiplyMatrix4x4(rz, tNeg, temp);      // rz * tNeg
+    multiplyMatrix4x4(tPos, temp, m);       // tPos * (rz * tNeg)
+}
+
+Vec3 TransformDemo::transformPoint(const float m[16], const Vec3& p) {
+    float x = m[0] * p.x + m[4] * p.y + m[8]  * p.z + m[12];
+    float y = m[1] * p.x + m[5] * p.y + m[9]  * p.z + m[13];
+    float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14];
+    float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
+
+    if (std::fabs(w) > 1e-7f && std::fabs(w - 1.0f) > 1e-5f) {
+        x /= w; y /= w; z /= w;
+    }
+    return Vec3(x, y, z);
 }
 
 void TransformDemo::drawFighter(float size) {
@@ -365,3 +417,4 @@ void TransformDemo::render(int screenWidth, int screenHeight) {
 }
 
 } // namespace CGL
+

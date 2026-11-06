@@ -249,6 +249,14 @@ void keyboardCallback(unsigned char key, int x, int y) {
             if (currentScreen == 6) lightingDemo->toggleTexture();
             break;
 
+        case 'u': case 'U':
+            if (currentScreen == 6) lightingDemo->toggleTextureSource();
+            break;
+
+        case 'k': case 'K':
+            if (currentScreen == 6) lightingDemo->toggleWrapping();
+            break;
+
         case 'f': case 'F':
             if (currentScreen == 2) transformDemo->toggleReflection();
             else if (currentScreen == 6) lightingDemo->toggleFiltering();

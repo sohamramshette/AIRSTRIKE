@@ -36,6 +36,13 @@ public:
     float getCameraYaw() const { return cameraYaw; }
     float getFov() const { return fov; }
 
+    // Math helpers for testing and verification
+    static void getOrthoMatrix(float l, float r, float b, float t, float n, float f, float m[16]);
+    static void getPerspectiveMatrix(float fovyDeg, float aspect, float zNear, float zFar, float m[16]);
+    static void getLookAtMatrix(const Vec3& eye, const Vec3& center, const Vec3& up, float m[16]);
+    static Vec3 projectPoint(const float projMatrix[16], const Vec3& p);
+    static Point2D viewportMap(const Vec3& ndc, int vpX, int vpY, int vpW, int vpH);
+
 private:
     int projectionMode; // 0: Split, 1: Ortho, 2: Perspective
     float cameraPitch;
@@ -52,3 +59,4 @@ private:
 } // namespace CGL
 
 #endif // VIEWING_DEMO_HPP
+

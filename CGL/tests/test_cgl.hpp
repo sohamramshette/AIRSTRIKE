@@ -13,3 +13,4 @@ int runAllCGLTests();
 } // namespace CGL
 
 #endif // TEST_CGL_HPP
+

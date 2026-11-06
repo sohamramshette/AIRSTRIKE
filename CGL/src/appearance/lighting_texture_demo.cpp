@@ -1,5 +1,6 @@
 #include "lighting_texture_demo.hpp"
 #include "common/font_renderer.hpp"
+#include "common/image_loader.hpp"
 #include <cmath>
 #include <iomanip>
 #include <sstream>
@@ -8,13 +9,19 @@ namespace CGL {
 
 LightingTextureDemo::LightingTextureDemo()
     : lightingEnabled(true), textureEnabled(true), smoothShading(true),
-      ambientOn(true), diffuseOn(true), specularOn(true), linearFilter(true),
-      matShininess(32.0f), animAngle(0.0f), lightOrbitAngle(45.0f),
-      hullTextureId(0), planetTextureId(0) {}
+      ambientOn(true), diffuseOn(true), specularOn(true),
+      linearFilter(true), repeatWrap(true), useFileTexture(true),
+      localTexLoaded(false), matShininess(32.0f),
+      animAngle(0.0f), lightOrbitAngle(45.0f),
+      procHullTextureId(0), procPlanetTextureId(0),
+      localHullTextureId(0), localAlienTextureId(0),
+      loadedFilePath("") {}
 
 LightingTextureDemo::~LightingTextureDemo() {
-    if (hullTextureId != 0) glDeleteTextures(1, &hullTextureId);
-    if (planetTextureId != 0) glDeleteTextures(1, &planetTextureId);
+    if (procHullTextureId != 0) glDeleteTextures(1, &procHullTextureId);
+    if (procPlanetTextureId != 0) glDeleteTextures(1, &procPlanetTextureId);
+    if (localHullTextureId != 0) glDeleteTextures(1, &localHullTextureId);
+    if (localAlienTextureId != 0) glDeleteTextures(1, &localAlienTextureId);
 }
 
 Color4 LightingTextureDemo::hsvToRgb(float h, float s, float v, float a) {
@@ -41,37 +48,22 @@ void LightingTextureDemo::generateHullTexture(int width, int height, std::vector
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int idx = (y * width + x) * 3;
-            // Base metallic gray
             unsigned char base = 140;
-
-            // Seam lines every 32 pixels
             bool isSeam = (x % 32 == 0) || (y % 32 == 0);
-
-            // Rivets at intersections
             bool isRivet = ((x % 32 == 2 || x % 32 == 30) && (y % 32 == 2 || y % 32 == 30));
-
-            // Diagonal yellow/black hazard stripe in lower-left quadrant
             bool isHazardQuadrant = (x < width / 2 && y < height / 2);
             bool isYellowStripe = ((x + y) / 8) % 2 == 0;
 
             if (isHazardQuadrant) {
                 if (isYellowStripe) {
-                    data[idx + 0] = 220; // R
-                    data[idx + 1] = 180; // G
-                    data[idx + 2] = 20;  // B
+                    data[idx + 0] = 220; data[idx + 1] = 180; data[idx + 2] = 20;
                 } else {
-                    data[idx + 0] = 30;
-                    data[idx + 1] = 30;
-                    data[idx + 2] = 35;
+                    data[idx + 0] = 30;  data[idx + 1] = 30;  data[idx + 2] = 35;
                 }
             } else if (isRivet) {
-                data[idx + 0] = 230;
-                data[idx + 1] = 235;
-                data[idx + 2] = 245;
+                data[idx + 0] = 230; data[idx + 1] = 235; data[idx + 2] = 245;
             } else if (isSeam) {
-                data[idx + 0] = 60;
-                data[idx + 1] = 65;
-                data[idx + 2] = 75;
+                data[idx + 0] = 60;  data[idx + 1] = 65;  data[idx + 2] = 75;
             } else {
                 data[idx + 0] = base + (x % 7);
                 data[idx + 1] = base + 5 + (y % 5);
@@ -88,19 +80,81 @@ void LightingTextureDemo::generatePlanetTexture(int width, int height, std::vect
         for (int x = 0; x < width; ++x) {
             float nx = static_cast<float>(x) / width;
             int idx = (y * width + x) * 3;
-
-            // Atmospheric bands and craters
             float band = std::sin(ny * 12.0f * static_cast<float>(M_PI)) * 0.2f;
             float swirl = std::sin((nx + ny) * 8.0f * static_cast<float>(M_PI)) * 0.15f;
             float val = 0.5f + band + swirl;
             if (val < 0.0f) val = 0.0f;
             if (val > 1.0f) val = 1.0f;
 
-            // Deep ocean turquoise to deep royal blue
-            data[idx + 0] = static_cast<unsigned char>(30 + val * 60);  // R
-            data[idx + 1] = static_cast<unsigned char>(70 + val * 120); // G
-            data[idx + 2] = static_cast<unsigned char>(160 + val * 85); // B
+            data[idx + 0] = static_cast<unsigned char>(30 + val * 60);
+            data[idx + 1] = static_cast<unsigned char>(70 + val * 120);
+            data[idx + 2] = static_cast<unsigned char>(160 + val * 85);
         }
+    }
+}
+
+void LightingTextureDemo::applyTextureParameters(GLuint texId) {
+    if (texId == 0) return;
+    glBindTexture(GL_TEXTURE_2D, texId);
+    GLint filter = linearFilter ? GL_LINEAR : GL_NEAREST;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+    GLint wrap = repeatWrap ? GL_REPEAT : GL_CLAMP;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+}
+
+void LightingTextureDemo::loadLocalTextures() {
+    int w = 0, h = 0;
+    std::vector<unsigned char> hullData;
+
+    // Search paths for local texture file
+    std::string candidates[] = {
+        "CGL/assets/textures/space_hull.bmp",
+        "assets/textures/space_hull.bmp",
+        "../CGL/assets/textures/space_hull.bmp",
+        "CGL/resources/textures/space_hull.bmp"
+    };
+
+    bool loadedHull = false;
+    for (const auto& path : candidates) {
+        if (loadBMP(path, w, h, hullData)) {
+            glGenTextures(1, &localHullTextureId);
+            glBindTexture(GL_TEXTURE_2D, localHullTextureId);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, hullData.data());
+            applyTextureParameters(localHullTextureId);
+            loadedFilePath = path;
+            loadedHull = true;
+            break;
+        }
+    }
+
+    std::string alienCandidates[] = {
+        "CGL/assets/textures/alien_surface.bmp",
+        "assets/textures/alien_surface.bmp",
+        "../CGL/assets/textures/alien_surface.bmp",
+        "CGL/resources/textures/alien_surface.bmp"
+    };
+
+    std::vector<unsigned char> alienData;
+    bool loadedAlien = false;
+    for (const auto& path : alienCandidates) {
+        if (loadBMP(path, w, h, alienData)) {
+            glGenTextures(1, &localAlienTextureId);
+            glBindTexture(GL_TEXTURE_2D, localAlienTextureId);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, alienData.data());
+            applyTextureParameters(localAlienTextureId);
+            loadedAlien = true;
+            break;
+        }
+    }
+
+    localTexLoaded = (loadedHull && loadedAlien);
+    if (!localTexLoaded) {
+        std::cerr << "[WARN] Could not load local BMP texture files. Gracefully falling back to procedural textures." << std::endl;
+        useFileTexture = false;
+    } else {
+        useFileTexture = true;
     }
 }
 
@@ -109,29 +163,24 @@ void LightingTextureDemo::createProceduralTextures() {
     std::vector<unsigned char> hullData;
     generateHullTexture(texDim, texDim, hullData);
 
-    glGenTextures(1, &hullTextureId);
-    glBindTexture(GL_TEXTURE_2D, hullTextureId);
+    glGenTextures(1, &procHullTextureId);
+    glBindTexture(GL_TEXTURE_2D, procHullTextureId);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texDim, texDim, 0, GL_RGB, GL_UNSIGNED_BYTE, hullData.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, linearFilter ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linearFilter ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    applyTextureParameters(procHullTextureId);
 
     std::vector<unsigned char> planetData;
     generatePlanetTexture(texDim, texDim, planetData);
 
-    glGenTextures(1, &planetTextureId);
-    glBindTexture(GL_TEXTURE_2D, planetTextureId);
+    glGenTextures(1, &procPlanetTextureId);
+    glBindTexture(GL_TEXTURE_2D, procPlanetTextureId);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texDim, texDim, 0, GL_RGB, GL_UNSIGNED_BYTE, planetData.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, linearFilter ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linearFilter ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    applyTextureParameters(procPlanetTextureId);
 }
 
 void LightingTextureDemo::init() {
     glEnable(GL_DEPTH_TEST);
     createProceduralTextures();
+    loadLocalTextures();
 }
 
 void LightingTextureDemo::update(float dt) {
@@ -151,16 +200,26 @@ void LightingTextureDemo::toggleSpecular() { specularOn = !specularOn; }
 
 void LightingTextureDemo::toggleFiltering() {
     linearFilter = !linearFilter;
-    GLint filter = linearFilter ? GL_LINEAR : GL_NEAREST;
-    if (hullTextureId) {
-        glBindTexture(GL_TEXTURE_2D, hullTextureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-    }
-    if (planetTextureId) {
-        glBindTexture(GL_TEXTURE_2D, planetTextureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+    applyTextureParameters(procHullTextureId);
+    applyTextureParameters(procPlanetTextureId);
+    applyTextureParameters(localHullTextureId);
+    applyTextureParameters(localAlienTextureId);
+}
+
+void LightingTextureDemo::toggleWrapping() {
+    repeatWrap = !repeatWrap;
+    applyTextureParameters(procHullTextureId);
+    applyTextureParameters(procPlanetTextureId);
+    applyTextureParameters(localHullTextureId);
+    applyTextureParameters(localAlienTextureId);
+}
+
+void LightingTextureDemo::toggleTextureSource() {
+    if (localTexLoaded) {
+        useFileTexture = !useFileTexture;
+    } else {
+        useFileTexture = false;
+        std::cout << "[INFO] Local image texture not available; remaining on procedural texture." << std::endl;
     }
 }
 
@@ -178,7 +237,13 @@ void LightingTextureDemo::reset() {
     diffuseOn = true;
     specularOn = true;
     linearFilter = true;
+    repeatWrap = true;
+    useFileTexture = localTexLoaded;
     matShininess = 32.0f;
+    applyTextureParameters(procHullTextureId);
+    applyTextureParameters(procPlanetTextureId);
+    applyTextureParameters(localHullTextureId);
+    applyTextureParameters(localAlienTextureId);
 }
 
 void LightingTextureDemo::setupLighting() {
@@ -196,7 +261,7 @@ void LightingTextureDemo::setupLighting() {
         std::cos(lightRad) * 5.0f,
         3.0f,
         std::sin(lightRad) * 5.0f,
-        1.0f // Positional point light
+        1.0f // Positional point light source
     };
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
 
@@ -220,7 +285,7 @@ void LightingTextureDemo::setupLighting() {
 
     glShadeModel(smoothShading ? GL_SMOOTH : GL_FLAT);
 
-    // Render a small glowing yellow orb at the light position
+    // Render light source indicator sphere
     glPushMatrix();
     glTranslatef(lightPos[0], lightPos[1], lightPos[2]);
     glDisable(GL_LIGHTING);
@@ -231,9 +296,11 @@ void LightingTextureDemo::setupLighting() {
 }
 
 void LightingTextureDemo::renderTexturedSphere(float radius, int slices, int stacks) {
-    if (textureEnabled && planetTextureId != 0) {
+    GLuint activeTex = (useFileTexture && localAlienTextureId != 0) ? localAlienTextureId : procPlanetTextureId;
+
+    if (textureEnabled && activeTex != 0) {
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, planetTextureId);
+        glBindTexture(GL_TEXTURE_2D, activeTex);
     } else {
         glDisable(GL_TEXTURE_2D);
         glColor3f(0.3f, 0.6f, 0.9f);
@@ -273,9 +340,11 @@ void LightingTextureDemo::renderTexturedSphere(float radius, int slices, int sta
 }
 
 void LightingTextureDemo::renderTexturedShip(float size) {
-    if (textureEnabled && hullTextureId != 0) {
+    GLuint activeTex = (useFileTexture && localHullTextureId != 0) ? localHullTextureId : procHullTextureId;
+
+    if (textureEnabled && activeTex != 0) {
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, hullTextureId);
+        glBindTexture(GL_TEXTURE_2D, activeTex);
     } else {
         glDisable(GL_TEXTURE_2D);
         glColor3f(0.7f, 0.75f, 0.85f);
@@ -318,14 +387,14 @@ void LightingTextureDemo::render(int screenWidth, int screenHeight) {
 
     setupLighting();
 
-    // 1. Render Rotating Textured Celestial Planet (Left)
+    // 1. Render Rotating Textured Celestial Planet
     glPushMatrix();
     glTranslatef(-2.2f, 0.0f, 0.0f);
     glRotatef(animAngle * 0.4f, 0.2f, 1.0f, 0.1f);
     renderTexturedSphere(1.3f, 24, 20);
     glPopMatrix();
 
-    // 2. Render Rotating Textured Spacecraft Hull (Right)
+    // 2. Render Rotating Textured Spacecraft Hull
     glPushMatrix();
     glTranslatef(2.2f, 0.0f, 0.0f);
     glRotatef(animAngle, 0.0f, 1.0f, 0.3f);
@@ -343,7 +412,7 @@ void LightingTextureDemo::render(int screenWidth, int screenHeight) {
 
     glColor3f(0.7f, 0.75f, 0.85f);
     renderBitmapString(20.0f, screenHeight - 50.0f, GLUT_BITMAP_HELVETICA_12,
-                       "Phong Reflection Model (Ambient + Diffuse + Specular) | Procedural 2D Texture UV Mapping");
+                       "Phong Illumination Formula evaluated per-vertex with Gouraud (GL_SMOOTH) or Flat Shading");
 
     // Component states
     std::string lightStr = lightingEnabled ? "Lighting: ENABLED [L]" : "Lighting: DISABLED [L]";
@@ -354,30 +423,37 @@ void LightingTextureDemo::render(int screenWidth, int screenHeight) {
     glColor3f(textureEnabled ? 0.3f : 0.8f, textureEnabled ? 1.0f : 0.3f, 0.3f);
     renderBitmapString(20.0f, screenHeight - 100.0f, GLUT_BITMAP_HELVETICA_12, texStr);
 
-    std::string shadeStr = smoothShading ? "Shading: SMOOTH GOURAUD [S]" : "Shading: FLAT [S]";
-    glColor3f(1.0f, 0.8f, 0.2f);
-    renderBitmapString(20.0f, screenHeight - 120.0f, GLUT_BITMAP_HELVETICA_12, shadeStr);
+    std::string sourceStr = useFileTexture
+        ? ("Texture Source: LOCAL FILE (space_hull.bmp) [U to toggle]")
+        : ("Texture Source: PROCEDURAL IN-MEMORY [U to toggle]");
+    glColor3f(0.4f, 1.0f, 0.6f);
+    renderBitmapString(20.0f, screenHeight - 120.0f, GLUT_BITMAP_HELVETICA_12, sourceStr);
 
-    std::string filterStr = linearFilter ? "Filtering: GL_LINEAR (Bilinear) [F]" : "Filtering: GL_NEAREST (Pixelated) [F]";
+    std::string shadeStr = smoothShading ? "Shading Mode: GOURAUD (GL_SMOOTH, per-vertex) [S]" : "Shading Mode: FLAT (GL_FLAT, faceted) [S]";
+    glColor3f(1.0f, 0.8f, 0.2f);
+    renderBitmapString(20.0f, screenHeight - 140.0f, GLUT_BITMAP_HELVETICA_12, shadeStr);
+
+    std::string filterStr = linearFilter ? "Filtering: GL_LINEAR (Bilinear) [F]" : "Filtering: GL_NEAREST (Point) [F]";
+    std::string wrapStr   = repeatWrap   ? "Wrapping: GL_REPEAT [K]" : "Wrapping: GL_CLAMP [K]";
     glColor3f(0.4f, 0.8f, 1.0f);
-    renderBitmapString(20.0f, screenHeight - 140.0f, GLUT_BITMAP_HELVETICA_12, filterStr);
+    renderBitmapString(20.0f, screenHeight - 160.0f, GLUT_BITMAP_HELVETICA_12, filterStr + " | " + wrapStr);
 
     std::stringstream ss;
     ss << "Ambient: [" << (ambientOn ? "ON" : "OFF") << "] (Key 7) | Diffuse: ["
        << (diffuseOn ? "ON" : "OFF") << "] (Key 8) | Specular: ["
        << (specularOn ? "ON" : "OFF") << "] (Key 9)";
     glColor3f(0.8f, 0.85f, 0.95f);
-    renderBitmapString(20.0f, screenHeight - 160.0f, GLUT_BITMAP_HELVETICA_12, ss.str());
+    renderBitmapString(20.0f, screenHeight - 180.0f, GLUT_BITMAP_HELVETICA_12, ss.str());
 
     ss.str("");
     ss << "Material Shininess Exponent: " << static_cast<int>(matShininess) << " [+/- to adjust]";
     glColor3f(1.0f, 0.5f, 0.8f);
-    renderBitmapString(20.0f, screenHeight - 180.0f, GLUT_BITMAP_HELVETICA_12, ss.str());
+    renderBitmapString(20.0f, screenHeight - 200.0f, GLUT_BITMAP_HELVETICA_12, ss.str());
 
     // Navigation Help
     glColor3f(0.6f, 0.6f, 0.7f);
     renderBitmapString(20.0f, 20.0f, GLUT_BITMAP_HELVETICA_12,
-                       "[L] Light | [T] Texture | [S] Shading | [7/8/9] Light Components | [F] Filter | [+/-] Shininess | [R] Reset");
+                       "[L] Light | [T] Texture | [U] File/Proc | [S] Shading | [F] Filter | [K] Wrap | [7/8/9] Amb/Diff/Spec | [+/-] Shininess");
 
     endHUD();
 }

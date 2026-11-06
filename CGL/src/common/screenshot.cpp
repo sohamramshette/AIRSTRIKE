@@ -97,3 +97,4 @@ bool captureScreenshot(const std::string& filepath, int width, int height) {
 }
 
 } // namespace CGL
+
