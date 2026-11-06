@@ -54,6 +54,8 @@ t_co2_mul:
     .asciz "CO2: Signed Multiplication (-12 * 8 = -96)"
 t_co2_div:
     .asciz "CO2: Signed Division with Remainder (47 / 5 = 9 rem 2)"
+t_co2_div_zero:
+    .asciz "CO2: Signed Division by Zero Protection (50 / 0 returns 0, Rem = 0)"
 t_co2_minmax:
     .asciz "CO2: Array Minimum & Maximum Extraction (Min: -34, Max: 102)"
 t_co2_sum:
@@ -83,6 +85,10 @@ t_co3_booth_neg_pos:
     .asciz "CO3: Booth's Algorithm (- * +): -8 * 6 = -48"
 t_co3_booth_neg_neg:
     .asciz "CO3: Booth's Algorithm (- * -): -11 * -3 = 33"
+t_co3_booth_zero_m:
+    .asciz "CO3: Booth's Algorithm Zero Multiplicand (0 * 45 = 0)"
+t_co3_booth_zero_q:
+    .asciz "CO3: Booth's Algorithm Zero Multiplier (-25 * 0 = 0)"
 t_co3_booth_boundary:
     .asciz "CO3: Booth's Algorithm Boundary (-64 * 2 = -128)"
 
@@ -94,6 +100,14 @@ t_co3_rest_nonexact2:
     .asciz "CO3: Restoring Division Non-Exact (100 / 7 = 14, Rem = 2)"
 t_co3_rest_small:
     .asciz "CO3: Restoring Division Dividend < Divisor (3 / 10 = 0, Rem = 3)"
+t_co3_rest_zero_dividend:
+    .asciz "CO3: Restoring Division Zero Dividend (0 / 15 = 0, Rem = 0)"
+t_co3_rest_div_zero:
+    .asciz "CO3: Restoring Division by Zero Protection (45 / 0 returns 0, Rem = 0)"
+t_co3_rest_max_dividend:
+    .asciz "CO3: Restoring Division 8-bit Maximum Boundary (255 / 1 = 255, Rem = 0)"
+t_co3_rest_max_both:
+    .asciz "CO3: Restoring Division Maximum Divisor Boundary (255 / 255 = 1, Rem = 0)"
 
 t_co3_adc:
     .asciz "CO3: Multi-precision 64-bit Addition with Carry (ADC)"
@@ -320,6 +334,24 @@ _run_all_coa_tests:
     mov ebx, 1
 .L_c2_div_bad:
     push offset t_co2_div
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 10b. Division by Zero Protection: 50 / 0 returns 0, rem 0
+    push offset test_rem
+    push 0
+    push 50
+    call _asm_div
+    add esp, 12
+    xor ebx, ebx
+    cmp eax, 0
+    jne .L_c2_div0_bad
+    cmp dword ptr [test_rem], 0
+    jne .L_c2_div0_bad
+    mov ebx, 1
+.L_c2_div0_bad:
+    push offset t_co2_div_zero
     push ebx
     call record_result
     add esp, 8
@@ -556,6 +588,34 @@ _run_all_coa_tests:
     call record_result
     add esp, 8
 
+    # 24b. Booth: Zero Multiplicand (0 * 45 = 0)
+    push 0
+    push 45
+    push 0
+    call _asm_booth_multiply
+    add esp, 12
+    cmp eax, 0
+    sete bl
+    movzx eax, bl
+    push offset t_co3_booth_zero_m
+    push eax
+    call record_result
+    add esp, 8
+
+    # 24c. Booth: Zero Multiplier (-25 * 0 = 0)
+    push 0
+    push 0
+    push -25
+    call _asm_booth_multiply
+    add esp, 12
+    cmp eax, 0
+    sete bl
+    movzx eax, bl
+    push offset t_co3_booth_zero_q
+    push eax
+    call record_result
+    add esp, 8
+
     # 25. Booth: Boundary (-64 * 2 = -128)
     push 0
     push 2
@@ -642,6 +702,82 @@ _run_all_coa_tests:
     mov ebx, 1
 .L_c3_rd4_bad:
     push offset t_co3_rest_small
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 29b. Restoring Div: Zero Dividend (0 / 15 = 0 rem 0)
+    push 0
+    push offset test_rem
+    push 15
+    push 0
+    call _asm_restoring_divide
+    add esp, 16
+    xor ebx, ebx
+    cmp eax, 0
+    jne .L_c3_rdz_bad
+    cmp dword ptr [test_rem], 0
+    jne .L_c3_rdz_bad
+    mov ebx, 1
+.L_c3_rdz_bad:
+    push offset t_co3_rest_zero_dividend
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 29c. Restoring Div: Division by Zero Protection (45 / 0 = 0 rem 0)
+    push 0
+    push offset test_rem
+    push 0
+    push 45
+    call _asm_restoring_divide
+    add esp, 16
+    xor ebx, ebx
+    cmp eax, 0
+    jne .L_c3_rd0_bad
+    cmp dword ptr [test_rem], 0
+    jne .L_c3_rd0_bad
+    mov ebx, 1
+.L_c3_rd0_bad:
+    push offset t_co3_rest_div_zero
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 29d. Restoring Div: 8-bit Maximum Dividend (255 / 1 = 255 rem 0)
+    push 0
+    push offset test_rem
+    push 1
+    push 255
+    call _asm_restoring_divide
+    add esp, 16
+    xor ebx, ebx
+    cmp eax, 255
+    jne .L_c3_rdmax_bad
+    cmp dword ptr [test_rem], 0
+    jne .L_c3_rdmax_bad
+    mov ebx, 1
+.L_c3_rdmax_bad:
+    push offset t_co3_rest_max_dividend
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 29e. Restoring Div: Maximum Divisor Boundary (255 / 255 = 1 rem 0)
+    push 0
+    push offset test_rem
+    push 255
+    push 255
+    call _asm_restoring_divide
+    add esp, 16
+    xor ebx, ebx
+    cmp eax, 1
+    jne .L_c3_rdmax2_bad
+    cmp dword ptr [test_rem], 0
+    jne .L_c3_rdmax2_bad
+    mov ebx, 1
+.L_c3_rdmax2_bad:
+    push offset t_co3_rest_max_both
     push ebx
     call record_result
     add esp, 8

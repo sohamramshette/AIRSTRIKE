@@ -110,6 +110,10 @@ _asm_div:
 .L_div_zero:
     xor eax, eax
     xor edx, edx
+    mov ecx, [ebp + 16]
+    test ecx, ecx
+    jz .L_div_done
+    mov [ecx], edx
 
 .L_div_done:
     pop ebx
@@ -209,3 +213,4 @@ _co2_demo_arithmetic:
     mov esp, ebp
     pop ebp
     ret
+

@@ -87,9 +87,18 @@ _asm_restoring_divide:
     jnz .L_div_valid
 
     # Division by zero error
+    mov ecx, [ebp + 16]
+    test ecx, ecx
+    jz .L_div_zero_no_rem
+    mov dword ptr [ecx], 0
+.L_div_zero_no_rem:
+    mov eax, [ebp + 20]         # verbose flag
+    test eax, eax
+    jz .L_div_zero_silent
     push offset div_err_zero
     call _print_str
     add esp, 4
+.L_div_zero_silent:
     xor eax, eax
     jmp .L_rest_div_exit
 

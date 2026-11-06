@@ -9,9 +9,9 @@
 
 .data
 cu_header:
-    .asciz "\n==============================================================================\n        CO4: CONTROL UNIT ARCHITECTURE & CONTROL SIGNAL GENERATION            \n==============================================================================\n"
+    .asciz "\n==============================================================================\n      CO4: CONTROL UNIT & INSTRUCTION DECODING (EDUCATIONAL SIMULATION)       \n==============================================================================\n"
 cu_desc:
-    .asciz "  Control Unit Functions:\n  1. Instruction Fetch (IF): Reads instruction from memory into IR using PC.\n  2. Instruction Decode (ID): Decodes opcode and asserts appropriate control signals.\n  3. Execute (EX): Steers ALU operation, register routing, and memory accesses.\n\n"
+    .asciz "  [Educational Microarchitecture Datapath Model (Patterson & Hennessy)]\n  This model demonstrates how instruction opcodes decode into internal control wires\n  governing register writes, ALU source multiplexing, and memory operations.\n\n  + Academic Datapath Control Signals Table:\n"
 
 cu_table_hdr:
     .asciz "  +-----------+--------+--------+----------+----------+---------+----------+--------+--------+\n  | Inst Type | RegDst | ALUSrc | MemToReg | RegWrite | MemRead | MemWrite | Branch | ALUOp  |\n  +-----------+--------+--------+----------+----------+---------+----------+--------+--------+\n"
@@ -20,7 +20,7 @@ cu_row_fmt:
 cu_table_footer:
     .asciz "  +-----------+--------+--------+----------+----------+---------+----------+--------+--------+\n"
 cu_note:
-    .asciz "  [Academic Note] 'X' represents Don't Care condition in control signal logic.\n==============================================================================\n"
+    .asciz "  [Academic Note] 'X' represents Don't Care condition in control signal logic.\n\n--- ARCHITECTURAL CLARIFICATION: EDUCATIONAL MODEL VS INTEL 80386 HARDWARE ---\n  1. Signals like RegDst, ALUSrc, MemToReg, RegWrite belong to an abstract academic\n     datapath model used in university curricula. The physical Intel 80386 does NOT\n     expose these internal control wires on its external pins.\n  2. The physical 80386 bus interface instead asserts hardware bus cycle pins:\n     - M/IO#  : Memory space access (1) vs I/O port access (0)\n     - D/C#   : Data operand transfer (1) vs Control/Code fetch (0)\n     - W/R#   : Write cycle (1) vs Read cycle (0)\n     - ADS#   : Address Status - asserts when address & bus definitions are valid\n     - READY# : Transfer Acknowledge input from external memory or bus controller\n     - BE0#-3#: Active-low byte enable lines selecting active byte lanes on 32-bit bus\n  3. Actual Intel 80386 Instruction Processing Organization (6 Parallel Units):\n     - Bus Interface Unit (BIU) : Coordinates external address/data bus transfers.\n     - Code Prefetch Unit       : Continuously fetches up to 16 bytes into prefetch queue.\n     - Instruction Decode Unit  : Translates 1-to-15 byte CISC instructions to microcode.\n     - Execution Unit (EU)      : Executes operations with 32-bit ALU, 8 GPRs & barrel shifter.\n     - Segmentation Unit        : Translates logical address (seg:offset) to 32-bit linear address.\n     - Paging Unit              : Translates linear address to physical address via page tables.\n==============================================================================\n"
 
 # Instruction Names
 str_rtype:
@@ -159,3 +159,4 @@ _co4_demo_control_unit:
     mov esp, ebp
     pop ebp
     ret
+

@@ -9,7 +9,7 @@
 
 .data
 pipe_hdr:
-    .asciz "\n==============================================================================\n        CO4: 5-STAGE INSTRUCTION PIPELINING SIMULATION & HAZARDS              \n==============================================================================\n  5-Stage Pipeline Model: IF (Fetch), ID (Decode), EX (Execute), MEM, WB (WriteBack)\n"
+    .asciz "\n==============================================================================\n        CO4: 5-STAGE INSTRUCTION PIPELINING SIMULATION & HAZARDS              \n==============================================================================\n  [Educational Architecture Model: Classic 5-Stage RISC Pipelining (IF,ID,EX,MEM,WB)]\n  [Note: This educational model illustrates pipeline hazards, stalls, and speedup.\n         It serves as an academic teaching model and does not represent the internal\n         parallel functional unit prefetch organization of the Intel 80386.]\n"
 
 sec_ideal_title:
     .asciz "\n--- 1. IDEAL PIPELINE (NO HAZARDS) - CYCLE BY CYCLE ---\n"
@@ -125,3 +125,4 @@ _co4_demo_pipeline:
     mov esp, ebp
     pop ebp
     ret
+

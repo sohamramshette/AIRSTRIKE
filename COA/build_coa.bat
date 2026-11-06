@@ -26,3 +26,4 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo [SUCCESS] COA 80386 module built successfully at bin\coa\coa_runner.exe!
 exit /b 0
+

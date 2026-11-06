@@ -40,9 +40,9 @@ flag_of_demo:
     .asciz "  [Overflow Flag OF]: 0x7FFFFFFF + 1          -> OF = %d (Signed Overflow: Pos + Pos = Neg)\n"
 
 sec_segments_title:
-    .asciz "\n--- 4. MEMORY SEGMENTATION (32-bit Protected Mode Selectors) ---\n"
+    .asciz "\n--- 4. MEMORY SEGMENTATION (32-bit Protected Mode Segment Selectors) ---\n"
 seg_fmt:
-    .asciz "  CS (Code Segment)  = 0x%04X\n  DS (Data Segment)  = 0x%04X\n  SS (Stack Segment) = 0x%04X\n  ES (Extra Segment) = 0x%04X\n  [Note] In 32-bit Flat Model, CS/DS/SS span the entire 4 GB linear address space.\n"
+    .asciz "  Active Segment Selectors (read from Segment Registers in Ring 3 User Mode):\n    CS (Code Selector)  = 0x%04X (RPL=3, TI=0, GDT Index)\n    DS (Data Selector)  = 0x%04X (RPL=3, TI=0, GDT Index)\n    SS (Stack Selector) = 0x%04X (RPL=3, TI=0, GDT Index)\n    ES (Extra Selector) = 0x%04X (RPL=3, TI=0, GDT Index)\n  [Architectural Clarification]:\n    Under modern OS 32-bit Protected Mode, a Flat Memory Model is configured.\n    The OS kernel creates GDT descriptors where Base=0 and Limit=4 GB for all code\n    and data segments. User-space programs inspect selector registers (CS, DS, SS, ES),\n    but cannot independently inspect OS GDT descriptor tables or prove 4 GB physical\n    memory limits from unprivileged Ring 3. Segmentation remains the underlying x86\n    mechanism upon which the flat address space abstraction is established.\n"
 
 sec_addr_title:
     .asciz "\n--- 5. 80386 ADDRESSING MODES DEMONSTRATION ---\n"
