@@ -223,3 +223,4 @@ If no credentials are provided or network connectivity is unavailable, AIRSTRIKE
 | `skipping incompatible when searching for -lglut32` | 64-bit GCC used on 32-bit GLUT | Ensure MinGW 32-bit GCC is installed or pass `-m32` flags. |
 | `glut32.dll was not found` | GLUT runtime library missing | Copy `glut32.dll` to `C:\Windows\System32` or the project root. |
 | `SecurityException: Attempted to configure service_role key` | Administrative key detected | Replace key in `supabase.properties` with the client-safe `anon` publishable key. |
+

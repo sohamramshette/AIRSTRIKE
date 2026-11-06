@@ -151,3 +151,4 @@
 
 **Q13: Why is it safe to include the Supabase Publishable Key in the client application?**  
 *Answer*: The Supabase Publishable (`anon`) key is designed specifically for client-side applications. It conveys no administrative privileges. Database access is strictly governed by **Row-Level Security (RLS)** policies defined inside PostgreSQL. Even with the publishable key, a user can only perform actions explicitly permitted by SQL policies (e.g., inserting records where `auth.uid() = user_id`). The administrative `service_role` key is strictly prohibited and actively rejected by our configuration loader.
+
