@@ -5,6 +5,7 @@ import game.GameCanvas;
 import game.GameEngine;
 import game.GameLoop;
 import service.AuthService;
+import service.MatchService;
 
 import java.awt.CardLayout;
 import java.awt.Dimension;
@@ -25,6 +26,7 @@ public class MainWindow extends JFrame {
     private final MenuPanel menuPanel;
     private final GameLoop gameLoop;
     private final AuthService authService;
+    private final MatchService matchService;
 
     public MainWindow() {
         super("AIRSTRIKE – 2D Space Shooter & Academic Demonstration System");
@@ -36,7 +38,8 @@ public class MainWindow extends JFrame {
 
         // Subsystems
         this.authService = new AuthService();
-        this.engine = new GameEngine(800, 650);
+        this.matchService = new MatchService(authService.getHttpClient(), SessionManager.getInstance());
+        this.engine = new GameEngine(800, 650, matchService);
         this.gameCanvas = new GameCanvas(engine, this);
         this.menuPanel = new MenuPanel(this, authService);
         this.gameLoop = new GameLoop(engine, gameCanvas);
@@ -85,7 +88,18 @@ public class MainWindow extends JFrame {
         dialog.setVisible(true);
     }
 
+    public void showLeaderboardDialog() {
+        LeaderboardDialog dialog = new LeaderboardDialog(this, this, matchService);
+        dialog.setVisible(true);
+    }
+
+    public void showMatchHistoryDialog() {
+        MatchHistoryDialog dialog = new MatchHistoryDialog(this, this, matchService);
+        dialog.setVisible(true);
+    }
+
     public GameEngine getEngine() { return engine; }
     public GameCanvas getGameCanvas() { return gameCanvas; }
     public AuthService getAuthService() { return authService; }
+    public MatchService getMatchService() { return matchService; }
 }

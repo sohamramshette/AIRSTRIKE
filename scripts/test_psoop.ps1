@@ -14,17 +14,24 @@ if (-not (Test-Path "bin\java\test\GameUnitTest.class")) {
     if ($LASTEXITCODE -ne 0) { exit 1 }
 }
 
-Write-Host "`n[TEST 1/2] Running Core Game Unit Tests..." -ForegroundColor Yellow
+Write-Host "`n[TEST 1/3] Running Core Game Unit Tests..." -ForegroundColor Yellow
 & java -cp "bin\java" test.GameUnitTest
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] GameUnitTest failed!" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "`n[TEST 2/2] Running Supabase Authentication Test Suite..." -ForegroundColor Yellow
+Write-Host "`n[TEST 2/3] Running Supabase Authentication Test Suite..." -ForegroundColor Yellow
 & java -cp "bin\java" test.SupabaseAuthTest
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] SupabaseAuthTest failed!" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "`n[TEST 3/3] Running Supabase Match & Leaderboard Test Suite..." -ForegroundColor Yellow
+& java -cp "bin\java" test.SupabaseMatchServiceTest
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] SupabaseMatchServiceTest failed!" -ForegroundColor Red
     exit 1
 }
 

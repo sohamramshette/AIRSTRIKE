@@ -116,8 +116,26 @@ public class CaptureScreenshots {
                     captureComponent(authDialog.getContentPane(), new File(OUTPUT_DIR, "auth_dialog.png"));
                     authDialog.dispose();
 
+                    // 8. Capture Global Leaderboard Dialog
+                    System.out.println("[SCREENSHOT] 8. Capturing Global Leaderboard Dialog...");
+                    ui.LeaderboardDialog lbDialog = new ui.LeaderboardDialog(window, window, window.getMatchService());
+                    lbDialog.pack();
+                    lbDialog.setSize(580, 520);
+                    Thread.sleep(150);
+                    captureComponent(lbDialog.getContentPane(), new File(OUTPUT_DIR, "leaderboard_dialog.png"));
+                    lbDialog.dispose();
+
+                    // 9. Capture Match History Dialog
+                    System.out.println("[SCREENSHOT] 9. Capturing Match History Dialog...");
+                    ui.MatchHistoryDialog histDialog = new ui.MatchHistoryDialog(window, window, window.getMatchService());
+                    histDialog.pack();
+                    histDialog.setSize(580, 520);
+                    Thread.sleep(150);
+                    captureComponent(histDialog.getContentPane(), new File(OUTPUT_DIR, "match_history_dialog.png"));
+                    histDialog.dispose();
+
                     window.dispose();
-                    System.out.println("[SCREENSHOT] All 7 screenshots successfully captured in " + OUTPUT_DIR);
+                    System.out.println("[SCREENSHOT] All 9 screenshots successfully captured in " + OUTPUT_DIR);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }

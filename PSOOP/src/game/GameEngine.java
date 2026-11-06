@@ -40,10 +40,24 @@ public class GameEngine {
     private int screenHeight;
     private boolean shootingTriggered;
 
+    // Match persistence & duration tracking (Phase 6.2B)
+    private service.MatchService matchService;
+    private long matchStartTimeMs;
+    private boolean matchUploaded;
+    private String matchUploadStatus;
+
     public GameEngine(int screenWidth, int screenHeight) {
+        this(screenWidth, screenHeight, new service.MatchService());
+    }
+
+    public GameEngine(int screenWidth, int screenHeight, service.MatchService matchService) {
         this.screenWidth = Math.max(640, screenWidth);
         this.screenHeight = Math.max(480, screenHeight);
         this.state = GameState.MENU;
+        this.matchService = matchService;
+        this.matchStartTimeMs = 0;
+        this.matchUploaded = false;
+        this.matchUploadStatus = "";
 
         this.player = new Player((this.screenWidth - 48) / 2.0, this.screenHeight - 110);
         this.enemies = new ArrayList<>();
@@ -69,7 +83,34 @@ public class GameEngine {
             throw new InvalidGameStateException("Cannot pause while in Main Menu", "MENU -> PAUSED");
         }
 
+        if (this.state != GameState.GAME_OVER && newState == GameState.GAME_OVER) {
+            onGameOver();
+        }
+
         this.state = newState;
+    }
+
+    private void onGameOver() {
+        if (matchUploaded) return; // Prevent duplicate submission
+        matchUploaded = true;
+
+        int finalScore = scoreCalculator.getScore();
+        int levelReached = waveManager.getCurrentLevel();
+        long now = System.currentTimeMillis();
+        int durationSeconds = (int) Math.max(1, (now - (matchStartTimeMs > 0 ? matchStartTimeMs : now)) / 1000);
+
+        if (matchService != null && database.SessionManager.getInstance().isLoggedIn()) {
+            matchUploadStatus = "TRANSMITTING FLIGHT LOG TO STARFLEET ARCHIVES...";
+            matchService.saveMatch(finalScore, levelReached, durationSeconds).thenAccept(success -> {
+                if (success) {
+                    matchUploadStatus = "FLIGHT LOG SECURED IN STARFLEET ARCHIVES";
+                } else {
+                    matchUploadStatus = "STARFLEET UPLINK OFFLINE (LOG STORED LOCALLY)";
+                }
+            });
+        } else {
+            matchUploadStatus = "GUEST PILOT MISSION COMPLETE (LOCAL ONLY)";
+        }
     }
 
     /**
@@ -84,6 +125,10 @@ public class GameEngine {
         scoreCalculator.resetGame();
         waveManager.resetToLevel(1);
         player.resetFull((screenWidth - player.getWidth()) / 2, screenHeight - 110);
+
+        this.matchStartTimeMs = System.currentTimeMillis();
+        this.matchUploaded = false;
+        this.matchUploadStatus = "";
 
         try {
             setState(GameState.PLAYING);
@@ -365,15 +410,29 @@ public class GameEngine {
         FontMetrics fm3 = g.getFontMetrics();
         g.drawString(highStr, (screenWidth - fm3.stringWidth(highStr)) / 2, midY + 18);
 
+        // Upload status banner
+        if (matchUploadStatus != null && !matchUploadStatus.isEmpty()) {
+            g.setColor(matchUploadStatus.contains("SECURED") ? new Color(80, 250, 120) : new Color(180, 200, 230));
+            g.setFont(new Font("SansSerif", Font.BOLD, 12));
+            FontMetrics fmStatus = g.getFontMetrics();
+            g.drawString(matchUploadStatus, (screenWidth - fmStatus.stringWidth(matchUploadStatus)) / 2, midY + 42);
+        }
+
         g.setColor(new Color(180, 220, 255));
-        g.setFont(new Font("SansSerif", Font.BOLD, 15));
+        g.setFont(new Font("SansSerif", Font.BOLD, 14));
         FontMetrics fm4 = g.getFontMetrics();
         String prompt = "Press [R] to Redeploy Ship | Press [M] for Main Menu";
-        g.drawString(prompt, (screenWidth - fm4.stringWidth(prompt)) / 2, midY + 65);
+        g.drawString(prompt, (screenWidth - fm4.stringWidth(prompt)) / 2, midY + 70);
     }
 
     // Input hooks
     public void setShooting(boolean shooting) { this.shootingTriggered = shooting; }
+
+    public void setMatchService(service.MatchService matchService) { this.matchService = matchService; }
+    public service.MatchService getMatchService() { return matchService; }
+    public long getMatchStartTimeMs() { return matchStartTimeMs; }
+    public boolean isMatchUploaded() { return matchUploaded; }
+    public String getMatchUploadStatus() { return matchUploadStatus; }
 
     public GameState getState() { return state; }
     public Player getPlayer() { return player; }

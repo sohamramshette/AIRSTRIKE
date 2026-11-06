@@ -264,6 +264,10 @@ public class AuthService {
         return (msg != null && !msg.trim().isEmpty()) ? msg.trim() : "Authentication error (HTTP " + defaultCode + ")";
     }
 
+    public SupabaseHttpClient getHttpClient() {
+        return httpClient;
+    }
+
     public SessionManager getSessionManager() {
         return sessionManager;
     }

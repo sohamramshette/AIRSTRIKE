@@ -62,43 +62,55 @@ public class MenuPanel extends JPanel {
 
     private void buildUI() {
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 12, 8, 12);
+        gbc.insets = new Insets(4, 12, 4, 12);
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // 1. Pilot Status Bar (positioned below title)
         gbc.gridy = 0;
-        gbc.insets = new Insets(165, 12, 12, 12);
+        gbc.insets = new Insets(150, 12, 8, 12);
         JPanel pilotBar = buildPilotStatusBar();
         add(pilotBar, gbc);
 
         // 2. Play Button
         gbc.gridy = 1;
-        gbc.insets = new Insets(8, 12, 8, 12);
+        gbc.insets = new Insets(4, 12, 4, 12);
         JButton playBtn = createStyledButton("LAUNCH MISSION", new Color(0, 180, 255));
         playBtn.addActionListener(e -> mainWindow.startGame());
         add(playBtn, gbc);
 
-        // 3. Pilot Registry / Account Button
+        // 3. Global Leaderboard Button
         gbc.gridy = 2;
+        JButton leaderboardBtn = createStyledButton("GLOBAL LEADERBOARD", new Color(255, 200, 50));
+        leaderboardBtn.addActionListener(e -> mainWindow.showLeaderboardDialog());
+        add(leaderboardBtn, gbc);
+
+        // 4. Match History / Flight Logs Button
+        gbc.gridy = 3;
+        JButton historyBtn = createStyledButton("MATCH HISTORY (FLIGHT LOGS)", new Color(60, 180, 240));
+        historyBtn.addActionListener(e -> mainWindow.showMatchHistoryDialog());
+        add(historyBtn, gbc);
+
+        // 5. Pilot Registry / Account Button
+        gbc.gridy = 4;
         JButton registryBtn = createStyledButton("STARFLEET PILOT REGISTRY", new Color(130, 90, 240));
         registryBtn.addActionListener(e -> mainWindow.showAuthDialog());
         add(registryBtn, gbc);
 
-        // 4. Instructions Button
-        gbc.gridy = 3;
+        // 6. Instructions Button
+        gbc.gridy = 5;
         JButton instrBtn = createStyledButton("PILOT MANUAL (CONTROLS)", new Color(60, 220, 120));
         instrBtn.addActionListener(e -> mainWindow.showInstructions());
         add(instrBtn, gbc);
 
-        // 5. Settings Button
-        gbc.gridy = 4;
+        // 7. Settings Button
+        gbc.gridy = 6;
         JButton settingsBtn = createStyledButton("SYSTEM SETTINGS", new Color(255, 170, 40));
         settingsBtn.addActionListener(e -> mainWindow.showSettings());
         add(settingsBtn, gbc);
 
-        // 6. Exit Button
-        gbc.gridy = 5;
+        // 8. Exit Button
+        gbc.gridy = 7;
         JButton exitBtn = createStyledButton("ABORT TO DESKTOP", new Color(240, 60, 60));
         exitBtn.addActionListener(e -> System.exit(0));
         add(exitBtn, gbc);
@@ -232,7 +244,7 @@ public class MenuPanel extends JPanel {
         g2d.setColor(new Color(100, 140, 180));
         g2d.setFont(new Font("SansSerif", Font.BOLD, 12));
         FontMetrics fm3 = g2d.getFontMetrics();
-        String ver = "v2.1.0 (Phase 6.2A Supabase Auth Edition)";
+        String ver = "v2.2.0 (Phase 6.2B Supabase Cloud Score & Leaderboard Edition)";
         g2d.drawString(ver, (w - fm3.stringWidth(ver)) / 2, 142);
     }
 }
