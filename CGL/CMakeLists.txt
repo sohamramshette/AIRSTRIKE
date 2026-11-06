@@ -20,9 +20,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/appearance
 )
 
-# Required definitions for MinGW GLUT
-add_definitions(-D_DLL -DGLUT_DISABLE_ATEXIT_HACK)
-
 # Collect source files
 file(GLOB_RECURSE CGL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
@@ -34,7 +31,6 @@ find_package(OpenGL REQUIRED)
 if(NOT CGL_SOURCES)
     message(STATUS "No CGL C++ source files detected yet. Add .cpp files in src/ and tests/.")
 else()
-    add_executable(cgl_demo ${CGL_SOURCES})
-    target_link_libraries(cgl_demo PRIVATE glut32 glu32 opengl32)
+    add_executable(cgl_runner ${CGL_SOURCES})
+    target_link_libraries(cgl_runner PRIVATE glut32 glu32 opengl32)
 endif()
-

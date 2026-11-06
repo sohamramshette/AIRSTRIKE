@@ -35,28 +35,28 @@ if %SOURCE_COUNT% EQU 0 (
     exit /b 0
 )
 
-where cmake >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo [INFO] CMake detected. Building via CMake...
-    if not exist "build\cgl" mkdir "build\cgl"
-    cmake -B build\cgl -S CGL -G "MinGW Makefiles"
-    if %ERRORLEVEL% NEQ 0 (
-        echo [ERROR] CMake CGL configuration failed!
-        exit /b 1
-    )
-    cmake --build build\cgl
-    if %ERRORLEVEL% NEQ 0 (
-        echo [ERROR] CMake CGL build failed!
-        exit /b 1
-    )
-) else (
-    echo [INFO] CMake not detected in PATH. Using direct MinGW g++ compilation fallback...
-    g++ -std=c++17 -Wall -Wextra -D_DLL -DGLUT_DISABLE_ATEXIT_HACK -ICGL/src -ICGL/src/primitives -ICGL/src/transformations -ICGL/src/algorithms -ICGL/src/objects -ICGL/src/projection -ICGL/src/clipping -ICGL/src/appearance CGL/src/*/*.cpp CGL/tests/*.cpp -lglut32 -lglu32 -lopengl32 -o bin\cgl\cgl_demo.exe
-    if %ERRORLEVEL% NEQ 0 (
-        echo [ERROR] OpenGL / GLUT compilation failed!
-        exit /b 1
-    )
+echo [INFO] Compiling CGL OpenGL/GLUT sources with MinGW g++ C++17...
+g++ -std=c++17 -Wall -Wextra ^
+    -ICGL/src ^
+    CGL/src/common/*.cpp ^
+    CGL/src/primitives/*.cpp ^
+    CGL/src/transformations/*.cpp ^
+    CGL/src/algorithms/*.cpp ^
+    CGL/src/projection/*.cpp ^
+    CGL/src/clipping/*.cpp ^
+    CGL/src/appearance/*.cpp ^
+    CGL/src/objects/*.cpp ^
+    CGL/src/main.cpp ^
+    CGL/tests/*.cpp ^
+    -lglut32 -lglu32 -lopengl32 ^
+    -o bin\cgl\cgl_runner.exe
+
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] OpenGL / GLUT compilation failed!
+    exit /b 1
 )
 
-echo [SUCCESS] CGL OpenGL module built successfully!
+copy /y bin\cgl\cgl_runner.exe bin\cgl\cgl_demo.exe >nul 2>&1
+
+echo [SUCCESS] CGL OpenGL module built successfully: bin\cgl\cgl_runner.exe
 exit /b 0

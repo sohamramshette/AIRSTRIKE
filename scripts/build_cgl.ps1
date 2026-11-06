@@ -30,37 +30,22 @@ if (-not $cppFiles -or $cppFiles.Count -eq 0) {
     exit 0
 }
 
-$cmakeCmd = Get-Command "cmake" -ErrorAction SilentlyContinue
-if ($cmakeCmd) {
-    Write-Host "[INFO] CMake detected. Building via CMake..." -ForegroundColor White
-    if (-not (Test-Path "build\cgl")) { New-Item -ItemType Directory -Path "build\cgl" -Force | Out-Null }
-    & cmake -B build\cgl -S CGL -G "MinGW Makefiles"
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] CMake configuration failed!" -ForegroundColor Red
-        exit 1
-    }
-    & cmake --build build\cgl
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] CMake build failed!" -ForegroundColor Red
-        exit 1
-    }
-} else {
-    Write-Host "[INFO] CMake not detected in PATH. Using direct MinGW g++ compilation fallback..." -ForegroundColor Yellow
-    $includeArgs = @(
-        "-std=c++17", "-Wall", "-Wextra",
-        "-D_DLL", "-DGLUT_DISABLE_ATEXIT_HACK",
-        "-ICGL/src", "-ICGL/src/primitives", "-ICGL/src/transformations",
-        "-ICGL/src/algorithms", "-ICGL/src/objects", "-ICGL/src/projection",
-        "-ICGL/src/clipping", "-ICGL/src/appearance"
-    )
-    $sourcePaths = $cppFiles.FullName
-    $linkArgs = @("-lglut32", "-lglu32", "-lopengl32", "-o", "$binCgl\cgl_demo.exe")
-    & g++ @includeArgs @sourcePaths @linkArgs
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] Direct OpenGL compilation failed!" -ForegroundColor Red
-        exit 1
-    }
+Write-Host "[INFO] Compiling CGL OpenGL/GLUT sources with MinGW g++ C++17..." -ForegroundColor White
+$includeArgs = @(
+    "-std=c++17", "-Wall", "-Wextra",
+    "-ICGL/src"
+)
+$sourcePaths = $cppFiles.FullName
+$targetExe = "$binCgl\cgl_runner.exe"
+$linkArgs = @("-lglut32", "-lglu32", "-lopengl32", "-o", $targetExe)
+
+& g++ @includeArgs @sourcePaths @linkArgs
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] Direct OpenGL compilation failed!" -ForegroundColor Red
+    exit 1
 }
 
-Write-Host "[SUCCESS] CGL OpenGL module built successfully!" -ForegroundColor Green
+Copy-Item $targetExe "$binCgl\cgl_demo.exe" -Force -ErrorAction SilentlyContinue
+
+Write-Host "[SUCCESS] CGL OpenGL module built successfully: $targetExe" -ForegroundColor Green
 exit 0
