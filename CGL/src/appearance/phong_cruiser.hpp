@@ -45,10 +45,22 @@ public:
     float getShininess() const { return shininess; }
     void setShininess(float s) { shininess = (s > 1.0f) ? s : 1.0f; }
 
+    bool isSmoothShading() const { return smoothShading; }
+    void setSmoothShading(bool smooth) { smoothShading = smooth; }
+
+    bool isTextureActive() const { return textureActive; }
+    void setTextureActive(bool active) { textureActive = active; }
+
+    float getLightAngle() const { return lightAngle; }
+    void setLightAngle(float angle) { lightAngle = angle; }
+
 private:
     float shininess;      // Material shininess exponent n
     float ka, kd, ks;     // Ambient, Diffuse, Specular reflection coefficients
     float animAngle;
+    bool  smoothShading;  // true: GL_SMOOTH (Gouraud), false: GL_FLAT
+    bool  textureActive;  // true: modulate with space_hull.bmp
+    float lightAngle;     // Directional light orbital azimuth in degrees
 
     bool textureLoaded;
     size_t textureBytes;

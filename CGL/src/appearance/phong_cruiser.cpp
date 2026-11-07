@@ -7,6 +7,7 @@ namespace CGL {
 
 PhongCruiser::PhongCruiser()
     : shininess(32.0f), ka(0.20f), kd(0.70f), ks(0.90f), animAngle(0.0f),
+      smoothShading(true), textureActive(true), lightAngle(45.0f),
       textureLoaded(false), textureBytes(0), textureId(0) {
     init();
 }
@@ -108,9 +109,11 @@ void PhongCruiser::renderIlluminatedHull() {
     glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular);
     glMaterialfv(GL_FRONT, GL_SHININESS, matShine);
 
-    if (textureLoaded) {
+    if (textureLoaded && textureActive) {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, textureId);
+    } else {
+        glDisable(GL_TEXTURE_2D);
     }
 
     // Render faceted hull with explicit surface normals
@@ -151,10 +154,16 @@ void PhongCruiser::render() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    glShadeModel(GL_SMOOTH); // Smooth Gouraud shading enabled
 
-    // Directional sunlight
-    GLfloat lightPos[]     = { 1.0f, 1.0f, 1.0f, 0.0f }; // Directional
+    if (smoothShading) {
+        glShadeModel(GL_SMOOTH); // Smooth Gouraud shading enabled
+    } else {
+        glShadeModel(GL_FLAT);   // Flat constant shading enabled
+    }
+
+    // Directional light orbiting at lightAngle
+    float rad = lightAngle * 3.14159265f / 180.0f;
+    GLfloat lightPos[]     = { std::cos(rad), 1.0f, std::sin(rad), 0.0f }; // Directional
     GLfloat lightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     GLfloat lightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     GLfloat lightSpec[]    = { 1.0f, 1.0f, 1.0f, 1.0f };

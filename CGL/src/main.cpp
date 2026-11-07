@@ -8,6 +8,7 @@
 #include "clipping/clipping_algorithms.hpp"
 #include "appearance/lighting_texture_demo.hpp"
 #include "objects/space_scene.hpp"
+#include "objects/enemy_demo_scene.hpp"
 #include "../tests/test_cgl.hpp"
 
 #include <iostream>
@@ -19,7 +20,7 @@ namespace CGL {
 // Active Window Dimensions
 static int windowWidth = 1024;
 static int windowHeight = 720;
-static int currentScreen = 0; // 0: Integrated, 1-6: CO1-CO6
+static int currentScreen = 0; // 0: Integrated, 1-6: CO1-CO6, 7: Enemy Demonstrator
 static bool screenshotMode = false;
 static int screenshotStep = 0;
 
@@ -31,6 +32,7 @@ static std::unique_ptr<ViewingDemo> viewingDemo;
 static std::unique_ptr<ClippingAlgorithmsDemo> clippingDemo;
 static std::unique_ptr<LightingTextureDemo> lightingDemo;
 static std::unique_ptr<SpaceCombatScene> combatScene;
+static std::unique_ptr<EnemyDemoScene> enemyDemoScene;
 
 void initModules() {
     primitivesDemo = std::make_unique<SpacePrimitivesDemo>();
@@ -53,6 +55,9 @@ void initModules() {
 
     combatScene = std::make_unique<SpaceCombatScene>();
     combatScene->init();
+
+    enemyDemoScene = std::make_unique<EnemyDemoScene>();
+    enemyDemoScene->init();
 }
 
 void displayCallback() {
@@ -63,6 +68,7 @@ void displayCallback() {
         case 4: viewingDemo->render(windowWidth, windowHeight); break;
         case 5: clippingDemo->render(windowWidth, windowHeight); break;
         case 6: lightingDemo->render(windowWidth, windowHeight); break;
+        case 7: enemyDemoScene->render(windowWidth, windowHeight); break;
         case 0:
         default:
             combatScene->render(windowWidth, windowHeight);
@@ -131,7 +137,55 @@ void timerCallback(int value) {
                 currentScreen = 0;
                 displayCallback();
                 captureScreenshot("docs/screenshots/CGL/cgl_integrated_scene.bmp", windowWidth, windowHeight);
-                std::cout << "[SUCCESS] All CGL screenshots successfully generated!" << std::endl;
+                screenshotStep++;
+                glutTimerFunc(100, timerCallback, 0);
+                return;
+            case 7:
+                currentScreen = 7;
+                enemyDemoScene->selectEnemy(0);
+                displayCallback();
+                captureScreenshot("docs/screenshots/CGL/cgl_enemy1_polygon_cruiser.bmp", windowWidth, windowHeight);
+                screenshotStep++;
+                glutTimerFunc(100, timerCallback, 0);
+                return;
+            case 8:
+                currentScreen = 7;
+                enemyDemoScene->selectEnemy(1);
+                displayCallback();
+                captureScreenshot("docs/screenshots/CGL/cgl_enemy2_orbital_rotor.bmp", windowWidth, windowHeight);
+                screenshotStep++;
+                glutTimerFunc(100, timerCallback, 0);
+                return;
+            case 9:
+                currentScreen = 7;
+                enemyDemoScene->selectEnemy(2);
+                displayCallback();
+                captureScreenshot("docs/screenshots/CGL/cgl_enemy3_raster_sentinel.bmp", windowWidth, windowHeight);
+                screenshotStep++;
+                glutTimerFunc(100, timerCallback, 0);
+                return;
+            case 10:
+                currentScreen = 7;
+                enemyDemoScene->selectEnemy(3);
+                displayCallback();
+                captureScreenshot("docs/screenshots/CGL/cgl_enemy4_warp_cruiser.bmp", windowWidth, windowHeight);
+                screenshotStep++;
+                glutTimerFunc(100, timerCallback, 0);
+                return;
+            case 11:
+                currentScreen = 7;
+                enemyDemoScene->selectEnemy(4);
+                displayCallback();
+                captureScreenshot("docs/screenshots/CGL/cgl_enemy5_boundary_skimmer.bmp", windowWidth, windowHeight);
+                screenshotStep++;
+                glutTimerFunc(100, timerCallback, 0);
+                return;
+            case 12:
+                currentScreen = 7;
+                enemyDemoScene->selectEnemy(5);
+                displayCallback();
+                captureScreenshot("docs/screenshots/CGL/cgl_enemy6_phong_cruiser.bmp", windowWidth, windowHeight);
+                std::cout << "[SUCCESS] All 13 CGL screenshots (Base + 6 Enemies) successfully generated!" << std::endl;
                 std::exit(0);
         }
     }
@@ -143,6 +197,7 @@ void timerCallback(int value) {
         case 4: viewingDemo->update(dt); break;
         case 5: clippingDemo->update(dt); break;
         case 6: lightingDemo->update(dt); break;
+        case 7: enemyDemoScene->update(dt); break;
         case 0: combatScene->update(dt); break;
         default: break;
     }
@@ -153,6 +208,25 @@ void timerCallback(int value) {
 
 void keyboardCallback(unsigned char key, int x, int y) {
     (void)x; (void)y;
+
+    // Dedicated input routing for Screen 7: Enemy Demonstrator
+    if (currentScreen == 7) {
+        if (key == 27 || key == '0') {
+            currentScreen = 0; // Return to Main Menu / Integrated Scene
+            return;
+        }
+        if (key >= '1' && key <= '6') {
+            enemyDemoScene->selectEnemy(key - '1');
+            return;
+        }
+        if (key == 'r' || key == 'R') {
+            enemyDemoScene->resetCurrentDemonstration();
+            return;
+        }
+        enemyDemoScene->handleKey(key);
+        return;
+    }
+
     switch (key) {
         case 27: // ESC
             std::cout << "[INFO] Exiting AIRSTRIKE CGL..." << std::endl;
@@ -205,6 +279,7 @@ void keyboardCallback(unsigned char key, int x, int y) {
 
         case 'e': case 'E':
             if (currentScreen == 2) transformDemo->rotate(-5.0f);
+            else currentScreen = 7;
             break;
 
         case '+': case '=':
@@ -264,6 +339,7 @@ void keyboardCallback(unsigned char key, int x, int y) {
 
         case '7':
             if (currentScreen == 6) lightingDemo->toggleAmbient();
+            else currentScreen = 7;
             break;
 
         case '8':
@@ -294,6 +370,12 @@ void keyboardCallback(unsigned char key, int x, int y) {
 
 void specialKeyCallback(int key, int x, int y) {
     (void)x; (void)y;
+
+    if (currentScreen == 7) {
+        enemyDemoScene->handleSpecialKey(key);
+        return;
+    }
+
     switch (key) {
         case GLUT_KEY_UP:
             if (currentScreen == 0) combatScene->movePlayer(0.0f, 0.25f);
@@ -352,10 +434,10 @@ int main(int argc, char** argv) {
     glutTimerFunc(16, CGL::timerCallback, 0);
 
     if (CGL::screenshotMode) {
-        std::cout << "[INFO] Screenshot capture mode engaged. Rendering all CO scenes..." << std::endl;
+        std::cout << "[INFO] Screenshot capture mode engaged. Rendering all CO scenes and Enemy Demos..." << std::endl;
     } else {
         std::cout << "[INFO] Entering interactive OpenGL event loop." << std::endl;
-        std::cout << "Controls: [1-6] CO Demos | [0] Integrated Combat Scene | [ESC] Exit" << std::endl;
+        std::cout << "Controls: [1-6] CO Demos | [7 / E] CGL Enemy Demonstrator | [0] Combat Scene | [ESC] Exit" << std::endl;
     }
 
     glutMainLoop();

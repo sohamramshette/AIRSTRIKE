@@ -40,6 +40,17 @@ public:
     static bool testPolygonClipping(const RectWindow& win);
 
     RectWindow getViewportWindow() const { return arenaWindow; }
+    void setWindowSize(float size) { arenaWindow = RectWindow(-size, -size, size, size); }
+
+    Vec2 getSkimmerPos() const { return skimmerPos; }
+    void setSkimmerPos(float x, float y) {
+        skimmerPos.x = x;
+        skimmerPos.y = y;
+        targetingSensor = LineSegment(skimmerPos, Vec2(0.0f, 0.0f));
+    }
+
+    LineSegment getTargetingSensor() const { return targetingSensor; }
+    const std::vector<Vec2>& getRawHullVertices() const { return rawHullVertices; }
 
 private:
     RectWindow arenaWindow;

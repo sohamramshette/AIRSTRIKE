@@ -35,7 +35,17 @@ public:
     static bool verifyBresenhamEndpoints(const std::vector<Point2D>& points, int x0, int y0, int x1, int y1);
 
     int getShieldRadius() const { return shieldRadius; }
-    void setShieldRadius(int r) { shieldRadius = (r > 5) ? r : 5; }
+    void setShieldRadius(int r) { shieldRadius = (r > 5) ? r : 5; rebuildRasterGeometry(); }
+
+    int getSentinelX() const { return sentinelX; }
+    int getSentinelY() const { return sentinelY; }
+    int getTargetX() const { return targetX; }
+    int getTargetY() const { return targetY; }
+    size_t getShieldPixelCount() const { return cachedShieldPixels.size(); }
+    size_t getBeamPixelCount() const { return cachedBeamPixels.size(); }
+
+    void setTarget(int tx, int ty) { targetX = tx; targetY = ty; rebuildRasterGeometry(); }
+    void setCenter(int cx, int cy) { sentinelX = cx; sentinelY = cy; rebuildRasterGeometry(); }
 
 private:
     int sentinelX;
