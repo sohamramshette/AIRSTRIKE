@@ -107,8 +107,7 @@ _main:
     jmp .L_main_menu_loop
 
 .L_opt1_arch:
-    call _co1_run_all
-    call _pause_key
+    call _co1_menu_loop
     jmp .L_main_menu_loop
 
 .L_opt2_programs:

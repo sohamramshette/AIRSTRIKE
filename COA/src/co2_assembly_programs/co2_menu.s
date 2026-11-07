@@ -8,7 +8,7 @@
 
 .data
 co2_menu_hdr:
-    .asciz "\n==============================================================================\n                 CO2: 80386 ASSEMBLY LANGUAGE PROGRAMS SUBMENU                 \n==============================================================================\n  [1] Addition & Subtraction (Prog 1)\n  [2] Multiplication & Division with Remainder (Prog 2)\n  [3] Array Operations (Progs 3, 4, 7, 8, 9: Min/Max, Sum, Search, Reverse, Counts)\n  [4] Mathematical Series (Progs 5 & 6: Factorial & Fibonacci)\n  [5] Bitwise Logic Operations (Prog 10: AND, OR, XOR, NOT)\n  [6] Run All 10 Programs Sequentially\n  [7] Return to Main Menu\n==============================================================================\n  Enter choice [1-7]: "
+    .asciz "\n==============================================================================\n                 CO2: 80386 ASSEMBLY LANGUAGE PROGRAMS SUBMENU                 \n==============================================================================\n  [1] Addition & Subtraction (Prog 1)\n  [2] Multiplication & Division with Remainder (Prog 2)\n  [3] Array Operations (Progs 3, 4, 7, 8, 9: Min/Max, Sum, Search, Reverse, Counts)\n  [4] Mathematical Series (Progs 5 & 6: Factorial & Fibonacci)\n  [5] Bitwise Logic Operations (Prog 10: AND, OR, XOR, NOT)\n  [6] Fibonacci Skimmer (COA-CO2: Assembly Math Series & Trajectory Generator)\n  [7] Run All 10 Programs Sequentially\n  [8] Return to Main Menu\n==============================================================================\n  Enter choice [1-8]: "
 
 .text
 
@@ -44,6 +44,8 @@ _co2_menu_loop:
     cmp ebx, 6
     je .L_co2_opt6
     cmp ebx, 7
+    je .L_co2_opt7
+    cmp ebx, 8
     je .L_co2_exit
     cmp ebx, -1
     je .L_co2_exit
@@ -70,6 +72,10 @@ _co2_menu_loop:
     jmp .L_co2_loop
 
 .L_co2_opt6:
+    call _coa_demo_fibonacci_skimmer
+    jmp .L_co2_loop
+
+.L_co2_opt7:
     call _co2_run_all
     jmp .L_co2_loop
 

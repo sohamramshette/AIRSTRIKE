@@ -18,6 +18,13 @@
 #include "src/hashing/hash_table_chaining.h"
 #include "src/hashing/hash_table_probing.h"
 
+// PL Enemy headers
+#include "src/arrays/grid_swarm_enemy.h"
+#include "src/linked_lists/formation_squadron.h"
+#include "src/queues/echelon_dispatcher.h"
+#include "src/searching/hunter_targeting.h"
+#include "src/hashing/hash_shield_controller.h"
+
 // Test suite headers
 #include "tests/test_common.h"
 #include "tests/test_arrays.h"
@@ -546,6 +553,283 @@ void demoHashing() {
 }
 
 // ==========================================
+// PL Enemy Submenu Demonstrations (Phase 8.8)
+// ==========================================
+void demoSpatialGridSwarm() {
+    std::cout << "\n==============================================================================\n";
+    std::cout << "        PL-CO1: SPATIAL GRID SWARM DEMONSTRATION (2D SPATIAL PARTITIONING)    \n";
+    std::cout << "==============================================================================\n";
+    std::cout << "  Syllabus Concept: 2D Arrays, Row-Major Addressing, Broadphase Partitioning\n";
+    std::cout << "  Row-Major Formula: Offset(i, j) = (i * COLS + j) * sizeof(Element)\n";
+    std::cout << "  Arena Dimensions : " << GridSwarmEnemy::ARENA_WIDTH << " x " << GridSwarmEnemy::ARENA_HEIGHT
+              << " px partitioned into [" << GridSwarmEnemy::GRID_ROWS << "x" << GridSwarmEnemy::GRID_COLS << "] Sectors\n";
+    std::cout << "------------------------------------------------------------------------------\n";
+
+    GridSwarmEnemy swarm;
+    std::cout << "1. Deploying Swarm Interceptors into Sector Coordinates:\n";
+    swarm.spawnDrone(101, 50.0, 40.0, 25);   // Sector [0, 0]
+    swarm.spawnDrone(102, 80.0, 70.0, 25);   // Sector [0, 0]
+    swarm.spawnDrone(103, 150.0, 50.0, 30);  // Sector [0, 1]
+    swarm.spawnDrone(104, 420.0, 310.0, 50); // Sector [4, 4] (Center)
+    swarm.spawnDrone(105, 750.0, 550.0, 80); // Sector [7, 7] (Perimeter)
+    std::cout << "   Active Drones Spawned: " << swarm.getTotalActiveDrones() << "\n\n";
+
+    std::cout << "2. Row-Major Contiguous Memory Offset Calculations:\n";
+    std::cout << "   Sector [0, 0] -> Row-Major Offset = " << GridSwarmEnemy::calculateRowMajorOffset(0, 0) << " elements\n";
+    std::cout << "   Sector [0, 1] -> Row-Major Offset = " << GridSwarmEnemy::calculateRowMajorOffset(0, 1) << " elements\n";
+    std::cout << "   Sector [4, 4] -> Row-Major Offset = " << GridSwarmEnemy::calculateRowMajorOffset(4, 4) << " elements\n";
+    std::cout << "   Sector [7, 7] -> Row-Major Offset = " << GridSwarmEnemy::calculateRowMajorOffset(7, 7) << " elements (Max Index)\n\n";
+
+    std::cout << "3. 2D Swarm Sector Occupancy Matrix:\n";
+    swarm.printSwarmGrid();
+
+    std::cout << "4. Broadphase 9-Sector Proximity Query:\n";
+    std::cout << "   Query Point: (70.0, 60.0), Search Radius: 120.0 px (Sectors [0,0], [0,1], [1,0], [1,1])\n";
+    int nearbyIds[16];
+    int count = swarm.findNearbyDrones(70.0, 60.0, 120.0, nearbyIds, 16);
+    std::cout << "   Nearby Interceptors Located: " << count << " units [";
+    for (int i = 0; i < count; ++i) {
+        std::cout << "ID #" << nearbyIds[i] << (i + 1 < count ? ", " : "");
+    }
+    std::cout << "]\n\n";
+
+    std::cout << "5. Dynamic Kinematics & Scatter Mine Fragmentation:\n";
+    std::cout << "   Deploying 4 fragmentation scatter mines around Center (400, 300)...\n";
+    int mineIds[8];
+    int deployed = swarm.disperseScatterMines(400.0, 300.0, 4, mineIds);
+    std::cout << "   Mines Deployed: " << deployed << " mine fragments into adjacent cells.\n";
+    std::cout << "   Updated Swarm Active Units: " << swarm.getTotalActiveDrones() << "\n";
+    swarm.printSwarmGrid();
+}
+
+void demoFormationSquadronChain() {
+    std::cout << "\n==============================================================================\n";
+    std::cout << "     PL-CO2: FORMATION SQUADRON CHAIN DEMONSTRATION (DOUBLY LINKED FLEET)     \n";
+    std::cout << "==============================================================================\n";
+    std::cout << "  Syllabus Concept: Doubly Linked Lists, Pointer Rewiring, O(1) Splitting\n";
+    std::cout << "  Node Structure  : Prev pointer <-> [ Ship ID, Callsign, HP, Pos ] <-> Next pointer\n";
+    std::cout << "------------------------------------------------------------------------------\n";
+
+    FormationSquadron alphaSquad("Viper-Strike-Wing");
+    std::cout << "1. Assembling Tactical Fleet via Head and Tail Insertions:\n";
+    alphaSquad.addVanguard(1, "Vanguard-Prime", 250, 400.0, 500.0);
+    alphaSquad.addRearguard(4, "Rear-Anchor", 350, 400.0, 200.0);
+    alphaSquad.insertAtRank(1, 2, "Escort-Alpha", 120, 360.0, 400.0);
+    alphaSquad.insertAtRank(2, 3, "Escort-Beta", 120, 440.0, 400.0);
+    alphaSquad.insertAtRank(3, 5, "Tactical-Drone", 80, 400.0, 300.0);
+
+    std::cout << "   Total ships in formation: " << alphaSquad.size() << "\n\n";
+
+    std::cout << "2. Bidirectional Traversal Verification:\n";
+    std::cout << "   [Forward: Vanguard -> Rearguard]:\n";
+    alphaSquad.traverseVanguardToRear();
+    std::cout << "   [Reverse: Rearguard -> Vanguard]:\n";
+    alphaSquad.traverseRearToVanguard();
+
+    std::cout << "\n3. Combat Hull Depletion & O(1) Node Removal:\n";
+    std::cout << "   Cruiser #3 ('Escort-Beta') suffered critical hull breach. Unlinking node...\n";
+    alphaSquad.removeShip(3);
+    std::cout << "   Post-destruction fleet chain (Size: " << alphaSquad.size() << "):\n";
+    alphaSquad.traverseVanguardToRear();
+
+    std::cout << "\n4. O(1) Tactical Formation Splitting:\n";
+    std::cout << "   Enemy EMP detected! Splitting formation after ship ID 2 ('Escort-Alpha')...\n";
+    FormationSquadron betaSquad("Cobra-Flank-Wing");
+    bool splitOk = alphaSquad.splitAt(2, betaSquad);
+    std::cout << "   Split Execution: " << (splitOk ? "SUCCESSFUL (O(1) pointer cut)" : "FAILED") << "\n\n";
+
+    std::cout << "   First Squadron  ['" << alphaSquad.getName() << "'] (Size " << alphaSquad.size() << "):\n";
+    alphaSquad.traverseVanguardToRear();
+
+    std::cout << "   Second Squadron ['" << betaSquad.getName() << "'] (Size " << betaSquad.size() << "):\n";
+    betaSquad.traverseVanguardToRear();
+}
+
+void demoQueueWaveEchelon() {
+    std::cout << "\n==============================================================================\n";
+    std::cout << "        PL-CO3: QUEUE WAVE ECHELON DEMONSTRATION (CIRCULAR FIFO DISPATCHER)   \n";
+    std::cout << "==============================================================================\n";
+    std::cout << "  Syllabus Concept: Circular Queue Array, FIFO Dispatch, Index Wraparound\n";
+    std::cout << "  Pointer Formula : rear = (rear + 1) % capacity | front = (front + 1) % capacity\n";
+    std::cout << "  Boundary Checks : Overflow on count == capacity | Underflow on count == 0\n";
+    std::cout << "------------------------------------------------------------------------------\n";
+
+    QueueWaveEchelon queue(4); // Small capacity 4 for clear demonstration
+    std::cout << "1. Initial Circular Echelon Queue State (Capacity: " << queue.capacity() << "):\n";
+    queue.printEchelonQueue();
+
+    std::cout << "2. Enqueueing 3 Tactical Echelons:\n";
+    queue.enqueue(EchelonWaveUnit(1, "Scout-Incursion", 4, 2.5, 0.5));
+    queue.enqueue(EchelonWaveUnit(2, "Heavy-Bombardment", 8, 1.8, 1.2));
+    queue.enqueue(EchelonWaveUnit(3, "Stealth-Interceptors", 6, 3.0, 0.8));
+    queue.printEchelonQueue();
+
+    std::cout << "3. Dequeueing 2 Echelons in Strict FIFO Order:\n";
+    EchelonWaveUnit dispatched;
+    while (queue.size() > 1) {
+        if (queue.dequeue(dispatched)) {
+            std::cout << "   -> DISPATCHED: Echelon #" << dispatched.echelonId << " ["
+                      << dispatched.codename << "] with " << dispatched.craftCount
+                      << " craft at " << dispatched.flightSpeed << "x speed\n";
+        }
+    }
+    queue.printEchelonQueue();
+
+    std::cout << "4. Inducing Circular Index Wraparound (rear < front):\n";
+    std::cout << "   Enqueueing 3 more echelons into capacity 4 buffer...\n";
+    queue.enqueue(EchelonWaveUnit(4, "Dreadnought-Escorts", 5, 1.5, 2.0));
+    queue.enqueue(EchelonWaveUnit(5, "Hyperspace-Strike", 10, 2.2, 1.5));
+    queue.enqueue(EchelonWaveUnit(6, "Orbital-Siege", 12, 1.0, 2.5));
+    queue.printEchelonQueue();
+
+    std::cout << "   Wraparound Status: " << (queue.isWrappedAround() ? "ACTIVE (rear < front)" : "INACTIVE") << "\n";
+    std::cout << "   Front Index = " << queue.getFrontIndex() << " | Rear Index = " << queue.getRearIndex() << "\n\n";
+
+    std::cout << "5. Enforcing Queue Overflow Boundary Protection:\n";
+    bool overflowAttempt = queue.enqueue(EchelonWaveUnit(7, "Illegal-Overfill", 99, 9.9, 0.0));
+    std::cout << "   Enqueue attempt when full (Capacity " << queue.capacity() << "): "
+              << (overflowAttempt ? "UNEXPECTED SUCCESS" : "BLOCKED BY OVERFLOW GUARD [OK]") << "\n";
+}
+
+void demoTargetSeekingHunter() {
+    std::cout << "\n==============================================================================\n";
+    std::cout << "      PL-CO4: TARGET-SEEKING HUNTER DEMONSTRATION (SEARCHING & SORTING)       \n";
+    std::cout << "==============================================================================\n";
+    std::cout << "  Syllabus Concept: QuickSort vs MergeSort, Monotonic Precondition, O(log N) Binary Search\n";
+    std::cout << "  Search Complexities: Linear O(N) comparisons vs Binary O(log N) comparisons\n";
+    std::cout << "------------------------------------------------------------------------------\n";
+
+    TargetSeekingHunter hunter(707);
+    std::cout << "1. Populating Unsorted Tactical Threat Telemetry:\n";
+    hunter.addTarget(101, 620, 80, 45.0);
+    hunter.addTarget(102, 150, 40, 12.0);
+    hunter.addTarget(103, 430, 95, 180.0); // Duplicate distance target A
+    hunter.addTarget(104, 890, 70, 270.0);
+    hunter.addTarget(105, 280, 60, 90.0);
+    hunter.addTarget(106, 430, 90, 185.0); // Duplicate distance target B
+    hunter.addTarget(107, 95, 30, 5.0);
+    hunter.addTarget(108, 510, 85, 315.0);
+
+    hunter.printTelemetry();
+
+    std::cout << "\n2. Precondition Validation Before Search:\n";
+    std::cout << "   Is telemetry array sorted ascending? "
+              << (hunter.isTelemetrySorted() ? "YES" : "NO [Binary Search precondition violated!]") << "\n";
+
+    std::cout << "\n3. Executing QuickSort In-Place Partitioning:\n";
+    long long comps = 0, swaps = 0;
+    hunter.sortByDistanceQuickSort(comps, swaps);
+    std::cout << "   QuickSort Completed: " << comps << " comparisons, " << swaps << " swaps performed.\n";
+    std::cout << "   Is telemetry array sorted ascending now? "
+              << (hunter.isTelemetrySorted() ? "YES [Precondition satisfied!]" : "NO") << "\n\n";
+    hunter.printTelemetry();
+
+    std::cout << "\n4. Performance Comparison: Linear Search vs Binary Search on Distance 430:\n";
+    HunterSearchMetrics lin = hunter.linearSearchTarget(430);
+    HunterSearchMetrics bin = hunter.binarySearchTarget(430);
+    std::cout << "   Linear Search : Found=" << (lin.found ? "YES" : "NO") << " at index " << lin.targetIndex
+              << " in " << lin.comparisons << " comparisons [O(N)]\n";
+    std::cout << "   Binary Search : Found=" << (bin.found ? "YES" : "NO") << " at index " << bin.targetIndex
+              << " in " << bin.comparisons << " comparisons [O(log N)]\n";
+
+    std::cout << "\n5. Resolving Duplicate Threat Keys at Distance 430:\n";
+    int dupIndices[8];
+    int dupComps = 0;
+    int dupCount = hunter.findAllTargetsAtDistance(430, dupIndices, 8, dupComps);
+    std::cout << "   Total targets matching 430m: " << dupCount << " targets acquired in " << dupComps << " comparisons:\n";
+    for (int i = 0; i < dupCount; ++i) {
+        const TargetTelemetry* t = hunter.getTargetAt(dupIndices[i]);
+        if (t) {
+            std::cout << "   -> Target #" << t->targetId << " | Distance: " << t->threatDistance
+                      << "m | Priority: " << t->priorityScore << " | Bearing: " << t->bearingDeg << " deg\n";
+        }
+    }
+
+    std::cout << "\n6. Engaging Priority Target:\n";
+    bool locked = hunter.engageTargetAtDistance(430);
+    std::cout << "   Target lock established: " << (locked ? "LOCKED ON TARGET ID #" + std::to_string(hunter.getCurrentLockId()) : "FAILED") << "\n";
+}
+
+void demoHashShieldedMatrixCraft() {
+    std::cout << "\n==============================================================================\n";
+    std::cout << "    PL-CO5: HASH-SHIELDED MATRIX CRAFT (OPEN ADDRESSING & TOMBSTONE RECYCLING) \n";
+    std::cout << "==============================================================================\n";
+    std::cout << "  Syllabus Concept: Hash Table, Polynomial Rolling Hash, Linear Probing, Tombstones\n";
+    std::cout << "  Hash Formula    : H(s) = sum(s[i] * p^i) % capacity (p = 31)\n";
+    std::cout << "  Probe Sequence  : h_i(k) = (h(k) + i) % capacity\n";
+    std::cout << "  Rehash Criterion: Load Factor > " << HashShieldController::MAX_LOAD_FACTOR << " (70%)\n";
+    std::cout << "------------------------------------------------------------------------------\n";
+
+    HashShieldController shield(7); // Prime capacity 7
+    std::cout << "1. Initial Shield Matrix State (Capacity: " << shield.getCapacity() << "):\n";
+    shield.printShieldMatrix();
+
+    std::cout << "2. Activating Shield Harmonics (Simulating Collisions via Linear Probing):\n";
+    shield.activateHarmonic("ALPHA_POLARIZER", 100, 80);
+    shield.activateHarmonic("BETA_ABSORBER", 150, 70);
+    shield.activateHarmonic("GAMMA_DEFLECTOR", 200, 90);
+    shield.activateHarmonic("DELTA_REFLECTOR", 120, 60);
+    shield.printShieldMatrix();
+
+    std::cout << "3. O(1) Harmonic Frequency Lookup:\n";
+    int barrier = 0, absorption = 0, probes = 0;
+    if (shield.lookupHarmonic("GAMMA_DEFLECTOR", barrier, absorption, probes)) {
+        std::cout << "   Lookup 'GAMMA_DEFLECTOR' -> Barrier: " << barrier << " HP | Absorption: "
+                  << absorption << "% | Probing Steps: " << probes << "\n\n";
+    }
+
+    std::cout << "4. Tombstone Deletion Demonstration:\n";
+    std::cout << "   Kinetic torpedo strikes 'BETA_ABSORBER'! Deactivating harmonic...\n";
+    shield.deactivateHarmonic("BETA_ABSORBER");
+    std::cout << "   Post-deactivation Matrix State (Tombstones: " << shield.getTombstoneCount() << "):\n";
+    shield.printShieldMatrix();
+
+    std::cout << "   Probing continuity verification through Tombstone:\n";
+    if (shield.lookupHarmonic("DELTA_REFLECTOR", barrier, absorption, probes)) {
+        std::cout << "   Lookup 'DELTA_REFLECTOR' through tombstone -> Barrier: " << barrier
+                  << " HP | Probing Steps: " << probes << " [CHAIN PRESERVED]\n\n";
+    }
+
+    std::cout << "5. Dynamic Rehashing Demonstration (Load Factor > 0.70):\n";
+    std::cout << "   Activating additional harmonic 'EPSILON_INVERTER' to exceed load factor...\n";
+    shield.activateHarmonic("EPSILON_INVERTER", 250, 95);
+    std::cout << "   Post-Rehash Matrix State:\n";
+    shield.printShieldMatrix();
+    std::cout << "   New Capacity = " << shield.getCapacity() << " (Prime Expansion)\n";
+    std::cout << "   New Load Factor = " << std::fixed << std::setprecision(2) << shield.getLoadFactor() << "\n";
+}
+
+void demoPLEnemies() {
+    int choice = 0;
+    while (choice != 6) {
+        std::cout << "\n--------------------------------------------------------------\n";
+        std::cout << "       PL ENEMY SYSTEMS & TACTICAL FLEET DEMONSTRATOR         \n";
+        std::cout << "       Evaluating Course Outcomes: PL-CO1 to PL-CO5 (C++17)   \n";
+        std::cout << "--------------------------------------------------------------\n";
+        std::cout << "  [1] Spatial Grid Swarm (PL-CO1: 2D Spatial Partitioning & Row-Major)\n";
+        std::cout << "  [2] Formation Squadron Chain (PL-CO2: Doubly-Linked Fleet & O(1) Split)\n";
+        std::cout << "  [3] Queue Wave Echelon (PL-CO3: Circular Queue & FIFO Dispatch)\n";
+        std::cout << "  [4] Target-Seeking Hunter (PL-CO4: QuickSort & O(log N) Binary Search)\n";
+        std::cout << "  [5] Hash-Shielded Matrix Craft (PL-CO5: Open Addressing & Tombstones)\n";
+        std::cout << "  [6] Return to Main Menu\n";
+        std::cout << "Enter selection [1-6]: ";
+        if (!(std::cin >> choice)) { std::cin.clear(); std::string s; std::cin >> s; continue; }
+
+        switch (choice) {
+            case 1: demoSpatialGridSwarm(); break;
+            case 2: demoFormationSquadronChain(); break;
+            case 3: demoQueueWaveEchelon(); break;
+            case 4: demoTargetSeekingHunter(); break;
+            case 5: demoHashShieldedMatrixCraft(); break;
+            case 6: break;
+            default:
+                std::cout << "Invalid choice. Please select [1-6].\n";
+                break;
+        }
+    }
+}
+
+// ==========================================
 // Main Function & CLI Dispatcher
 // ==========================================
 int main(int argc, char* argv[]) {
@@ -560,7 +844,7 @@ int main(int argc, char* argv[]) {
     }
 
     int choice = 0;
-    while (choice != 9) {
+    while (choice != 10) {
         std::cout << "\n==============================================================================\n";
         std::cout << "             AIRSTRIKE - PROGRAMMING LABORATORY (PL) IN C++17                 \n";
         std::cout << "             Data Structures & Algorithms Verification System                 \n";
@@ -572,10 +856,11 @@ int main(int argc, char* argv[]) {
         std::cout << "  [5] PL-CO4: Searching Algorithms (Linear vs Binary Search & Metrics)\n";
         std::cout << "  [6] PL-CO4: Sorting Algorithms (5 Canonical Sorts & Leaderboard)\n";
         std::cout << "  [7] PL-CO5: Hashing Techniques (Chaining, Linear Probing, Rehashing)\n";
-        std::cout << "  [8] Run All Demonstrations and Automated Verification Tests\n";
-        std::cout << "  [9] Exit Application\n";
+        std::cout << "  [8] PL Enemy Systems & Tactical Fleet Demonstrator (PL-CO1 to PL-CO5)\n";
+        std::cout << "  [9] Run All Demonstrations and Automated Verification Tests\n";
+        std::cout << "  [10] Exit Application\n";
         std::cout << "==============================================================================\n";
-        std::cout << "Enter selection [1-9]: ";
+        std::cout << "Enter selection [1-10]: ";
 
         if (!(std::cin >> choice)) {
             std::cin.clear();
@@ -592,12 +877,13 @@ int main(int argc, char* argv[]) {
             case 5: demoSearching(); break;
             case 6: demoSorting(); break;
             case 7: demoHashing(); break;
-            case 8: runAllTestsAndReport(); break;
-            case 9:
+            case 8: demoPLEnemies(); break;
+            case 9: runAllTestsAndReport(); break;
+            case 10:
                 std::cout << "\nExiting AIRSTRIKE Programming Laboratory suite. Farewell, Commander!\n";
                 break;
             default:
-                std::cout << "[ERROR] Invalid selection. Please enter a number between 1 and 9.\n";
+                std::cout << "[ERROR] Invalid selection. Please enter a number between 1 and 10.\n";
                 break;
         }
     }

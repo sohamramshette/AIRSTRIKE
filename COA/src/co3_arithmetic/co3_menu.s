@@ -8,7 +8,7 @@
 
 .data
 co3_menu_hdr:
-    .asciz "\n==============================================================================\n            CO3: COMPUTER ARITHMETIC ALGORITHMS SUBMENU                       \n==============================================================================\n  [1] Booth's Signed Binary Multiplication (Step-by-Step Table)\n  [2] Restoring Binary Division (Step-by-Step Table)\n  [3] Multi-Precision Carry (ADC) & Signed Overflow (OF Flag) Demo\n  [4] Run All CO3 Demonstrations Sequentially\n  [5] Return to Main Menu\n==============================================================================\n  Enter choice [1-5]: "
+    .asciz "\n==============================================================================\n            CO3: COMPUTER ARITHMETIC ALGORITHMS SUBMENU                       \n==============================================================================\n  [1] Booth's Signed Binary Multiplication (Step-by-Step Table)\n  [2] Restoring Binary Division (Step-by-Step Table)\n  [3] Multi-Precision Carry (ADC) & Signed Overflow (OF Flag) Demo\n  [4] Booth Multiplier Gunship (COA-CO3: Signed Multiplication & Saturation)\n  [5] Run All CO3 Demonstrations Sequentially\n  [6] Return to Main Menu\n==============================================================================\n  Enter choice [1-6]: "
 
 .text
 
@@ -40,6 +40,8 @@ _co3_menu_loop:
     cmp ebx, 4
     je .L_co3_opt4
     cmp ebx, 5
+    je .L_co3_opt5
+    cmp ebx, 6
     je .L_co3_exit
     cmp ebx, -1
     je .L_co3_exit
@@ -58,6 +60,10 @@ _co3_menu_loop:
     jmp .L_co3_loop
 
 .L_co3_opt4:
+    call _coa_demo_booth_gunship
+    jmp .L_co3_loop
+
+.L_co3_opt5:
     call _co3_run_all
     jmp .L_co3_loop
 

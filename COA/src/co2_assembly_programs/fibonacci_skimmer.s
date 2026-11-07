@@ -216,7 +216,8 @@ _coa_demo_fibonacci_skimmer:
     add esp, 8
 
     push eax                    # Result cooldown (500 ms)
-    mov ebx, [offset fib_temp_buf + 5 * 4]
+    mov edx, offset fib_temp_buf
+    mov ebx, [edx + 5 * 4]
     push ebx                    # F(5)
     push 5
     push 5

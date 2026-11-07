@@ -9,6 +9,9 @@
 .intel_syntax noprefix
 
 .data
+co1_menu_hdr:
+    .asciz "\n==============================================================================\n                 CO1: 80386 ARCHITECTURE & INSTRUCTION SET SUBMENU             \n==============================================================================\n  [1] General Purpose Registers & Partitioning (EAX, AX, AH, AL)\n  [2] Index & Pointer Registers (ESI, EDI, EBP, ESP Stack Alteration)\n  [3] EFLAGS Register & Condition Code Flags (CF, ZF, SF, OF)\n  [4] Memory Segmentation (CS, DS, SS, ES Selectors in Protected Mode)\n  [5] 80386 Addressing Modes & Core Instruction Categories\n  [6] Sub-Register Aegis Sentry (COA-CO1: EAX/AX/AH/AL & SIB Shield)\n  [7] Run All CO1 Demonstrations Sequentially\n  [8] Return to Main Menu\n==============================================================================\n  Enter choice [1-8]: "
+
 arch_header:
     .asciz "\n==============================================================================\n                 CO1: INTEL 80386 ARCHITECTURE & INSTRUCTION SET               \n==============================================================================\n"
 
@@ -69,6 +72,82 @@ sample_array:
     .long 10, 20, 30, 40, 50, 60, 70, 80
 
 .text
+
+# ------------------------------------------------------------------------------
+# co1_menu_loop: Interactive submenu for CO1
+# ------------------------------------------------------------------------------
+.global _co1_menu_loop
+_co1_menu_loop:
+    push ebp
+    mov ebp, esp
+    push ebx
+    push esi
+    push edi
+
+.L_co1_loop:
+    push offset co1_menu_hdr
+    call _print_str
+    add esp, 4
+
+    call _read_int
+    mov ebx, eax
+
+    cmp ebx, 1
+    je .L_co1_opt1
+    cmp ebx, 2
+    je .L_co1_opt2
+    cmp ebx, 3
+    je .L_co1_opt3
+    cmp ebx, 4
+    je .L_co1_opt4
+    cmp ebx, 5
+    je .L_co1_opt5
+    cmp ebx, 6
+    je .L_co1_opt6
+    cmp ebx, 7
+    je .L_co1_opt7
+    cmp ebx, 8
+    je .L_co1_exit
+    cmp ebx, -1
+    je .L_co1_exit
+    jmp .L_co1_loop
+
+.L_co1_opt1:
+    call _demo_gpr
+    jmp .L_co1_loop
+
+.L_co1_opt2:
+    call _demo_pointer_registers
+    jmp .L_co1_loop
+
+.L_co1_opt3:
+    call _demo_eflags
+    jmp .L_co1_loop
+
+.L_co1_opt4:
+    call _demo_segmentation
+    jmp .L_co1_loop
+
+.L_co1_opt5:
+    call _demo_addressing_modes
+    call _demo_instruction_categories
+    jmp .L_co1_loop
+
+.L_co1_opt6:
+    call _coa_demo_aegis_sentry
+    jmp .L_co1_loop
+
+.L_co1_opt7:
+    call _co1_run_all
+    jmp .L_co1_loop
+
+.L_co1_exit:
+    pop edi
+    pop esi
+    pop ebx
+    mov esp, ebp
+    pop ebp
+    ret
 
 # ------------------------------------------------------------------------------
 # co1_run_all: Master entry point for CO1 demonstration
