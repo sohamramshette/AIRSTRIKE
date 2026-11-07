@@ -27,6 +27,7 @@
 #include "tests/test_searching.h"
 #include "tests/test_sorting.h"
 #include "tests/test_hashing.h"
+#include "tests/test_pl_enemies.h"
 
 // ==========================================
 // Automated Test Runner Function
@@ -45,6 +46,7 @@ int runAllTestsAndReport() {
     overall.merge(runSearchingTests());
     overall.merge(runSortingTests());
     overall.merge(runHashingTests());
+    overall.merge(runPLEnemyTests());
 
     std::cout << "\n==============================================================================\n";
     std::cout << "                          FINAL PL TEST RESULTS SUMMARY                       \n";
@@ -56,7 +58,7 @@ int runAllTestsAndReport() {
     std::cout << "==============================================================================\n";
 
     if (overall.failedTests == 0) {
-        std::cout << "[SUCCESS] ALL 53 AUTOMATED TESTS PASSED WITH ZERO ERRORS.\n\n";
+        std::cout << "[SUCCESS] ALL " << overall.totalTests << " AUTOMATED TESTS PASSED WITH ZERO ERRORS.\n\n";
         return 0;
     } else {
         std::cerr << "[FAILURE] " << overall.failedTests << " TEST(S) FAILED.\n\n";
