@@ -3,7 +3,8 @@ import { LeaderboardEntry } from '../types/supabase';
 
 export interface LeaderboardResult {
   entries: LeaderboardEntry[];
-  source: 'cloud' | 'offline_fallback';
+  source: 'cloud';
+  error?: boolean;
   message?: string;
 }
 
@@ -21,20 +22,37 @@ export class LeaderboardService {
 
   public async fetchLeaderboard(limit: number = 10): Promise<LeaderboardResult> {
     try {
-      const { data, error, status } = await supabase
+      // Guard against hanging network requests with a 6-second timeout
+      const timeoutPromise = new Promise<{ data: null; error: { message: string; code: string }; status: number }>((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: null,
+            error: {
+              message: 'Supabase cloud request timed out. Please check your connection or refresh the page.',
+              code: 'TIMEOUT'
+            },
+            status: 408
+          });
+        }, 6000);
+      });
+
+      const queryPromise = supabase
         .from('leaderboard')
         .select('username,best_score')
         .order('best_score', { ascending: false })
         .limit(limit);
 
+      const { data, error, status } = await Promise.race([queryPromise, timeoutPromise]);
+
       if (error) {
-        // HTTP 401 / 42501 occurs when anonymous RLS permission is not yet applied
         console.warn(`Supabase leaderboard returned status ${status}:`, error.message);
+        const isPermissionDenied = status === 401 || (error as { code?: string }).code === '42501';
         return {
-          entries: this.getOfflineLeaderboard(),
-          source: 'offline_fallback',
-          message: status === 401 || (error as { code?: string }).code === '42501'
-            ? 'Cloud Leaderboard awaiting Phase 7.2A backend RLS activation. Displaying local academy records.'
+          entries: [],
+          source: 'cloud',
+          error: true,
+          message: isPermissionDenied
+            ? 'Global Leaderboard awaiting Supabase public access grant (Phase 7.2A Option B migration pending). Authenticated pilots can view scores upon login.'
             : `Supabase notice: ${error.message}`
         };
       }
@@ -42,38 +60,24 @@ export class LeaderboardService {
       if (data && data.length > 0) {
         return {
           entries: data as LeaderboardEntry[],
-          source: 'cloud'
+          source: 'cloud',
+          message: `⚡ Live Hall of Fame (${data.length} pilot${data.length === 1 ? '' : 's'} ranked)`
         };
       }
 
       return {
-        entries: this.getOfflineLeaderboard(),
-        source: 'offline_fallback',
-        message: 'No cloud scores recorded yet. Be the first Commander on the board!'
+        entries: [],
+        source: 'cloud',
+        message: 'No flight combat records logged yet. Be the first Commander on the board!'
       };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       return {
-        entries: this.getOfflineLeaderboard(),
-        source: 'offline_fallback',
-        message: `Offline mode: ${msg}`
+        entries: [],
+        source: 'cloud',
+        error: true,
+        message: `Network error: ${msg}`
       };
     }
   }
-
-  private getOfflineLeaderboard(): LeaderboardEntry[] {
-    return [
-      { username: 'COMMANDER_APEX', best_score: 48500 },
-      { username: 'STAR_VIPER', best_score: 36200 },
-      { username: 'NOVA_STRIKER', best_score: 29400 },
-      { username: 'CYBER_ACE', best_score: 22800 },
-      { username: 'PHANTOM_9', best_score: 18500 },
-      { username: 'SOLAR_WING', best_score: 14200 },
-      { username: 'VORTEX_LEADER', best_score: 11000 },
-      { username: 'NEBULA_RUNNER', best_score: 8750 },
-      { username: 'ASTRO_CADET', best_score: 6200 },
-      { username: 'ROOKIE_ONE', best_score: 3500 }
-    ];
-  }
 }
-

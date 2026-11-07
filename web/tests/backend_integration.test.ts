@@ -5,17 +5,19 @@ import { MatchService } from '../src/services/MatchService';
 import { LeaderboardService } from '../src/services/LeaderboardService';
 
 describe('Supabase Backend & Authentication Integration Tests', () => {
-  test('Leaderboard captures Supabase 401/42501 permission error and serves standby records', async () => {
+  test('Leaderboard captures Supabase 401/42501 permission error without fabricating mock records', async () => {
+    const auth = AuthService.getInstance();
+    await auth.signOut(); // Ensure unauthenticated guest
+
     const leaderboardService = LeaderboardService.getInstance();
     const result = await leaderboardService.fetchLeaderboard(10);
 
-    // Verify source and error handling
-    assert.ok(result.entries.length > 0, 'Entries must be returned');
-    assert.strictEqual(result.entries.length, 10);
-    // Since Phase 7.2A backend migration is pending approval, anonymous query returns 401
-    assert.strictEqual(result.source, 'offline_fallback');
+    assert.strictEqual(result.source, 'cloud');
+    // Since Phase 7.2A Option B migration is pending approval, anonymous query returns 401/42501
+    assert.strictEqual(result.error, true);
+    assert.strictEqual(result.entries.length, 0);
     assert.ok(
-      result.message?.includes('Phase 7.2A') || result.message?.includes('telemetry') || result.message?.includes('permission'),
+      result.message?.includes('Phase 7.2A') || result.message?.includes('permission') || result.message?.includes('grant'),
       `Expected informative RLS notice, got: ${result.message}`
     );
   });
@@ -74,6 +76,19 @@ describe('Supabase Backend & Authentication Integration Tests', () => {
     const auth = AuthService.getInstance();
     const callsign = await auth.resolveCallsign('uuid-0000', 'star.viper@galaxy.org');
     assert.strictEqual(callsign, 'STAR.VIPER');
+  });
+
+  test('Callsign update rejects unauthenticated pilot and empty input', async () => {
+    const auth = AuthService.getInstance();
+    await auth.signOut();
+
+    const emptyRes = await auth.updateCallsign('');
+    assert.strictEqual(emptyRes.success, false);
+    assert.strictEqual(emptyRes.message, 'Pilot not authenticated.');
+
+    const validNameRes = await auth.updateCallsign('APOLLO');
+    assert.strictEqual(validNameRes.success, false);
+    assert.strictEqual(validNameRes.message, 'Pilot not authenticated.');
   });
 
   test('Session state clears completely on logout', async () => {

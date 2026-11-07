@@ -1,6 +1,6 @@
 export interface SupabaseProfile {
-  user_id: string;
-  callsign: string | null;
+  id: string;
+  username: string;
   created_at?: string;
   updated_at?: string;
 }

@@ -160,19 +160,30 @@ export class UIManager {
       this.setAuthFeedback('');
     });
 
-    authForm?.addEventListener('submit', async (e) => {
+    const handleAuthSubmit = async (e: Event) => {
       e.preventDefault();
       const emailInput = document.getElementById('auth-input-email') as HTMLInputElement;
       const passInput = document.getElementById('auth-input-password') as HTMLInputElement;
       const callsignInput = document.getElementById('auth-input-callsign') as HTMLInputElement;
 
-      const email = emailInput?.value || '';
+      const email = emailInput?.value?.trim() || '';
       const password = passInput?.value || '';
-      const callsign = callsignInput?.value || '';
+      const callsign = callsignInput?.value?.trim() || '';
 
-      this.setAuthFeedback('Communicating with Supabase...');
+      if (!email || !password) {
+        this.setAuthFeedback('Email and password are required.', '#EF4444');
+        return;
+      }
+      if (password.length < 6) {
+        this.setAuthFeedback('Password must be at least 6 characters.', '#EF4444');
+        return;
+      }
 
-      if (this.isRegisterMode) {
+      this.setAuthFeedback('Communicating with Supabase...', 'var(--cyan-neon)');
+
+      const isRegister = this.isRegisterMode || !!document.getElementById('tab-register')?.classList.contains('active');
+
+      if (isRegister) {
         const res = await this.authService.signUp(email, password, callsign);
         this.setAuthFeedback(res.message, res.success ? '#22C55E' : '#EF4444');
         if (res.success) {
@@ -185,7 +196,10 @@ export class UIManager {
           setTimeout(() => this.closeModal('auth-modal'), 800);
         }
       }
-    });
+    };
+
+    authForm?.addEventListener('submit', handleAuthSubmit);
+    authSubmit?.addEventListener('click', handleAuthSubmit);
   }
 
   private bindTouchControls(): void {
@@ -284,34 +298,49 @@ export class UIManager {
     const tbody = document.getElementById('leaderboard-table-body');
     const notice = document.getElementById('leaderboard-source-notice');
 
-    if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Fetching leaderboard...</td></tr>';
-
-    const result = await this.leaderboardService.fetchLeaderboard(10);
-
+    if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 18px;">Connecting to telemetry...</td></tr>';
     if (notice) {
-      notice.textContent = result.message || (result.source === 'cloud' ? '⚡ Connected to Supabase Cloud' : 'Academy Standby Database');
-      notice.style.color = result.source === 'cloud' ? '#22C55E' : 'var(--text-muted)';
+      notice.textContent = 'Querying Supabase Cloud...';
+      notice.style.color = 'var(--text-muted)';
     }
 
-    if (tbody) {
-      if (result.entries.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No scores recorded.</td></tr>';
-      } else {
-        tbody.innerHTML = result.entries.map((entry, idx) => {
-          let rankClass = '';
-          let medal = `#${idx + 1}`;
-          if (idx === 0) { rankClass = 'rank-gold'; medal = '🥇 #1'; }
-          else if (idx === 1) { rankClass = 'rank-silver'; medal = '🥈 #2'; }
-          else if (idx === 2) { rankClass = 'rank-bronze'; medal = '🥉 #3'; }
+    try {
+      const result = await this.leaderboardService.fetchLeaderboard(10);
 
-          return `
-            <tr>
-              <td class="${rankClass}">${medal}</td>
-              <td style="font-weight: 600; color: #FFFFFF;">${this.escapeHtml(entry.username)}</td>
-              <td style="text-align: right; color: var(--cyan-neon); font-weight: bold;">${entry.best_score.toLocaleString()}</td>
-            </tr>
-          `;
-        }).join('');
+      if (notice) {
+        notice.textContent = result.message || '⚡ Connected to Supabase Cloud';
+        notice.style.color = result.error ? '#EF4444' : '#22C55E';
+      }
+
+      if (tbody) {
+        if (result.entries.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 24px; font-size: 13px;">${this.escapeHtml(result.message || 'No flight records logged yet.')}</td></tr>`;
+        } else {
+          tbody.innerHTML = result.entries.map((entry, idx) => {
+            let rankClass = '';
+            let medal = `#${idx + 1}`;
+            if (idx === 0) { rankClass = 'rank-gold'; medal = '🥇 #1'; }
+            else if (idx === 1) { rankClass = 'rank-silver'; medal = '🥈 #2'; }
+            else if (idx === 2) { rankClass = 'rank-bronze'; medal = '🥉 #3'; }
+
+            return `
+              <tr>
+                <td class="${rankClass}">${medal}</td>
+                <td style="font-weight: 600; color: #FFFFFF;">${this.escapeHtml(entry.username)}</td>
+                <td style="text-align: right; color: var(--cyan-neon); font-weight: bold;">${entry.best_score.toLocaleString()}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (notice) {
+        notice.textContent = 'Telemetry notice';
+        notice.style.color = '#EF4444';
+      }
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #EF4444; padding: 20px;">Connection failed: ${this.escapeHtml(msg)}</td></tr>`;
       }
     }
   }

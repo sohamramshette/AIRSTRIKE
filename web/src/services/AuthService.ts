@@ -10,7 +10,11 @@ export class AuthService {
     this.initSession();
     supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        const callsign = await this.resolveCallsign(session.user.id, session.user.email);
+        const callsign = await this.resolveCallsign(
+          session.user.id,
+          session.user.email,
+          session.user.user_metadata
+        );
         this.currentSession = {
           userId: session.user.id,
           email: session.user.email || '',
@@ -35,7 +39,11 @@ export class AuthService {
     try {
       const { data } = await supabase.auth.getSession();
       if (data?.session?.user) {
-        const callsign = await this.resolveCallsign(data.session.user.id, data.session.user.email);
+        const callsign = await this.resolveCallsign(
+          data.session.user.id,
+          data.session.user.email,
+          data.session.user.user_metadata
+        );
         this.currentSession = {
           userId: data.session.user.id,
           email: data.session.user.email || '',
@@ -49,21 +57,46 @@ export class AuthService {
     }
   }
 
-  public async resolveCallsign(userId: string, email?: string): Promise<string> {
+  /**
+   * Resolves the pilot callsign from public.profiles using the audited schema:
+   * Table: public.profiles, Primary Key: id, Unique Column: username.
+   */
+  public async resolveCallsign(
+    userId: string,
+    email?: string,
+    userMetadata?: Record<string, unknown>
+  ): Promise<string> {
+    const rawMetadataCallsign = userMetadata?.callsign || userMetadata?.username;
+    const metadataCallsign = typeof rawMetadataCallsign === 'string' ? rawMetadataCallsign.trim() : undefined;
+
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('callsign')
-        .eq('user_id', userId)
+        .select('username')
+        .eq('id', userId)
         .maybeSingle();
 
-      if (!error && data?.callsign) {
-        return data.callsign;
+      if (!error && data?.username) {
+        const dbName = (data.username as string).trim();
+        // If the database has an automated default name (e.g. player_xxxx) and user metadata has a custom name:
+        if (metadataCallsign && dbName.startsWith('player_') && dbName !== metadataCallsign) {
+          const { error: updateErr } = await supabase
+            .from('profiles')
+            .update({ username: metadataCallsign })
+            .eq('id', userId);
+          if (!updateErr) {
+            return metadataCallsign;
+          }
+        }
+        return dbName;
       }
     } catch (e) {
       // Profile table access might fail or user trigger still running
     }
 
+    if (metadataCallsign) {
+      return metadataCallsign;
+    }
     if (email) {
       return email.split('@')[0].toUpperCase();
     }
@@ -87,7 +120,8 @@ export class AuthService {
         password,
         options: {
           data: {
-            callsign: trimmedCallsign
+            callsign: trimmedCallsign,
+            username: trimmedCallsign
           }
         }
       });
@@ -97,14 +131,23 @@ export class AuthService {
       }
 
       if (data.user) {
-        // Attempt to upsert/update profile callsign
+        // An automated trigger on auth.users automatically inserts the initial row into public.profiles.
+        // Update the profile row with the user's chosen callsign:
         try {
-          await supabase.from('profiles').upsert({
-            user_id: data.user.id,
-            callsign: trimmedCallsign
-          });
+          const { error: updateErr } = await supabase
+            .from('profiles')
+            .update({ username: trimmedCallsign })
+            .eq('id', data.user.id);
+
+          if (updateErr) {
+            // Fallback to upsert if trigger was not present
+            await supabase.from('profiles').upsert({
+              id: data.user.id,
+              username: trimmedCallsign
+            });
+          }
         } catch {
-          // Trigger may have already created it
+          // Non-blocking fallback
         }
 
         if (data.session) {
@@ -115,7 +158,7 @@ export class AuthService {
             accessToken: data.session.access_token
           };
           this.notifyListeners();
-          return { success: true, message: 'Account registered and logged in successfully!' };
+          return { success: true, message: `Account registered! Welcome Commander ${trimmedCallsign}!` };
         } else {
           return { success: true, message: 'Registration received! Please check your email for confirmation if required.' };
         }
@@ -125,6 +168,36 @@ export class AuthService {
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       return { success: false, message: errorMsg };
+    }
+  }
+
+  /**
+   * Updates the pilot username/callsign in public.profiles.
+   * Adheres to audited schema: table public.profiles, key 'id', column 'username'.
+   */
+  public async updateCallsign(newCallsign: string): Promise<{ success: boolean; message: string }> {
+    if (!this.currentSession) {
+      return { success: false, message: 'Pilot not authenticated.' };
+    }
+    const trimmed = newCallsign.trim();
+    if (!trimmed) {
+      return { success: false, message: 'Callsign cannot be empty.' };
+    }
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: trimmed })
+        .eq('id', this.currentSession.userId);
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+      this.currentSession.callsign = trimmed;
+      this.notifyListeners();
+      return { success: true, message: 'Callsign updated successfully.' };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, message: msg };
     }
   }
 
@@ -145,7 +218,11 @@ export class AuthService {
       }
 
       if (data.user && data.session) {
-        const callsign = await this.resolveCallsign(data.user.id, data.user.email);
+        const callsign = await this.resolveCallsign(
+          data.user.id,
+          data.user.email,
+          data.user.user_metadata
+        );
         this.currentSession = {
           userId: data.user.id,
           email: data.user.email || trimmedEmail,
@@ -195,4 +272,3 @@ export class AuthService {
     }
   }
 }
-
