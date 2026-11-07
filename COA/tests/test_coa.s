@@ -121,11 +121,60 @@ t_co4_cu:
 t_co4_pipe_hazards:
     .asciz "CO4: 5-Stage Pipeline Simulation (RAW Stalls & Branch Flush Verified)"
 
+# Section 5: COA Enemy Types Verification Strings
+sec_co5_enemy_test:
+    .asciz "\n[SUITE 5/5] COA Enemy Types Verification (Pure 80386 Assembly)...\n"
+
+t_en_aegis_part:
+    .asciz "COA-Enemy1: Aegis Sentry GPR Sub-register Partitioning (EAX -> AX -> AH/AL)"
+t_en_aegis_al:
+    .asciz "COA-Enemy1: Aegis Sentry AL Layer Damage preserves AH & Upper Word"
+t_en_aegis_ah:
+    .asciz "COA-Enemy1: Aegis Sentry AH Layer Recharge preserves AL Layer"
+t_en_aegis_flags_zf:
+    .asciz "COA-Enemy1: Aegis Sentry Arithmetic Zero Flag (ZF=1 on Depletion)"
+t_en_aegis_flags_sf_cf:
+    .asciz "COA-Enemy1: Aegis Sentry Sign & Carry Flags (SF=1, CF=1 on Over-penetration)"
+t_en_aegis_sib:
+    .asciz "COA-Enemy1: Aegis Sentry SIB Addressing Mode [EBX + ESI*4 + 8]"
+
+t_en_skimmer_traj:
+    .asciz "COA-Enemy2: Fibonacci Skimmer Trajectory Weave Calculation"
+t_en_skimmer_fire:
+    .asciz "COA-Enemy2: Fibonacci Skimmer Weapon Timing Scaling F(n)*Cooldown"
+
+t_en_booth_pos_pos:
+    .asciz "COA-Enemy3: Booth Gunship Firepower (+ * +): 7 * 5 = 35 Damage"
+t_en_booth_pos_neg:
+    .asciz "COA-Enemy3: Booth Gunship Inverted Phase (+ * -): 9 * -4 = -36 (EMP Drain)"
+t_en_booth_neg_neg:
+    .asciz "COA-Enemy3: Booth Gunship Dual Inversion (- * -): -11 * -3 = 33 Damage"
+t_en_booth_zero:
+    .asciz "COA-Enemy3: Booth Gunship Zero Vector Dud (0 * 45 = 0)"
+t_en_booth_boundary:
+    .asciz "COA-Enemy3: Booth Gunship 8-bit Boundary Saturated (-64 * 2 = -128)"
+
+t_en_pipe_ideal:
+    .asciz "COA-Enemy4: Railgun Dreadnought Ideal 5-Stage Volley (8 Cycles, 0 Stalls)"
+t_en_pipe_raw:
+    .asciz "COA-Enemy4: Railgun Dreadnought RAW Hazard Stall Bubbles (10 Cycles, 2 Stalls)"
+t_en_pipe_fwd:
+    .asciz "COA-Enemy4: Railgun Dreadnought Operand Forwarding Bypass (8 Cycles, 0 Stalls)"
+
 # Test data arrays
 test_array_coa:
     .long 45, -12, 88, 0, -34, 102, -5, 23
 test_array_size:
     .long 8
+
+# Test SIB buffer for Aegis Sentry
+test_sib_layers:
+    .long 0x11111111
+    .long 0x22222222
+    .long 0xAAAA0001
+    .long 0xBBBB0002
+    .long 0xCCCC0003
+    .long 0xDDDD0004
 
 .bss
 .lcomm total_cnt, 4
@@ -141,6 +190,11 @@ test_array_size:
 .lcomm test_lo, 4
 .lcomm test_hi, 4
 .lcomm test_cf, 4
+.lcomm test_en_buf, 64
+.lcomm test_en_dmg, 4
+.lcomm test_en_flg, 4
+.lcomm test_en_cyc, 4
+.lcomm test_en_stl, 4
 
 .text
 
@@ -842,6 +896,318 @@ _run_all_coa_tests:
     mov eax, 1
     push offset t_co4_pipe_hazards
     push eax
+    call record_result
+    add esp, 8
+
+    # ==========================================================================
+    # SUITE 5: COA Enemy Types Verification (Pure 80386 Assembly)
+    # ==========================================================================
+    push offset sec_co5_enemy_test
+    call _print_str
+    add esp, 4
+
+    # 35. Aegis Sentry: Initial GPR sub-partitioning
+    call _coa_init_aegis_shield
+    # EAX should be 0xA5B6C7D8
+    xor ebx, ebx
+    cmp eax, 0xA5B6C7D8
+    jne .L_en_aegis1_bad
+    cmp ax, 0xC7D8
+    jne .L_en_aegis1_bad
+    cmp ah, 0xC7
+    jne .L_en_aegis1_bad
+    cmp al, 0xD8
+    jne .L_en_aegis1_bad
+    mov ebx, 1
+.L_en_aegis1_bad:
+    push offset t_en_aegis_part
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 36. Aegis Sentry: AL Layer damage preserves AH & upper word
+    push 0x10                   # dmg = 0x10
+    push 0xA5B6C7D8             # current
+    call _coa_damage_al_layer
+    add esp, 8
+    # EAX should be 0xA5B6C7C8 (AL: 0xD8 - 0x10 = 0xC8, AH: 0xC7 unchanged)
+    xor ebx, ebx
+    cmp eax, 0xA5B6C7C8
+    jne .L_en_aegis2_bad
+    cmp al, 0xC8
+    jne .L_en_aegis2_bad
+    cmp ah, 0xC7
+    jne .L_en_aegis2_bad
+    mov ebx, 1
+.L_en_aegis2_bad:
+    push offset t_en_aegis_al
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 37. Aegis Sentry: AH Layer recharge preserves AL
+    push 0x10                   # boost = 0x10
+    push 0xA5B6C7C8             # current
+    call _coa_recharge_ah_layer
+    add esp, 8
+    # EAX should be 0xA5B6D7C8 (AH: 0xC7 + 0x10 = 0xD7, AL: 0xC8 unchanged)
+    xor ebx, ebx
+    cmp eax, 0xA5B6D7C8
+    jne .L_en_aegis3_bad
+    cmp ah, 0xD7
+    jne .L_en_aegis3_bad
+    cmp al, 0xC8
+    jne .L_en_aegis3_bad
+    mov ebx, 1
+.L_en_aegis3_bad:
+    push offset t_en_aegis_ah
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 38. Aegis Sentry: ZF=1 on depletion (50 - 50 = 0)
+    push 1                      # isSub = 1
+    push 50                     # val2 = 50
+    push 50                     # val1 = 50
+    call _coa_evaluate_shield_flags
+    add esp, 12
+    # Returns (OF << 3) | (SF << 2) | (ZF << 1) | CF
+    # ZF=1 -> bit 1 must be set, CF/SF/OF must be 0
+    xor ebx, ebx
+    cmp eax, 2
+    jne .L_en_aegis4_bad
+    mov ebx, 1
+.L_en_aegis4_bad:
+    push offset t_en_aegis_flags_zf
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 39. Aegis Sentry: SF=1 and CF=1 on over-penetration (20 - 50 = -30, borrow)
+    push 1                      # isSub = 1
+    push 50                     # val2 = 50
+    push 20                     # val1 = 20
+    call _coa_evaluate_shield_flags
+    add esp, 12
+    # CF=bit0, SF=bit2 -> eax should have (1 << 2) | 1 = 5
+    xor ebx, ebx
+    and eax, 5
+    cmp eax, 5                  # both CF and SF set
+    jne .L_en_aegis5_bad
+    mov ebx, 1
+.L_en_aegis5_bad:
+    push offset t_en_aegis_flags_sf_cf
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 40. Aegis Sentry: SIB addressing mode [ebx + esi*4 + 8]
+    push 2                      # index = 2
+    push offset test_sib_layers # base
+    call _coa_sib_shield_layer_access
+    add esp, 8
+    xor ebx, ebx
+    cmp eax, 0xCCCC0003         # Layer 2 value
+    jne .L_en_aegis6_bad
+    mov ebx, 1
+.L_en_aegis6_bad:
+    push offset t_en_aegis_sib
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 41. Fibonacci Skimmer: Trajectory calculation
+    push 100                    # maxWeave = 100
+    push 400                    # baseX = 400
+    push 6                      # count = 6
+    push offset test_en_buf     # outX
+    call _coa_skimmer_compute_trajectory
+    add esp, 16
+    xor ebx, ebx
+    mov esi, offset test_en_buf
+    cmp dword ptr [esi + 0], 400   # 400 + F(0)=0
+    jne .L_en_skim1_bad
+    cmp dword ptr [esi + 4], 399   # 400 - F(1)=1
+    jne .L_en_skim1_bad
+    cmp dword ptr [esi + 8], 401   # 400 + F(2)=1
+    jne .L_en_skim1_bad
+    cmp dword ptr [esi + 12], 398  # 400 - F(3)=2
+    jne .L_en_skim1_bad
+    cmp dword ptr [esi + 16], 403  # 400 + F(4)=3
+    jne .L_en_skim1_bad
+    cmp dword ptr [esi + 20], 395  # 400 - F(5)=5
+    jne .L_en_skim1_bad
+    mov ebx, 1
+.L_en_skim1_bad:
+    push offset t_en_skimmer_traj
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 42. Fibonacci Skimmer: Salvo timing scaling F(5)*100 = 500 ms
+    push 100                    # baseCooldown = 100
+    push 5                      # stepIndex = 5 -> F(5)=5
+    call _coa_skimmer_fire_interval
+    add esp, 8
+    xor ebx, ebx
+    cmp eax, 500
+    jne .L_en_skim2_bad
+    mov ebx, 1
+.L_en_skim2_bad:
+    push offset t_en_skimmer_fire
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 43. Booth Gunship: (+7 * +5 = 35)
+    push offset test_en_flg
+    push offset test_en_dmg
+    push 5
+    push 7
+    call _coa_booth_calculate_kinetic_damage
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_en_dmg], 35
+    jne .L_en_booth1_bad
+    test dword ptr [test_en_flg], 1     # should NOT be negative
+    jnz .L_en_booth1_bad
+    mov ebx, 1
+.L_en_booth1_bad:
+    push offset t_en_booth_pos_pos
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 44. Booth Gunship: (+9 * -4 = -36)
+    push offset test_en_flg
+    push offset test_en_dmg
+    push -4
+    push 9
+    call _coa_booth_calculate_kinetic_damage
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_en_dmg], -36
+    jne .L_en_booth2_bad
+    test dword ptr [test_en_flg], 1     # must be negative (bit 0 set)
+    jz .L_en_booth2_bad
+    mov ebx, 1
+.L_en_booth2_bad:
+    push offset t_en_booth_pos_neg
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 45. Booth Gunship: (-11 * -3 = 33)
+    push offset test_en_flg
+    push offset test_en_dmg
+    push -3
+    push -11
+    call _coa_booth_calculate_kinetic_damage
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_en_dmg], 33
+    jne .L_en_booth3_bad
+    test dword ptr [test_en_flg], 1     # must be positive (bit 0 clear)
+    jnz .L_en_booth3_bad
+    mov ebx, 1
+.L_en_booth3_bad:
+    push offset t_en_booth_neg_neg
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 46. Booth Gunship: Zero vector (0 * 45 = 0)
+    push offset test_en_flg
+    push offset test_en_dmg
+    push 45
+    push 0
+    call _coa_booth_calculate_kinetic_damage
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_en_dmg], 0
+    jne .L_en_booth4_bad
+    test dword ptr [test_en_flg], 2     # must have bit 1 (isZero) set
+    jz .L_en_booth4_bad
+    mov ebx, 1
+.L_en_booth4_bad:
+    push offset t_en_booth_zero
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 47. Booth Gunship: 8-bit boundary (-64 * 2 = -128, saturated)
+    push offset test_en_flg
+    push offset test_en_dmg
+    push 2
+    push -64
+    call _coa_booth_calculate_kinetic_damage
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_en_dmg], -128
+    jne .L_en_booth5_bad
+    test dword ptr [test_en_flg], 4     # must have bit 2 (isSaturated) set
+    jz .L_en_booth5_bad
+    mov ebx, 1
+.L_en_booth5_bad:
+    push offset t_en_booth_boundary
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 48. Railgun Dreadnought: Ideal 5-stage pipeline (4 shots -> 8 cycles, 0 stalls)
+    push offset test_en_stl
+    push offset test_en_cyc
+    push 0                      # mode = ideal
+    push 4                      # shots = 4
+    call _coa_railgun_pipeline_eval
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_en_cyc], 8
+    jne .L_en_pipe1_bad
+    cmp dword ptr [test_en_stl], 0
+    jne .L_en_pipe1_bad
+    mov ebx, 1
+.L_en_pipe1_bad:
+    push offset t_en_pipe_ideal
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 49. Railgun Dreadnought: RAW Hazard without forwarding (4 shots -> 10 cycles, 2 stalls)
+    push offset test_en_stl
+    push offset test_en_cyc
+    push 1                      # mode = RAW hazard with stalls
+    push 4                      # shots = 4
+    call _coa_railgun_pipeline_eval
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_en_cyc], 10
+    jne .L_en_pipe2_bad
+    cmp dword ptr [test_en_stl], 2
+    jne .L_en_pipe2_bad
+    mov ebx, 1
+.L_en_pipe2_bad:
+    push offset t_en_pipe_raw
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 50. Railgun Dreadnought: Operand Forwarding bypass (4 shots -> 8 cycles, 0 stalls)
+    push offset test_en_stl
+    push offset test_en_cyc
+    push 2                      # mode = Forwarding
+    push 4                      # shots = 4
+    call _coa_railgun_pipeline_eval
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_en_cyc], 8
+    jne .L_en_pipe3_bad
+    cmp dword ptr [test_en_stl], 0
+    jne .L_en_pipe3_bad
+    mov ebx, 1
+.L_en_pipe3_bad:
+    push offset t_en_pipe_fwd
+    push ebx
     call record_result
     add esp, 8
 

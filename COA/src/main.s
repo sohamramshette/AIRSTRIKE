@@ -124,11 +124,15 @@ _main:
     jmp .L_main_menu_loop
 
 .L_opt5_run_all:
-    # Run all CO demonstrations + automated tests
+    # Run all CO demonstrations, Enemy demonstrations + automated tests
     call _co1_run_all
     call _co2_run_all
     call _co3_run_all
     call _co4_run_all
+    call _coa_demo_aegis_sentry
+    call _coa_demo_fibonacci_skimmer
+    call _coa_demo_booth_gunship
+    call _coa_demo_pipelined_railgun
     call _run_all_coa_tests
     call _pause_key
     jmp .L_main_menu_loop
