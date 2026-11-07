@@ -6,6 +6,12 @@
 #include "projection/viewing_demo.hpp"
 #include "clipping/clipping_algorithms.hpp"
 #include "appearance/lighting_texture_demo.hpp"
+#include "primitives/polygon_cruiser.hpp"
+#include "transformations/orbital_rotor.hpp"
+#include "algorithms/raster_sentinel.hpp"
+#include "projection/warp_cruiser.hpp"
+#include "clipping/boundary_skimmer.hpp"
+#include "appearance/phong_cruiser.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -469,6 +475,148 @@ void testCO6Appearance() {
                "TC_CGL_06K: Gouraud shading bilinear vertex color interpolation verification");
 }
 
+// -------------------------------------------------------------
+// CGL Enemy Implementation Tests (CGL-CO1 to CGL-CO6)
+// -------------------------------------------------------------
+void testCGLEnemies() {
+    std::cout << "\n--- Testing CGL Enemy Implementations (CGL-CO1 to CGL-CO6) ---" << std::endl;
+
+    // 1. Geometric Polygon Cruiser (CGL-CO1)
+    {
+        PolygonCruiser cruiser;
+        CGL_ASSERT(cruiser.getHullVertexCount() == 6,
+                   "TC_CGL_EN1A: PolygonCruiser 6-vertex CCW fuselage hull generation");
+        CGL_ASSERT(cruiser.getWingVertexCount() == 6,
+                   "TC_CGL_EN1B: PolygonCruiser swept delta wings triangle-fan geometry");
+        CGL_ASSERT(cruiser.verifyCCWWindingOrder(),
+                   "TC_CGL_EN1C: PolygonCruiser strict Counter-Clockwise (CCW) front-facing winding");
+        CGL_ASSERT(cruiser.calculateHullArea() > 0.05f,
+                   "TC_CGL_EN1D: PolygonCruiser positive signed Green-Shoelace area verification");
+        CGL_ASSERT(cruiser.isPointInHull(0.0f, 0.0f) && !cruiser.isPointInHull(0.5f, 0.5f),
+                   "TC_CGL_EN1E: PolygonCruiser ray-casting point-in-polygon containment check");
+    }
+
+    // 2. Orbital Rotor Drone (CGL-CO2)
+    {
+        OrbitalRotorDrone drone;
+        CGL_ASSERT(drone.verifyNonCommutativity(2.0f, 3.0f, 45.0f),
+                   "TC_CGL_EN2A: OrbitalRotor non-commutative matrix sequencing (T*R != R*T)");
+
+        // Pod 0 world position at angle 0: Base(5, 10) + (2, 0) -> (7, 10, 0)
+        Vec3 pod0 = drone.computeRotorWorldPosition(0, 5.0f, 10.0f, 0.0f, 2.0f);
+        CGL_ASSERT(approxEqual(pod0.x, 7.0f) && approxEqual(pod0.y, 10.0f),
+                   "TC_CGL_EN2B: OrbitalRotor hierarchical pod 0 world coordinate resolution");
+
+        // Pod 1 world position at 180 deg opposite: Base(5, 10) + (-2, 0) -> (3, 10, 0)
+        Vec3 pod1 = drone.computeRotorWorldPosition(1, 5.0f, 10.0f, 0.0f, 2.0f);
+        CGL_ASSERT(approxEqual(pod1.x, 3.0f) && approxEqual(pod1.y, 10.0f),
+                   "TC_CGL_EN2C: OrbitalRotor hierarchical pod 1 180-deg opposed orbit coordinate");
+
+        // Orbit at 90 deg: Base(5, 10) + (0, 2) -> (5, 12, 0)
+        Vec3 podRot90 = drone.computeRotorWorldPosition(0, 5.0f, 10.0f, 90.0f, 2.0f);
+        CGL_ASSERT(approxEqual(podRot90.x, 5.0f) && approxEqual(podRot90.y, 12.0f),
+                   "TC_CGL_EN2D: OrbitalRotor dynamic rotation angle trigonometry accuracy");
+
+        // Pulsation scale factor range check
+        drone.update(0.5f);
+        CGL_ASSERT(drone.getPulseScale() >= 0.85f && drone.getPulseScale() <= 1.15f,
+                   "TC_CGL_EN2E: OrbitalRotor central core breathing scale range [0.85, 1.15]");
+    }
+
+    // 3. Bresenham Shield Sentinel (CGL-CO3)
+    {
+        RasterSentinel sentinel;
+        std::vector<Point2D> shield = sentinel.generateShield(100, 100, 25);
+        CGL_ASSERT(!shield.empty() && shield.size() >= 100,
+                   "TC_CGL_EN3A: RasterSentinel Midpoint Circle shield pixel points generation");
+
+        CGL_ASSERT(RasterSentinel::verifyCircleEquation(shield, 100, 100, 25),
+                   "TC_CGL_EN3B: RasterSentinel Midpoint Circle mathematical equation adherence");
+
+        CGL_ASSERT(RasterSentinel::verify8WaySymmetry(100, 100, 25),
+                   "TC_CGL_EN3C: RasterSentinel 8-way octant symmetry across cardinal axes");
+
+        std::vector<Point2D> beam = sentinel.generateTargetingBeam(10, 20, 80, 60);
+        CGL_ASSERT(RasterSentinel::verifyBresenhamEndpoints(beam, 10, 20, 80, 60),
+                   "TC_CGL_EN3D: RasterSentinel Bresenham integer line targeting beam endpoints");
+
+        std::vector<Point2D> steepBeam = sentinel.generateTargetingBeam(0, 0, 4, 12);
+        CGL_ASSERT(RasterSentinel::verifyBresenhamEndpoints(steepBeam, 0, 0, 4, 12) && steepBeam.size() == 13,
+                   "TC_CGL_EN3E: RasterSentinel Bresenham line across steep slope (m > 1) octants");
+    }
+
+    // 4. Depth-Diving Warp Cruiser (CGL-CO4)
+    {
+        WarpCruiser cruiser;
+        float pRatio = cruiser.computePerspectiveForeshorteningRatio(-50.0f, -10.0f, 60.0f, 1.333f);
+        CGL_ASSERT(approxEqual(pRatio, 5.0f, 0.05f),
+                   "TC_CGL_EN4A: WarpCruiser perspective 1/Z foreshortening ratio (5.0x for Z=50 to Z=10)");
+
+        float oRatio = cruiser.computeOrthoForeshorteningRatio(-50.0f, -10.0f, -15.0f, 15.0f);
+        CGL_ASSERT(approxEqual(oRatio, 1.0f, 0.001f),
+                   "TC_CGL_EN4B: WarpCruiser orthographic parallel distance invariance ratio (1.0x)");
+
+        Vec3 nearPt = cruiser.projectPerspective(Vec3(0.0f, 0.0f, -10.0f), 60.0f, 1.333f, 1.0f, 100.0f);
+        Vec3 farPt  = cruiser.projectPerspective(Vec3(0.0f, 0.0f, -50.0f), 60.0f, 1.333f, 1.0f, 100.0f);
+        CGL_ASSERT(nearPt.z < farPt.z,
+                   "TC_CGL_EN4C: WarpCruiser perspective NDC depth buffer ordering (near < far)");
+    }
+
+    // 5. Boundary Phase Skimmer (CGL-CO5)
+    {
+        RectWindow win(-0.6f, -0.6f, 0.6f, 0.6f);
+        CGL_ASSERT(BoundarySkimmer::testTrivialAccept(win),
+                   "TC_CGL_EN5A: BoundarySkimmer Cohen-Sutherland trivial accept inside window");
+
+        CGL_ASSERT(BoundarySkimmer::testTrivialReject(win),
+                   "TC_CGL_EN5B: BoundarySkimmer Cohen-Sutherland trivial reject outside left");
+
+        CGL_ASSERT(BoundarySkimmer::testSingleBoundaryCross(win),
+                   "TC_CGL_EN5C: BoundarySkimmer Cohen-Sutherland single boundary intersection clip");
+
+        CGL_ASSERT(BoundarySkimmer::testMultipleBoundariesCross(win),
+                   "TC_CGL_EN5D: BoundarySkimmer Cohen-Sutherland multiple boundaries traversal clip");
+
+        CGL_ASSERT(BoundarySkimmer::testPolygonClipping(win),
+                   "TC_CGL_EN5E: BoundarySkimmer Sutherland-Hodgman polygon clipping against boundary");
+    }
+
+    // 6. Specular Phong Cruiser (CGL-CO6)
+    {
+        PhongCruiser cruiser;
+
+        // Reflection vector test
+        Vec3 N(0.0f, 1.0f, 0.0f);
+        Vec3 L(0.7071f, 0.7071f, 0.0f);
+        Vec3 R = PhongCruiser::computeReflectionVector(N, L);
+        CGL_ASSERT(approxEqual(R.x, -0.7071f) && approxEqual(R.y, 0.7071f),
+                   "TC_CGL_EN6A: PhongCruiser Reflection Vector formula R = 2(N.L)N - L verified");
+
+        // Half-angle vector test
+        Vec3 V(0.0f, 1.0f, 0.0f);
+        Vec3 L2(1.0f, 0.0f, 0.0f);
+        Vec3 H = PhongCruiser::computeHalfAngleVector(L2, V);
+        CGL_ASSERT(approxEqual(H.x, 0.7071f) && approxEqual(H.y, 0.7071f),
+                   "TC_CGL_EN6B: PhongCruiser Blinn-Phong Half-Angle Vector H = normalize(L + V)");
+
+        // Phong evaluation with aligned reflection & view vector
+        Color4 phongColor = PhongCruiser::evaluatePhongModel(N, Vec3(0.0f, 1.0f, 0.0f), Vec3(0.0f, 1.0f, 0.0f),
+                                                            0.2f, 0.6f, 0.9f, 32.0f);
+        CGL_ASSERT(phongColor.r > 0.8f,
+                   "TC_CGL_EN6C: PhongCruiser specular highlight peak on aligned viewer vector");
+
+        // Blinn-Phong evaluation
+        Color4 blinnColor = PhongCruiser::evaluateBlinnPhongModel(N, Vec3(0.0f, 1.0f, 0.0f), Vec3(0.0f, 1.0f, 0.0f),
+                                                                 0.2f, 0.6f, 0.9f, 32.0f);
+        CGL_ASSERT(blinnColor.r > 0.8f,
+                   "TC_CGL_EN6D: PhongCruiser Blinn-Phong specular reflection intensity evaluation");
+
+        // Local 24-bit uncompressed BMP texture check
+        CGL_ASSERT(cruiser.isTextureLoaded() && cruiser.getTextureBufferSize() == 196608,
+                   "TC_CGL_EN6E: PhongCruiser local 24-bit uncompressed BMP texture buffer (196,608 bytes)");
+    }
+}
+
 int runAllCGLTests() {
     testsPassed = 0;
     testsTotal = 0;
@@ -486,6 +634,7 @@ int runAllCGLTests() {
     testCO4Projection();
     testCO5Clipping();
     testCO6Appearance();
+    testCGLEnemies();
 
     std::cout << "\n========================================================" << std::endl;
     std::cout << "  TEST SUMMARY: " << testsPassed << " / " << testsTotal << " Passed ("
