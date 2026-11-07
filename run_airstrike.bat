@@ -7,12 +7,15 @@ if exist "%~dp0bin" cd /d "%~dp0"
 if "%1"=="" goto :delegate_master
 if /i "%1"=="java" goto :run_java
 if /i "%1"=="psoop" goto :run_java
+if /i "%1"=="browser" goto :run_browser
+if /i "%1"=="web" goto :run_browser
 if /i "%1"=="pl" goto :run_pl
 if /i "%1"=="coa" goto :run_coa
 if /i "%1"=="cgl" goto :run_cgl
 if /i "%1"=="build" goto :run_build
 if /i "%1"=="test" goto :run_tests
 if /i "%1"=="verify" goto :run_tests
+if /i "%1"=="roster" goto :run_roster
 if /i "%1"=="docs" goto :open_docs
 
 :delegate_master
@@ -24,6 +27,14 @@ echo.
 echo [PSOOP] Launching Java Game Client...
 if not exist "bin\java\main\Main.class" call scripts\build_java.bat
 start "AIRSTRIKE - Java Combat Client" java -cp bin\java main.Main
+exit /b 0
+
+:run_browser
+echo.
+echo [WEB] Launching Browser Client development server...
+start "AIRSTRIKE - Web Server" cmd /k "cd /d web && npm run dev"
+timeout /t 2 >nul
+start http://localhost:5173
 exit /b 0
 
 :run_pl
@@ -53,6 +64,10 @@ exit /b %ERRORLEVEL%
 
 :run_tests
 call test_all.bat
+exit /b %ERRORLEVEL%
+
+:run_roster
+call airstrike.bat
 exit /b %ERRORLEVEL%
 
 :open_docs

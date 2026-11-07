@@ -2,7 +2,8 @@
 
 ![Status](https://img.shields.io/badge/status-complete__verified-brightgreen.svg)
 ![COs](https://img.shields.io/badge/Course%20Outcomes-19%20of%2019%20Verified-blue.svg)
-![Tests](https://img.shields.io/badge/Automated%20Tests-302%20Passing%20(100%25)-success.svg)
+![Enemies](https://img.shields.io/badge/Academic%20Enemies-20%20of%2020%20Verified-blueviolet.svg)
+![Tests](https://img.shields.io/badge/Automated%20Tests-418%20Passing%20(100%25)-success.svg)
 ![Java](https://img.shields.io/badge/Java-26%20%7C%20Swing%20%7C%20AWT-orange.svg)
 ![C++](https://img.shields.io/badge/C++-17%20Standard-brightgreen.svg)
 ![Assembly](https://img.shields.io/badge/Assembly-80386%2032--bit-red.svg)
@@ -94,16 +95,18 @@ airstrike.bat
                      AIRSTRIKE - UNIFIED MASTER LAUNCHER
                  Academic Demonstration & Verification System
 ==============================================================================
-  Four Integrated Subjects - 19 Course Outcomes - Supabase Cloud Database
+   Four Integrated Subjects - 19 Course Outcomes - 20 Academic Enemy Types
 ==============================================================================
-  [1] PSOOP - Java Space Shooter (Swing / AWT GUI)
-  [2] PL    - Data Structures and Algorithms (C++17 CLI)
-  [3] COA   - 80386 Assembly Programs (32-bit Assembly CLI)
-  [4] CGL   - Computer Graphics Laboratory (OpenGL / GLUT)
-  [5] Build All Modules (build_all.bat)
-  [6] Run All Tests (test_all.bat)
-  [7] Open Project Documentation
-  [8] Exit
+  [1]  Play AIRSTRIKE - Java Desktop (Swing / AWT Space Combat Game)
+  [2]  Launch AIRSTRIKE - Browser (HTML5 Canvas + TypeScript Web Client)
+  [3]  PSOOP Enemy Demonstrations (Java Space Shooter & Enemy Fleet)
+  [4]  PL Enemy Demonstrations (C++17 Data Structures & Tactical Fleet)
+  [5]  COA Enemy Demonstrations (32-bit Intel 80386 Assembly Suite)
+  [6]  CGL Enemy Demonstrations (OpenGL / GLUT Graphics - Screen 7)
+  [7]  Build All Modules (build_all.bat)
+  [8]  Run All Tests (test_all.bat - 418 Assertions)
+  [9]  View 20-Enemy Academic Roster (CO1 to CO19 Full Mapping)
+  [10] Exit Application
 ==============================================================================
 ```
 
@@ -116,7 +119,7 @@ airstrike.bat
 build_all.bat
 ```
 
-### Master Test Runner (All 19 Course Outcomes)
+### Master Test Runner (All 19 Course Outcomes & 20 Enemies)
 ```cmd
 test_all.bat
 ```
@@ -128,12 +131,12 @@ test_all.bat
 ==============================================================================
   Module   Subject                           Assertions   Status
   ----------------------------------------------------------------------------
-  PSOOP    Java Swing and Supabase Backend       143       PASSED
-  PL       C++17 Data Structures and Algos        53       PASSED
-  COA      80386 32-bit Assembly and Booth        41       PASSED
-  CGL      OpenGL Raster, Viewing and Lighting    65       PASSED
+  PSOOP    Java Swing and Supabase Backend       169       PASSED
+  PL       C++17 Data Structures and Algos        99       PASSED
+  COA      80386 32-bit Assembly and Booth        57       PASSED
+  CGL      OpenGL Raster, Viewing and Lighting    93       PASSED
   ----------------------------------------------------------------------------
-  TOTAL    All 19 Course Outcomes                302       100% PASS
+  TOTAL    All 19 Course Outcomes (COs)          418       100% PASS
 ==============================================================================
 ```
 

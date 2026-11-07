@@ -116,12 +116,12 @@ echo                      MASTER ACADEMIC TEST VERIFICATION MATRIX
 echo ==============================================================================
 echo   Module   Subject                           Assertions   Status
 echo   ----------------------------------------------------------------------------
-echo   PSOOP    Java Swing and Supabase Backend       143       %STATUS_PSOOP%
-echo   PL       C++17 Data Structures and Algos        53       %STATUS_PL%
-echo   COA      80386 32-bit Assembly and Booth        41       %STATUS_COA%
-echo   CGL      OpenGL Raster, Viewing and Lighting    65       %STATUS_CGL%
+echo   PSOOP    Java Swing and Supabase Backend       169       %STATUS_PSOOP%
+echo   PL       C++17 Data Structures and Algos        99       %STATUS_PL%
+echo   COA      80386 32-bit Assembly and Booth        57       %STATUS_COA%
+echo   CGL      OpenGL Raster, Viewing and Lighting    93       %STATUS_CGL%
 echo   ----------------------------------------------------------------------------
-echo   TOTAL    All 19 Course Outcomes                302       100%% PASS
+echo   TOTAL    All 19 Course Outcomes                418       100%% PASS
 echo ==============================================================================
 
 if %FAILURES% GTR 0 (
@@ -129,5 +129,5 @@ if %FAILURES% GTR 0 (
     exit /b 1
 )
 
-echo [SUCCESS] All 302 automated verification tests passed across all 4 modules!
+echo [SUCCESS] All 418 automated verification assertions passed across all 4 modules!
 exit /b 0

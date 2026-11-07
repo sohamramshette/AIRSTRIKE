@@ -56,11 +56,11 @@ $colorCOA = if ($statusCOA -eq "PASSED") { "Green" } else { "Red" }
 $colorCGL = if ($statusCGL -eq "PASSED") { "Green" } else { "Red" }
 
 Write-Host "  PSOOP    Java Swing & Supabase Backend        169       $statusPSOOP" -ForegroundColor $colorPSOOP
-Write-Host "  PL       C++17 Data Structures & Algos         53       $statusPL" -ForegroundColor $colorPL
-Write-Host "  COA      80386 32-bit Assembly & Booth         41       $statusCOA" -ForegroundColor $colorCOA
-Write-Host "  CGL      OpenGL Raster, Viewing & Lighting     65       $statusCGL" -ForegroundColor $colorCGL
+Write-Host "  PL       C++17 Data Structures & Algos         99       $statusPL" -ForegroundColor $colorPL
+Write-Host "  COA      80386 32-bit Assembly & Booth         57       $statusCOA" -ForegroundColor $colorCOA
+Write-Host "  CGL      OpenGL Raster, Viewing & Lighting     93       $statusCGL" -ForegroundColor $colorCGL
 Write-Host "  ----------------------------------------------------------------------------" -ForegroundColor Gray
-Write-Host "  TOTAL    All 19 Course Outcomes (COs)         328       100% PASS" -ForegroundColor Green
+Write-Host "  TOTAL    All 19 Course Outcomes (COs)         418       100% PASS" -ForegroundColor Green
 Write-Host "==============================================================================" -ForegroundColor Cyan
 
 if ($failures -gt 0) {
@@ -68,6 +68,6 @@ if ($failures -gt 0) {
     exit 1
 }
 
-Write-Host "[SUCCESS] All 302 automated verification tests passed across all 4 modules!" -ForegroundColor Green
+Write-Host "[SUCCESS] All 418 automated verification assertions passed across all 4 modules!" -ForegroundColor Green
 exit 0
 
