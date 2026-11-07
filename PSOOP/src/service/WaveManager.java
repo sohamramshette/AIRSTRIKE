@@ -1,17 +1,23 @@
 package service;
 
+import model.ArmouredEnemy;
 import model.BossEnemy;
 import model.DroneEnemy;
 import model.Enemy;
+import model.FailSafeEnemy;
 import model.FighterEnemy;
+import model.InterceptorEnemy;
+import model.MorphingEnemy;
 import model.PowerUp;
 import model.PowerUpType;
+import model.RammerEnemy;
 
 import java.util.List;
 import java.util.Random;
 
 /**
  * Service orchestrating wave difficulty, enemy spawn timers, and Boss encounters.
+ * Phase 8.2: Controlled progressive deployment of all 7 hostile fleet archetypes.
  */
 public class WaveManager {
 
@@ -92,12 +98,56 @@ public class WaveManager {
         double spawnX = margin + random.nextInt(Math.max(10, screenWidth - margin * 2));
         double spawnY = -40;
 
-        // At level 1, mostly Drones. At level 2+, Fighters appear more frequently.
-        int fighterChance = Math.min(65, currentLevel * 15);
-        if (random.nextInt(100) < fighterChance) {
-            enemyList.add(new FighterEnemy(spawnX, spawnY));
+        int roll = random.nextInt(100);
+
+        if (currentLevel == 1) {
+            // Level 1: Baseline introduction (70% Drone, 30% Fighter)
+            if (roll < 70) {
+                enemyList.add(new DroneEnemy(spawnX, spawnY));
+            } else {
+                enemyList.add(new FighterEnemy(spawnX, spawnY));
+            }
+        } else if (currentLevel == 2) {
+            // Level 2: Tactical speed & armor (25% Drone, 25% Fighter, 25% Armoured, 25% Interceptor)
+            if (roll < 25) {
+                enemyList.add(new DroneEnemy(spawnX, spawnY));
+            } else if (roll < 50) {
+                enemyList.add(new FighterEnemy(spawnX, spawnY));
+            } else if (roll < 75) {
+                enemyList.add(new ArmouredEnemy(spawnX, spawnY));
+            } else {
+                enemyList.add(new InterceptorEnemy(spawnX, spawnY));
+            }
+        } else if (currentLevel == 4) {
+            // Level 4: Adaptive tactics (20% Drone, 20% Fighter, 20% Armoured, 20% Interceptor, 20% Morphing)
+            if (roll < 20) {
+                enemyList.add(new DroneEnemy(spawnX, spawnY));
+            } else if (roll < 40) {
+                enemyList.add(new FighterEnemy(spawnX, spawnY));
+            } else if (roll < 60) {
+                enemyList.add(new ArmouredEnemy(spawnX, spawnY));
+            } else if (roll < 80) {
+                enemyList.add(new InterceptorEnemy(spawnX, spawnY));
+            } else {
+                enemyList.add(new MorphingEnemy(spawnX, spawnY));
+            }
         } else {
-            enemyList.add(new DroneEnemy(spawnX, spawnY));
+            // Level 5+: Full combined fleet (Drone, Fighter, Armoured, Interceptor, Morphing, FailSafe, Rammer)
+            if (roll < 18) {
+                enemyList.add(new DroneEnemy(spawnX, spawnY));
+            } else if (roll < 36) {
+                enemyList.add(new FighterEnemy(spawnX, spawnY));
+            } else if (roll < 50) {
+                enemyList.add(new ArmouredEnemy(spawnX, spawnY));
+            } else if (roll < 65) {
+                enemyList.add(new InterceptorEnemy(spawnX, spawnY));
+            } else if (roll < 77) {
+                enemyList.add(new MorphingEnemy(spawnX, spawnY));
+            } else if (roll < 88) {
+                enemyList.add(new FailSafeEnemy(spawnX, spawnY));
+            } else {
+                enemyList.add(new RammerEnemy(spawnX, spawnY));
+            }
         }
     }
 

@@ -8,6 +8,12 @@ import model.BossEnemy;
 import model.DroneEnemy;
 import model.Enemy;
 import model.FighterEnemy;
+import model.ArmouredEnemy;
+import model.InterceptorEnemy;
+import model.MorphingEnemy;
+import model.DroneAIState;
+import model.FailSafeEnemy;
+import model.RammerEnemy;
 import model.Particle;
 import model.Player;
 import model.PowerUp;
@@ -58,6 +64,14 @@ public class GameUnitTest {
         testIllegalStateTransitions();
         testEntityPruning();
         testStreakResetOnDamage();
+
+        // Phase 8.2: Five New PSOOP Enemies & Multi-Tier Wave Verification
+        testArmouredEnemyEncapsulation();
+        testInterceptorEnemyPolymorphism();
+        testMorphingEnemyStateTransitions();
+        testFailSafeEnemyDefensiveProgramming();
+        testRammerEnemyKinematicsAndCollision();
+        testWaveProgressionMultiTier();
 
         System.out.println("========================================================");
         System.out.println("TEST RESULTS: " + testsPassed + " / " + testsTotal + " PASSED");
@@ -357,6 +371,188 @@ public class GameUnitTest {
 
         assertTrue("Streak Reset on Hit", preStreak > 0 && scoreCalc.getKillStreak() == 0,
                 "Combo streak should reset to 0 upon player taking damage");
+    }
+
+    // 17. Phase 8.2: Armoured Vanguard Encapsulation & Damage Mitigation (PSOOP-CO1)
+    private static void testArmouredEnemyEncapsulation() {
+        ArmouredEnemy armoured = new ArmouredEnemy(200, 100);
+        assertTrue("Armoured Dimensions", armoured.getWidth() == 46 && armoured.getHeight() == 44,
+                "Armoured Vanguard should have width 46, height 44");
+        assertTrue("Armoured Vitals", armoured.getHealth() == 90 && armoured.getShield() == 30,
+                "Armoured Vanguard should initialize with 90 health and 30 shield");
+        assertTrue("Armoured Armor Rating", armoured.getArmorRating() == 8,
+                "Armoured Vanguard should encapsulate an 8-point flat armor rating");
+
+        // Shield absorbs first
+        armoured.takeDamage(20);
+        assertTrue("Armoured Shield Absorbs First", armoured.getShield() == 10 && armoured.getHealth() == 90,
+                "Shield should absorb 20 damage without reducing health");
+
+        // Remaining damage is reduced by armor (30 damage: 10 to shield, 20 to armor -> 20 - 8 = 12 damage to health)
+        armoured.takeDamage(30);
+        assertTrue("Armoured Armor Mitigation", armoured.getShield() == 0 && armoured.getHealth() == 78,
+                "Armor should reduce 20 remaining damage by 8 down to 12 effective hull damage");
+
+        // Firing weapon
+        List<Projectile> projectiles = new ArrayList<>();
+        armoured.shoot(projectiles);
+        assertTrue("Armoured Heavy Plasma Slug", !projectiles.isEmpty() && projectiles.get(0).getDamage() == 20,
+                "Armoured Vanguard should discharge heavy prow plasma slugs with 20 damage");
+    }
+
+    // 18. Phase 8.2: Interceptor Fighter Polymorphism & Dynamic Dispatch (PSOOP-CO1)
+    private static void testInterceptorEnemyPolymorphism() {
+        Enemy interceptor = new InterceptorEnemy(200, 100);
+        Player player = new Player(210, 300); // Aligned horizontally
+        List<Projectile> projectiles = new ArrayList<>();
+
+        // Polymorphic invocation via Enemy reference
+        interceptor.performAttack(1.2, projectiles, player);
+        interceptor.update(0.016);
+
+        assertTrue("Interceptor Dynamic Dispatch Dash", ((InterceptorEnemy) interceptor).isDashing(),
+                "Polymorphic invocation should trigger high-speed dash upon player horizontal alignment");
+        assertTrue("Interceptor Staggered Shot", !projectiles.isEmpty() && projectiles.get(0).getDamage() == 12,
+                "Interceptor should discharge micro-darts with 12 damage");
+    }
+
+    // 19. Phase 8.2: Adaptive Morphing Drone State Pattern & Transitions (PSOOP-CO2)
+    private static void testMorphingEnemyStateTransitions() {
+        MorphingEnemy morphing = new MorphingEnemy(300, 100);
+        assertTrue("Morphing Initial State", morphing.getCurrentState() == DroneAIState.PATROL,
+                "Morphing Drone should initialize in PATROL state");
+
+        // Far away player -> stays PATROL
+        Player farPlayer = new Player(800, 800);
+        morphing.performAttack(0.1, new ArrayList<>(), farPlayer);
+        morphing.update(0.1);
+        assertTrue("Morphing Patrol Sustained", morphing.getCurrentState() == DroneAIState.PATROL,
+                "Morphing Drone should remain in PATROL when player is distant");
+
+        // Near player (dist < 260) -> transitions to CHASE
+        Player nearPlayer = new Player(310, 200);
+        morphing.performAttack(0.1, new ArrayList<>(), nearPlayer);
+        morphing.update(0.1);
+        assertTrue("Morphing Transition CHASE", morphing.getCurrentState() == DroneAIState.CHASE,
+                "Morphing Drone should transition to CHASE when player approaches within 260px");
+
+        // Close quarters (dist < 150) -> transitions to OVERCHARGE
+        Player closePlayer = new Player(310, 130);
+        morphing.performAttack(0.1, new ArrayList<>(), closePlayer);
+        morphing.update(0.1);
+        assertTrue("Morphing Transition OVERCHARGE", morphing.getCurrentState() == DroneAIState.OVERCHARGE,
+                "Morphing Drone should transition to OVERCHARGE when player is in close quarters");
+
+        // Hull damaged critically -> transitions to EVADE
+        // 50 HP, 15 Shield. Hit for 48 damage -> 15 shield, 33 to health -> 17 HP remaining (34% < 35%)
+        morphing.takeDamage(48);
+        morphing.update(0.1);
+        assertTrue("Morphing Transition EVADE", morphing.getCurrentState() == DroneAIState.EVADE,
+                "Morphing Drone should transition to EVADE when health drops critically low");
+    }
+
+    // 20. Phase 8.2: Fail-Safe Sentry Defensive Programming (PSOOP-CO3)
+    private static void testFailSafeEnemyDefensiveProgramming() {
+        FailSafeEnemy sentry = new FailSafeEnemy(150, 100);
+        assertTrue("FailSafe Initial Properties", sentry.getHealth() == 70 && sentry.getShield() == 15,
+                "FailSafe Sentry should initialize with 70 health and 15 shield");
+
+        // Non-positive damage rejected defensively
+        sentry.takeDamage(-25);
+        assertTrue("FailSafe Negative Damage Rejection", sentry.getHealth() == 70,
+                "Defensive invariant should reject non-positive damage");
+
+        // Damage above threshold (70 HP, 15 Shield. Hit for 50 -> 15 to shield, 35 to health -> 35 HP > 21)
+        sentry.takeDamage(50);
+        assertTrue("FailSafe Normal Damage", sentry.getHealth() == 35 && !sentry.isEmergencyBarrierActive(),
+                "Normal damage should resolve without activating emergency barrier");
+
+        // Critical threshold hit (35 HP. Hit for 20 -> 15 HP <= 21 HP threshold)
+        sentry.takeDamage(20);
+        assertTrue("FailSafe Emergency Barrier Activated", sentry.isEmergencyBarrierActive() && sentry.isEmergencyBarrierTriggered(),
+                "Critical health should trigger emergency barrier");
+        assertTrue("FailSafe Shield Recharged Defensively", sentry.getShield() >= 35,
+                "Emergency barrier should defensively recharge shield buffer");
+
+        // Subsequent damage mitigated under active barrier
+        int preShield = sentry.getShield();
+        sentry.takeDamage(20);
+        assertTrue("FailSafe 50% Barrier Damage Mitigation", sentry.getShield() == (preShield - 10),
+                "Active barrier should mitigate incoming damage by 50%");
+    }
+
+    // 21. Phase 8.2: Kinetic Battering Ram Kinematics & Collision (PSOOP-CO4)
+    private static void testRammerEnemyKinematicsAndCollision() {
+        RammerEnemy rammer = new RammerEnemy(200, 100);
+        Player player = new Player(210, 400); // Forward corridor
+        CollisionManager cm = new CollisionManager();
+        ScoreCalculator scoreCalc = new ScoreCalculator();
+        WaveManager waveMgr = new WaveManager();
+        List<Particle> particles = new ArrayList<>();
+        List<PowerUp> powerUps = new ArrayList<>();
+
+        assertTrue("Rammer Initial Speed", rammer.getSpeed() == 70.0 && !rammer.isCharging(),
+                "Rammer should start uncharged at patrol speed");
+
+        // Corridor acquisition
+        rammer.performAttack(0.1, new ArrayList<>(), player);
+        assertTrue("Rammer Locked and Charging", rammer.isCharging(),
+                "Rammer should lock and charge when player is in forward corridor");
+
+        // Non-uniform acceleration
+        double prevVy = rammer.getVy();
+        rammer.update(0.2);
+        assertTrue("Rammer Non-Uniform Acceleration", rammer.getVy() > prevVy,
+                "Kinematics integration should accelerate rammer velocity");
+
+        // Kinetic prow impact on player
+        List<Enemy> enemyList = new ArrayList<>();
+        enemyList.add(rammer);
+        player.setX(rammer.getX());
+        player.setY(rammer.getY()); // Force collision overlap
+        player.setShield(0); // Deplete shields to test direct kinetic prow impact
+        int prePlayerHealth = player.getHealth();
+        cm.checkPlayerVsEnemies(player, enemyList, particles, scoreCalc, waveMgr, powerUps);
+
+        assertTrue("Rammer Prow Impact Inflicted", player.getHealth() == (prePlayerHealth - 45),
+                "Rammer prow impact should inflict exactly 45 specialized damage to player hull");
+    }
+
+    // 22. Phase 8.2: Multi-Tier Fleet Spawning Progression
+    private static void testWaveProgressionMultiTier() {
+        WaveManager waveMgr = new WaveManager();
+
+        // Level 1: Drones and Fighters only
+        waveMgr.resetToLevel(1);
+        List<Enemy> l1Enemies = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            waveMgr.update(5.0, l1Enemies, 800);
+        }
+        boolean onlyDroneOrFighter = l1Enemies.stream()
+                .allMatch(e -> e instanceof DroneEnemy || e instanceof FighterEnemy);
+        assertTrue("Level 1 Baseline Spawning", onlyDroneOrFighter && !l1Enemies.isEmpty(),
+                "Level 1 should strictly spawn baseline Drone and Fighter craft");
+
+        // Level 2: Introduces Armoured and Interceptor
+        waveMgr.resetToLevel(2);
+        List<Enemy> l2Enemies = new ArrayList<>();
+        for (int i = 0; i < 60; i++) {
+            waveMgr.update(5.0, l2Enemies, 800);
+        }
+        boolean hasArmouredOrInterceptor = l2Enemies.stream()
+                .anyMatch(e -> e instanceof ArmouredEnemy || e instanceof InterceptorEnemy);
+        assertTrue("Level 2 Armoured/Interceptor Introduction", hasArmouredOrInterceptor,
+                "Level 2 should introduce Armoured Vanguard and Interceptor Fighter");
+
+        // Level 5: Full combined fleet
+        waveMgr.resetToLevel(5);
+        List<Enemy> l5Enemies = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            waveMgr.update(5.0, l5Enemies, 800);
+        }
+        long uniqueClasses = l5Enemies.stream().map(Object::getClass).distinct().count();
+        assertTrue("Level 5 Full Fleet Deployment", uniqueClasses >= 4,
+                "Level 5+ should deploy a rich multi-class hostile fleet");
     }
 }
 

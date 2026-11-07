@@ -15,7 +15,12 @@ export enum PowerUpType {
 export enum EnemyType {
   DRONE = 'DRONE',
   FIGHTER = 'FIGHTER',
-  BOSS = 'BOSS'
+  BOSS = 'BOSS',
+  ARMOURED = 'ARMOURED',
+  INTERCEPTOR = 'INTERCEPTOR',
+  MORPHING = 'MORPHING',
+  FAIL_SAFE = 'FAIL_SAFE',
+  RAMMER = 'RAMMER'
 }
 
 export interface BoundingBox {

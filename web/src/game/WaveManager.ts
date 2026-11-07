@@ -2,6 +2,11 @@ import { Enemy } from './Enemy';
 import { Drone } from './Drone';
 import { Fighter } from './Fighter';
 import { Boss } from './Boss';
+import { Armoured } from './Armoured';
+import { Interceptor } from './Interceptor';
+import { Morphing } from './Morphing';
+import { FailSafe } from './FailSafe';
+import { Rammer } from './Rammer';
 
 export class WaveManager {
   public currentLevel: number = 1;
@@ -76,14 +81,57 @@ export class WaveManager {
           const interval = Math.max(0.7, 2.2 - this.currentLevel * 0.2);
           this.spawnTimer = interval;
 
-          const fighterProbability = Math.min(0.65, this.currentLevel * 0.15);
-          const isFighter = Math.random() < fighterProbability;
           const spawnX = 50 + Math.random() * 680;
+          const roll = Math.random() * 100;
 
-          if (isFighter) {
-            onSpawnEnemy(new Fighter(spawnX));
+          if (this.currentLevel === 1) {
+            // Level 1: Baseline introduction (70% Drone, 30% Fighter)
+            if (roll < 70) {
+              onSpawnEnemy(new Drone(spawnX));
+            } else {
+              onSpawnEnemy(new Fighter(spawnX));
+            }
+          } else if (this.currentLevel === 2) {
+            // Level 2: Tactical speed & armor (25% Drone, 25% Fighter, 25% Armoured, 25% Interceptor)
+            if (roll < 25) {
+              onSpawnEnemy(new Drone(spawnX));
+            } else if (roll < 50) {
+              onSpawnEnemy(new Fighter(spawnX));
+            } else if (roll < 75) {
+              onSpawnEnemy(new Armoured(spawnX));
+            } else {
+              onSpawnEnemy(new Interceptor(spawnX));
+            }
+          } else if (this.currentLevel === 4) {
+            // Level 4: Adaptive tactics (20% Drone, 20% Fighter, 20% Armoured, 20% Interceptor, 20% Morphing)
+            if (roll < 20) {
+              onSpawnEnemy(new Drone(spawnX));
+            } else if (roll < 40) {
+              onSpawnEnemy(new Fighter(spawnX));
+            } else if (roll < 60) {
+              onSpawnEnemy(new Armoured(spawnX));
+            } else if (roll < 80) {
+              onSpawnEnemy(new Interceptor(spawnX));
+            } else {
+              onSpawnEnemy(new Morphing(spawnX));
+            }
           } else {
-            onSpawnEnemy(new Drone(spawnX));
+            // Level 5+: Full combined fleet
+            if (roll < 18) {
+              onSpawnEnemy(new Drone(spawnX));
+            } else if (roll < 36) {
+              onSpawnEnemy(new Fighter(spawnX));
+            } else if (roll < 50) {
+              onSpawnEnemy(new Armoured(spawnX));
+            } else if (roll < 65) {
+              onSpawnEnemy(new Interceptor(spawnX));
+            } else if (roll < 77) {
+              onSpawnEnemy(new Morphing(spawnX));
+            } else if (roll < 88) {
+              onSpawnEnemy(new FailSafe(spawnX));
+            } else {
+              onSpawnEnemy(new Rammer(spawnX));
+            }
           }
 
           this.waveEnemiesRemaining -= 1;

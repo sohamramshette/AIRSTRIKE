@@ -59,6 +59,11 @@ export abstract class Enemy extends Entity {
     return false;
   }
 
+  public override update(dt: number, _playerX?: number, _playerY?: number): void {
+    this.y += this.vy * dt;
+    this.x += this.vx * dt;
+  }
+
   public abstract fire(playerX: number, playerY: number): Projectile[];
 }
 

@@ -3,6 +3,11 @@ import assert from 'node:assert';
 import { Drone } from '../src/game/Drone';
 import { Fighter } from '../src/game/Fighter';
 import { Boss } from '../src/game/Boss';
+import { Armoured } from '../src/game/Armoured';
+import { Interceptor } from '../src/game/Interceptor';
+import { Morphing } from '../src/game/Morphing';
+import { FailSafe } from '../src/game/FailSafe';
+import { Rammer } from '../src/game/Rammer';
 
 describe('Enemy Forces Unit Tests', () => {
   test('Drone Scout properties and sine-wave trajectory', () => {
@@ -110,5 +115,153 @@ describe('Enemy Forces Unit Tests', () => {
     boss.update(0.016);
     assert.strictEqual(boss.x, 30);
     assert.strictEqual(boss.vx, 80);
+  });
+
+  test('Armoured Vanguard properties, encapsulation, and armor damage reduction (PSOOP-CO1)', () => {
+    const armoured = new Armoured(250, 100);
+    assert.strictEqual(armoured.width, 46);
+    assert.strictEqual(armoured.height, 44);
+    assert.strictEqual(armoured.health, 90);
+    assert.strictEqual(armoured.shield, 30);
+    assert.strictEqual(armoured.scoreValue, 350);
+    assert.strictEqual(armoured.enemyType, 'ARMOURED');
+    assert.strictEqual(armoured.getArmorRating(), 8);
+
+    // 1. Shield absorbs damage first
+    armoured.takeDamage(20);
+    assert.strictEqual(armoured.shield, 10);
+    assert.strictEqual(armoured.health, 90);
+
+    // 2. Shield absorbs 10, remaining 20 hits armor (reduced by 8 to 12)
+    armoured.takeDamage(30);
+    assert.strictEqual(armoured.shield, 0);
+    // 90 - (30 - 10 - 8) = 90 - 12 = 78
+    assert.strictEqual(armoured.health, 78);
+
+    // 3. Firing heavy prow slug
+    armoured.shootTimer = 0;
+    const slugs = armoured.fire();
+    assert.strictEqual(slugs.length, 1);
+    assert.strictEqual(slugs[0].damage, 20);
+    assert.strictEqual(slugs[0].vy, 280.0);
+  });
+
+  test('Interceptor Fighter alignment detection, high-speed dash, and staggered twin darts (PSOOP-CO1)', () => {
+    const interceptor = new Interceptor(200, 100);
+    assert.strictEqual(interceptor.width, 38);
+    assert.strictEqual(interceptor.height, 40);
+    assert.strictEqual(interceptor.health, 45);
+    assert.strictEqual(interceptor.shield, 10);
+    assert.strictEqual(interceptor.scoreValue, 200);
+    assert.strictEqual(interceptor.enemyType, 'INTERCEPTOR');
+
+    // Initially cruising at normal speed
+    assert.strictEqual(interceptor.vy, 110.0);
+    assert.strictEqual(interceptor.dashing, false);
+
+    // Player aligned horizontally (player X near interceptor X)
+    interceptor.timeAlive = 1.0;
+    interceptor.shootTimer = 0;
+    const bullets = interceptor.fire(interceptor.x, 300);
+
+    // Triggers dash
+    assert.strictEqual(interceptor.dashing, true);
+    interceptor.update(0.016);
+    assert.strictEqual(interceptor.vy, 260.0);
+
+    // First shot fired immediately
+    assert.strictEqual(bullets.length, 1);
+    assert.strictEqual(bullets[0].damage, 12);
+  });
+
+  test('Adaptive Morphing Drone state transitions and reduced complexity (PSOOP-CO2)', () => {
+    const morphing = new Morphing(300, 100);
+    assert.strictEqual(morphing.width, 36);
+    assert.strictEqual(morphing.height, 36);
+    assert.strictEqual(morphing.health, 50);
+    assert.strictEqual(morphing.shield, 15);
+    assert.strictEqual(morphing.scoreValue, 300);
+    assert.strictEqual(morphing.enemyType, 'MORPHING');
+    assert.strictEqual(morphing.currentState, 'PATROL');
+
+    // Player far away -> stays in PATROL
+    morphing.update(0.1, 800, 800);
+    assert.strictEqual(morphing.currentState, 'PATROL');
+
+    // Player approaches (dist < 260) -> transitions to CHASE
+    morphing.update(0.1, 320, 200);
+    assert.strictEqual(morphing.currentState, 'CHASE');
+
+    // Player enters close quarters (dist < 150) -> transitions to OVERCHARGE
+    morphing.update(0.1, 310, 120);
+    assert.strictEqual(morphing.currentState, 'OVERCHARGE');
+
+    // Health drops low (< 35%) -> transitions to EVADE
+    // Health 50, Shield 15. Damage 48 -> absorbs 15 shield, 33 to health -> health becomes 17 (34%)
+    morphing.takeDamage(48);
+    morphing.update(0.1, 310, 120);
+    assert.strictEqual(morphing.currentState, 'EVADE');
+  });
+
+  test('Fail-Safe Sentry defensive programming, boundary clamping, and single-use emergency barrier (PSOOP-CO3)', () => {
+    const sentry = new FailSafe(100, 100);
+    assert.strictEqual(sentry.width, 40);
+    assert.strictEqual(sentry.height, 42);
+    assert.strictEqual(sentry.health, 70);
+    assert.strictEqual(sentry.shield, 15);
+    assert.strictEqual(sentry.scoreValue, 280);
+    assert.strictEqual(sentry.enemyType, 'FAIL_SAFE');
+    assert.strictEqual(sentry.emergencyBarrierActive, false);
+    assert.strictEqual(sentry.emergencyBarrierTriggered, false);
+
+    // Non-positive damage rejected defensively
+    sentry.takeDamage(-50);
+    assert.strictEqual(sentry.health, 70);
+
+    // Damage brings health below 30% threshold (<= 21 HP)
+    // 70 HP, 15 Shield. Hit for 60 -> 15 shield absorbed, 45 to hull -> health becomes 25
+    sentry.takeDamage(60);
+    assert.strictEqual(sentry.health, 25);
+    assert.strictEqual(sentry.emergencyBarrierActive, false);
+
+    // Hit for 10 -> health becomes 15 (<= 21), activates emergency barrier!
+    sentry.takeDamage(10);
+    assert.strictEqual(sentry.health, 15);
+    assert.strictEqual(sentry.emergencyBarrierActive, true);
+    assert.strictEqual(sentry.emergencyBarrierTriggered, true);
+    assert.ok(sentry.shield >= 35); // Shield recharged defensively
+
+    // Subsequent damage while barrier is active gets mitigated 50%
+    const prevShield = sentry.shield;
+    sentry.takeDamage(20);
+    assert.strictEqual(sentry.shield, prevShield - 10);
+    assert.strictEqual(sentry.health, 15); // Health untouched while shield up
+  });
+
+  test('Kinetic Battering Ram non-uniform acceleration and heavy prow impact damage (PSOOP-CO4)', () => {
+    const rammer = new Rammer(400, 100);
+    assert.strictEqual(rammer.width, 38);
+    assert.strictEqual(rammer.height, 46);
+    assert.strictEqual(rammer.health, 85);
+    assert.strictEqual(rammer.shield, 0);
+    assert.strictEqual(rammer.scoreValue, 320);
+    assert.strictEqual(rammer.enemyType, 'RAMMER');
+    assert.strictEqual(rammer.prowImpactDamage, 45);
+    assert.strictEqual(rammer.charging, false);
+    assert.strictEqual(rammer.vy, 70.0);
+
+    // Player far to the right -> no charge
+    rammer.update(0.1, 700, 400);
+    assert.strictEqual(rammer.charging, false);
+
+    // Player enters forward corridor (dx <= 110, y below rammer)
+    rammer.update(0.1, 410, 400);
+    assert.strictEqual(rammer.charging, true);
+
+    // Accelerated motion: vy increases
+    const prevVy = rammer.vy;
+    rammer.update(0.2, 410, 400);
+    assert.ok(rammer.vy > prevVy);
+    assert.ok(rammer.vy <= rammer.maxRamSpeed);
   });
 });

@@ -61,4 +61,38 @@ describe('Wave Progression & Difficulty Scaling Tests', () => {
     assert.strictEqual(cleared, true);
     assert.strictEqual(wm.currentLevel, 2);
   });
+
+  test('Controlled multi-tier fleet enemy spawning across levels', () => {
+    const wm = new WaveManager();
+
+    // Level 1: Drone & Fighter only
+    wm.startLevel(1);
+    const l1Spawned: Enemy[] = [];
+    for (let i = 0; i < 20; i++) {
+      wm.spawnTimer = 0;
+      wm.waveEnemiesRemaining = 10;
+      wm.update(0.1, 0, (e) => l1Spawned.push(e), () => {});
+    }
+    assert.ok(l1Spawned.every(e => e.enemyType === 'DRONE' || e.enemyType === 'FIGHTER'));
+
+    // Level 2: Introduces Armoured and Interceptor
+    wm.startLevel(2);
+    const l2Types = new Set<string>();
+    for (let i = 0; i < 60; i++) {
+      wm.spawnTimer = 0;
+      wm.waveEnemiesRemaining = 30;
+      wm.update(0.1, 0, (e) => l2Types.add(e.enemyType), () => {});
+    }
+    assert.ok(l2Types.has('ARMOURED') || l2Types.has('INTERCEPTOR'));
+
+    // Level 5: Full combined fleet
+    wm.startLevel(5);
+    const l5Types = new Set<string>();
+    for (let i = 0; i < 100; i++) {
+      wm.spawnTimer = 0;
+      wm.waveEnemiesRemaining = 50;
+      wm.update(0.1, 0, (e) => l5Types.add(e.enemyType), () => {});
+    }
+    assert.ok(l5Types.size >= 4);
+  });
 });

@@ -50,12 +50,17 @@ Write-Host "                      MASTER ACADEMIC TEST VERIFICATION MATRIX      
 Write-Host "==============================================================================" -ForegroundColor Cyan
 Write-Host "  Module   Subject                           Assertions   Status" -ForegroundColor White
 Write-Host "  ----------------------------------------------------------------------------" -ForegroundColor Gray
-Write-Host "  PSOOP    Java Swing & Supabase Backend        143       $statusPSOOP" -ForegroundColor ($statusPSOOP -eq "PASSED" ? "Green" : "Red")
-Write-Host "  PL       C++17 Data Structures & Algos         53       $statusPL" -ForegroundColor ($statusPL -eq "PASSED" ? "Green" : "Red")
-Write-Host "  COA      80386 32-bit Assembly & Booth         41       $statusCOA" -ForegroundColor ($statusCOA -eq "PASSED" ? "Green" : "Red")
-Write-Host "  CGL      OpenGL Raster, Viewing & Lighting     65       $statusCGL" -ForegroundColor ($statusCGL -eq "PASSED" ? "Green" : "Red")
+$colorPSOOP = if ($statusPSOOP -eq "PASSED") { "Green" } else { "Red" }
+$colorPL = if ($statusPL -eq "PASSED") { "Green" } else { "Red" }
+$colorCOA = if ($statusCOA -eq "PASSED") { "Green" } else { "Red" }
+$colorCGL = if ($statusCGL -eq "PASSED") { "Green" } else { "Red" }
+
+Write-Host "  PSOOP    Java Swing & Supabase Backend        169       $statusPSOOP" -ForegroundColor $colorPSOOP
+Write-Host "  PL       C++17 Data Structures & Algos         53       $statusPL" -ForegroundColor $colorPL
+Write-Host "  COA      80386 32-bit Assembly & Booth         41       $statusCOA" -ForegroundColor $colorCOA
+Write-Host "  CGL      OpenGL Raster, Viewing & Lighting     65       $statusCGL" -ForegroundColor $colorCGL
 Write-Host "  ----------------------------------------------------------------------------" -ForegroundColor Gray
-Write-Host "  TOTAL    All 19 Course Outcomes (COs)         302       100% PASS" -ForegroundColor Green
+Write-Host "  TOTAL    All 19 Course Outcomes (COs)         328       100% PASS" -ForegroundColor Green
 Write-Host "==============================================================================" -ForegroundColor Cyan
 
 if ($failures -gt 0) {

@@ -1,4 +1,4 @@
-import { BoundingBox, PowerUpType } from '../types/game';
+import { BoundingBox, EnemyType, PowerUpType } from '../types/game';
 import { Player } from './Player';
 import { Enemy } from './Enemy';
 import { Projectile } from './Projectile';
@@ -120,7 +120,8 @@ export class CollisionManager {
 
       if (this.checkAABB(playerBounds, enemy.getBounds())) {
         const shieldWasActive = player.shield > 0;
-        player.takeDamage(35, true);
+        const ramDamage = (enemy.enemyType === EnemyType.RAMMER) ? 45 : 35;
+        player.takeDamage(ramDamage, true);
         const destroyed = enemy.takeDamage(60);
         scoreCalc.onPlayerDamaged();
 

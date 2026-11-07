@@ -181,7 +181,7 @@ export class GameEngine {
       // 3. Update Enemies & their firing
       for (let i = this.enemies.length - 1; i >= 0; i--) {
         const enemy = this.enemies[i];
-        enemy.update(dt);
+        enemy.update(dt, this.player.x, this.player.y);
 
         if (enemy.active) {
           const enemyBullets = enemy.fire(this.player.x, this.player.y);

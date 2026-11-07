@@ -107,8 +107,9 @@ public class CollisionManager {
             if (!e.isActive()) continue;
 
             if (player.intersects(e)) {
-                // Inflict mutually heavy kinetic collision damage
-                player.takeDamage(35);
+                // Inflict mutually heavy kinetic collision damage (Prow battering ram delivers specialized damage)
+                int kineticDamage = (e instanceof model.RammerEnemy rammer) ? rammer.getProwImpactDamage() : 35;
+                player.takeDamage(kineticDamage);
                 player.triggerInvulnerability(800); // i-frame after ramming
                 e.takeDamage(60);
                 scoreCalculator.resetStreak();
