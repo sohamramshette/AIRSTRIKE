@@ -97,6 +97,14 @@ Color4 PhongCruiser::evaluateBlinnPhongModel(const Vec3& N, const Vec3& L, const
     return Color4(intensity * lightColor.r, intensity * lightColor.g, intensity * lightColor.b, 1.0f);
 }
 
+Color4 PhongCruiser::interpolateGouraudColor(const Color4& c1, const Color4& c2, float t) {
+    t = std::max(0.0f, std::min(1.0f, t));
+    return Color4(c1.r + t * (c2.r - c1.r),
+                  c1.g + t * (c2.g - c1.g),
+                  c1.b + t * (c2.b - c1.b),
+                  c1.a + t * (c2.a - c1.a));
+}
+
 void PhongCruiser::renderIlluminatedHull() {
     // Set material properties for specular highlight demonstration
     GLfloat matAmbient[]  = { ka, ka, ka, 1.0f };

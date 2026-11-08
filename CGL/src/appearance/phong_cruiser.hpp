@@ -38,6 +38,9 @@ public:
                                           float ka, float kd, float ks, float shininess,
                                           Color4 lightColor = Color4(1.0f, 1.0f, 1.0f, 1.0f));
 
+    // Gouraud Shading: Per-vertex illumination bilinear color interpolation across fragments
+    static Color4 interpolateGouraudColor(const Color4& c1, const Color4& c2, float t);
+
     // Texture Inspection
     bool isTextureLoaded() const { return textureLoaded; }
     size_t getTextureBufferSize() const { return textureBytes; }

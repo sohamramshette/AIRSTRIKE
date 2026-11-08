@@ -207,7 +207,7 @@ AIRSTRIKE/
 ├── scripts/                      # Build and test automation scripts
 ├── airstrike.bat / .ps1          # Unified Master Launcher
 ├── build_all.bat / .ps1          # Master compiler script
-└── test_all.bat / .ps1           # Master automated test suite (302 assertions)
+└── test_all.bat / .ps1           # Master automated test suite (418 assertions)
 ```
 
 ---

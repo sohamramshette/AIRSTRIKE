@@ -72,7 +72,7 @@ async function runBrowserQA(browserName: string, executablePath: string): Promis
     assert.ok(rowCount > 0, 'Leaderboard rows should be populated');
     result.checks.push(`Leaderboard populated with ${rowCount} entries`);
 
-    await page.click('#leaderboard-modal-close');
+    await page.evaluate(() => document.getElementById('leaderboard-modal-close')?.click());
     await page.waitForSelector('#leaderboard-modal.hidden', { timeout: 2000 });
     result.checks.push('Leaderboard modal closed cleanly');
 

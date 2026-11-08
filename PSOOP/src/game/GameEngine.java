@@ -1,11 +1,16 @@
 package game;
 
 import exception.InvalidGameStateException;
+import model.ArmouredEnemy;
 import model.Enemy;
+import model.FailSafeEnemy;
+import model.InterceptorEnemy;
+import model.MorphingEnemy;
 import model.Particle;
 import model.Player;
 import model.PowerUp;
 import model.Projectile;
+import model.RammerEnemy;
 import service.AssetManager;
 import service.ScoreCalculator;
 import service.WaveManager;
@@ -46,6 +51,10 @@ public class GameEngine {
     private boolean matchUploaded;
     private String matchUploadStatus;
 
+    // Academic 5-Enemy Demonstration Mode (Phase 8.10)
+    private boolean enemyDemoMode;
+    private double demoRespawnTimer;
+
     public GameEngine(int screenWidth, int screenHeight) {
         this(screenWidth, screenHeight, new service.MatchService());
     }
@@ -58,6 +67,8 @@ public class GameEngine {
         this.matchStartTimeMs = 0;
         this.matchUploaded = false;
         this.matchUploadStatus = "";
+        this.enemyDemoMode = false;
+        this.demoRespawnTimer = 0.0;
 
         this.player = new Player((this.screenWidth - 48) / 2.0, this.screenHeight - 110);
         this.enemies = new ArrayList<>();
@@ -117,6 +128,7 @@ public class GameEngine {
      * Initiates a fresh game session.
      */
     public void startNewGame() {
+        this.enemyDemoMode = false;
         enemies.clear();
         projectiles.clear();
         powerUps.clear();
@@ -133,6 +145,73 @@ public class GameEngine {
         try {
             setState(GameState.PLAYING);
         } catch (InvalidGameStateException ignored) {}
+    }
+
+    /**
+     * Initiates the Academic 5-Enemy Demonstration arena (Phase 8.10).
+     * Deploys all five PSOOP enemy types simultaneously for live interactive evaluation:
+     * 1. Armoured Vanguard (PSOOP-CO1)
+     * 2. Interceptor Fighter (PSOOP-CO1)
+     * 3. Adaptive Morphing Drone (PSOOP-CO2)
+     * 4. Fail-Safe Sentry (PSOOP-CO3)
+     * 5. Kinetic Battering Ram (PSOOP-CO4)
+     */
+    public void startEnemyDemo() {
+        enemies.clear();
+        projectiles.clear();
+        powerUps.clear();
+        particles.clear();
+
+        this.enemyDemoMode = true;
+        this.demoRespawnTimer = 0.0;
+        scoreCalculator.resetGame();
+        player.resetFull((int)((screenWidth - player.getWidth()) / 2), screenHeight - 110);
+        player.setHealth(player.getMaxHealth());
+        player.rechargeShield(player.getMaxShield());
+
+        this.matchStartTimeMs = System.currentTimeMillis();
+        this.matchUploaded = false;
+        this.matchUploadStatus = "";
+
+        populateDemoFleet();
+
+        try {
+            setState(GameState.PLAYING);
+        } catch (InvalidGameStateException ignored) {}
+    }
+
+    public void populateDemoFleet() {
+        enemies.clear();
+        double spacing = screenWidth / 6.0;
+        enemies.add(new ArmouredEnemy(spacing * 1 - 23, 75));     // CO1: Armoured Vanguard
+        enemies.add(new InterceptorEnemy(spacing * 2 - 19, 120)); // CO1: Interceptor Fighter
+        enemies.add(new MorphingEnemy(spacing * 3 - 18, 75));     // CO2: Adaptive Morphing Drone
+        enemies.add(new FailSafeEnemy(spacing * 4 - 20, 120));    // CO3: Fail-Safe Sentry
+        enemies.add(new RammerEnemy(spacing * 5 - 19, 75));       // CO4: Kinetic Battering Ram
+    }
+
+    public void spawnDemoEnemy(int type) {
+        double spawnX = 60 + Math.random() * Math.max(10, screenWidth - 140);
+        double spawnY = 50 + Math.random() * 80;
+        switch (type) {
+            case 1 -> enemies.add(new ArmouredEnemy(spawnX, spawnY));
+            case 2 -> enemies.add(new InterceptorEnemy(spawnX, spawnY));
+            case 3 -> enemies.add(new MorphingEnemy(spawnX, spawnY));
+            case 4 -> enemies.add(new FailSafeEnemy(spawnX, spawnY));
+            case 5 -> enemies.add(new RammerEnemy(spawnX, spawnY));
+        }
+    }
+
+    public void clearDemoEnemies() {
+        enemies.clear();
+    }
+
+    public void resetDemoFleet() {
+        populateDemoFleet();
+    }
+
+    public boolean isEnemyDemoMode() {
+        return enemyDemoMode;
     }
 
     /**
@@ -178,7 +257,11 @@ public class GameEngine {
         }
 
         // 2. Wave Manager updates (enemy spawning & difficulty)
-        waveManager.update(delta, enemies, screenWidth);
+        if (!enemyDemoMode) {
+            waveManager.update(delta, enemies, screenWidth);
+        } else {
+            updateDemoFleet(delta);
+        }
 
         // 3. Update active Enemies
         for (Enemy e : enemies) {
@@ -188,7 +271,11 @@ public class GameEngine {
             e.update(delta);
             e.performAttack(delta, projectiles, player);
             if (e.isOffScreen(screenHeight)) {
-                e.setActive(false);
+                if (enemyDemoMode) {
+                    e.setY(-30);
+                } else {
+                    e.setActive(false);
+                }
             }
         }
 
@@ -221,11 +308,17 @@ public class GameEngine {
 
         // 8. Player Destruction & Respawn Handling
         if (player.isDestroyed()) {
-            boolean hasRemainingLives = player.loseLifeAndRespawn((screenWidth - player.getWidth()) / 2, screenHeight - 110);
-            if (!hasRemainingLives) {
-                try {
-                    setState(GameState.GAME_OVER);
-                } catch (InvalidGameStateException ignored) {}
+            if (enemyDemoMode) {
+                player.setHealth(player.getMaxHealth());
+                player.rechargeShield(player.getMaxShield());
+                player.setActive(true);
+            } else {
+                boolean hasRemainingLives = player.loseLifeAndRespawn((screenWidth - player.getWidth()) / 2, screenHeight - 110);
+                if (!hasRemainingLives) {
+                    try {
+                        setState(GameState.GAME_OVER);
+                    } catch (InvalidGameStateException ignored) {}
+                }
             }
         }
 
@@ -234,6 +327,16 @@ public class GameEngine {
         projectiles.removeIf(p -> !p.isActive());
         powerUps.removeIf(pu -> !pu.isActive());
         particles.removeIf(pt -> !pt.isActive());
+    }
+
+    private void updateDemoFleet(double delta) {
+        if (enemies.isEmpty()) {
+            demoRespawnTimer += delta;
+            if (demoRespawnTimer >= 1.5) {
+                demoRespawnTimer = 0.0;
+                populateDemoFleet();
+            }
+        }
     }
 
     /**
@@ -252,6 +355,11 @@ public class GameEngine {
         // 3. Enemies
         for (Enemy e : enemies) e.render(g);
 
+        // Academic Demo Badges
+        if (enemyDemoMode) {
+            renderDemoBadges(g);
+        }
+
         // 4. Projectiles
         for (Projectile p : projectiles) p.render(g);
 
@@ -266,6 +374,11 @@ public class GameEngine {
         // 7. HUD Overlay (Health, Shield, Score, Level, Lives)
         if (state == GameState.PLAYING || state == GameState.PAUSED) {
             renderHUD(g);
+        }
+
+        // Academic Demo Banner
+        if (enemyDemoMode) {
+            renderDemoBanner(g, width);
         }
 
         // 8. Wave Clear Notice Banner
@@ -423,6 +536,56 @@ public class GameEngine {
         FontMetrics fm4 = g.getFontMetrics();
         String prompt = "Press [R] to Redeploy Ship | Press [M] for Main Menu";
         g.drawString(prompt, (screenWidth - fm4.stringWidth(prompt)) / 2, midY + 70);
+    }
+
+    private void renderDemoBadges(Graphics2D g) {
+        g.setFont(new Font("SansSerif", Font.BOLD, 10));
+        for (Enemy e : enemies) {
+            if (!e.isActive()) continue;
+            String label = "";
+            Color col = Color.CYAN;
+            if (e instanceof ArmouredEnemy arm) {
+                label = "CO1: Armoured (Armor:" + arm.getArmorRating() + ")";
+                col = new Color(0, 220, 230);
+            } else if (e instanceof InterceptorEnemy inc) {
+                label = "CO1: Interceptor" + (inc.isDashing() ? " [DASH]" : "");
+                col = new Color(255, 180, 50);
+            } else if (e instanceof MorphingEnemy morph) {
+                label = "CO2: Morphing [" + morph.getCurrentState() + "]";
+                col = new Color(180, 100, 255);
+            } else if (e instanceof FailSafeEnemy fs) {
+                label = "CO3: Fail-Safe" + (fs.isEmergencyBarrierActive() ? " [BARRIER]" : "");
+                col = new Color(50, 220, 150);
+            } else if (e instanceof RammerEnemy ram) {
+                label = "CO4: Rammer" + (ram.isCharging() ? " [RAM]" : "");
+                col = new Color(255, 90, 90);
+            }
+            if (!label.isEmpty()) {
+                FontMetrics fm = g.getFontMetrics();
+                int textW = fm.stringWidth(label);
+                int lx = (int) (e.getX() + (e.getWidth() - textW) / 2.0);
+                int ly = (int) Math.max(14, e.getY() - 6);
+                g.setColor(new Color(10, 15, 25, 210));
+                g.fillRoundRect(lx - 4, ly - 10, textW + 8, 13, 4, 4);
+                g.setColor(col);
+                g.drawString(label, lx, ly);
+            }
+        }
+    }
+
+    private void renderDemoBanner(Graphics2D g, int width) {
+        g.setColor(new Color(7, 10, 19, 220));
+        g.fillRect(0, 0, width, 46);
+        g.setColor(new Color(0, 229, 255, 140));
+        g.drawLine(0, 46, width, 46);
+
+        g.setColor(new Color(0, 229, 255));
+        g.setFont(new Font("SansSerif", Font.BOLD, 12));
+        g.drawString("PSOOP 5-ENEMY ACADEMIC DEMONSTRATION ARENA", 20, 18);
+
+        g.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        g.setColor(new Color(200, 225, 245));
+        g.drawString("[1] Armoured (CO1) | [2] Interceptor (CO1) | [3] Morphing (CO2) | [4] Fail-Safe (CO3) | [5] Rammer (CO4) | [C] Clear | [R] Reset | [M] Menu", 20, 36);
     }
 
     // Input hooks

@@ -67,7 +67,7 @@ call test_all.bat
 exit /b %ERRORLEVEL%
 
 :run_roster
-call airstrike.bat
+call airstrike.bat 9
 exit /b %ERRORLEVEL%
 
 :open_docs

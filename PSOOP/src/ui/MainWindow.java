@@ -69,6 +69,12 @@ public class MainWindow extends JFrame {
         gameCanvas.requestFocusInWindow();
     }
 
+    public void startEnemyDemo() {
+        cardLayout.show(rootPanel, "GAME");
+        engine.startEnemyDemo();
+        gameCanvas.requestFocusInWindow();
+    }
+
     public void showInstructions() {
         InstructionsDialog dialog = new InstructionsDialog(this);
         dialog.setVisible(true);

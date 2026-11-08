@@ -11,6 +11,17 @@ import javax.swing.UIManager;
 public class Main {
 
     public static void main(String[] args) {
+        boolean demoFlag = false;
+        if (args != null) {
+            for (String arg : args) {
+                if ("--demo".equalsIgnoreCase(arg) || "--enemies".equalsIgnoreCase(arg) || "-e".equalsIgnoreCase(arg)) {
+                    demoFlag = true;
+                    break;
+                }
+            }
+        }
+        final boolean launchDemo = demoFlag;
+
         // Set cross-platform look and feel or system look and feel defensively
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -20,6 +31,9 @@ public class Main {
         SwingUtilities.invokeLater(() -> {
             MainWindow window = new MainWindow();
             window.setVisible(true);
+            if (launchDemo) {
+                window.startEnemyDemo();
+            }
         });
     }
 }

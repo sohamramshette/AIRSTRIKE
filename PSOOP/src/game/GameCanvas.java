@@ -77,7 +77,19 @@ public class GameCanvas extends JPanel {
                     player.setMoveDown(true);
                 } else if (code == KeyEvent.VK_SPACE) {
                     engine.setShooting(true);
-                } else if (code == KeyEvent.VK_P || code == KeyEvent.VK_ESCAPE) {
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_1 || code == KeyEvent.VK_NUMPAD1)) {
+                    engine.spawnDemoEnemy(1);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_2 || code == KeyEvent.VK_NUMPAD2)) {
+                    engine.spawnDemoEnemy(2);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_3 || code == KeyEvent.VK_NUMPAD3)) {
+                    engine.spawnDemoEnemy(3);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_4 || code == KeyEvent.VK_NUMPAD4)) {
+                    engine.spawnDemoEnemy(4);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_5 || code == KeyEvent.VK_NUMPAD5)) {
+                    engine.spawnDemoEnemy(5);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_C)) {
+                    engine.clearDemoEnemies();
+                } else if (code == KeyEvent.VK_P) {
                     // Pause toggle
                     if (engine.getState() == GameState.PLAYING) {
                         engine.pauseGame();
@@ -85,19 +97,26 @@ public class GameCanvas extends JPanel {
                         engine.resumeGame();
                     }
                 } else if (code == KeyEvent.VK_R) {
-                    // Quick restart from Game Over or active session
-                    if (engine.getState() == GameState.GAME_OVER || engine.getState() == GameState.PLAYING) {
+                    if (engine.isEnemyDemoMode()) {
+                        engine.resetDemoFleet();
+                    } else if (engine.getState() == GameState.GAME_OVER || engine.getState() == GameState.PLAYING) {
                         engine.startNewGame();
                     }
-                } else if (code == KeyEvent.VK_M) {
+                } else if (code == KeyEvent.VK_M || (engine.isEnemyDemoMode() && code == KeyEvent.VK_ESCAPE)) {
                     // Return to Main Menu
-                    if (engine.getState() == GameState.PAUSED || engine.getState() == GameState.GAME_OVER) {
+                    if (engine.isEnemyDemoMode() || engine.getState() == GameState.PAUSED || engine.getState() == GameState.GAME_OVER) {
                         try {
                             engine.setState(GameState.MENU);
                             if (mainWindow != null) {
                                 mainWindow.showMainMenu();
                             }
                         } catch (InvalidGameStateException ignored) {}
+                    }
+                } else if (code == KeyEvent.VK_ESCAPE) {
+                    if (engine.getState() == GameState.PLAYING) {
+                        engine.pauseGame();
+                    } else if (engine.getState() == GameState.PAUSED) {
+                        engine.resumeGame();
                     }
                 }
             }

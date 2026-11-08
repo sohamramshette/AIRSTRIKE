@@ -132,25 +132,38 @@ public class MenuPanel extends JPanel {
 
         // 1. Pilot Status HUD Capsule (below hero header space)
         gbc.gridy = 0;
-        gbc.insets = new Insets(152, 12, 10, 12);
+        gbc.insets = new Insets(134, 12, 8, 12);
         JPanel pilotHud = buildPilotStatusCapsule();
         add(pilotHud, gbc);
 
         // 2. Primary Hero Button: LAUNCH MISSION
         gbc.gridy = 1;
-        gbc.insets = new Insets(4, 12, 8, 12);
+        gbc.insets = new Insets(4, 12, 6, 12);
         AestheticButton launchBtn = new AestheticButton(
                 "▶   LAUNCH MISSION",
                 new Color(0, 229, 255),
                 new Color(0, 119, 182),
                 true
         );
-        launchBtn.setPreferredSize(new Dimension(380, 44));
+        launchBtn.setPreferredSize(new Dimension(380, 42));
         launchBtn.addActionListener(e -> mainWindow.startGame());
         add(launchBtn, gbc);
 
-        // 3. Global Leaderboard
+        // 3. Academic Demonstration: PSOOP 5-Enemy Showcase
         gbc.gridy = 2;
+        gbc.insets = new Insets(3, 12, 3, 12);
+        AestheticButton enemyDemoBtn = new AestheticButton(
+                "✦   PSOOP ENEMY SHOWCASE (5 COs)",
+                new Color(168, 85, 247),
+                new Color(36, 18, 48),
+                false
+        );
+        enemyDemoBtn.setPreferredSize(new Dimension(380, 42));
+        enemyDemoBtn.addActionListener(e -> mainWindow.startEnemyDemo());
+        add(enemyDemoBtn, gbc);
+
+        // 4. Global Leaderboard
+        gbc.gridy = 3;
         gbc.insets = new Insets(3, 12, 3, 12);
         AestheticButton leaderboardBtn = new AestheticButton(
                 "★   GLOBAL LEADERBOARD",
@@ -161,8 +174,8 @@ public class MenuPanel extends JPanel {
         leaderboardBtn.addActionListener(e -> mainWindow.showLeaderboardDialog());
         add(leaderboardBtn, gbc);
 
-        // 4. Match History / Flight Logs
-        gbc.gridy = 3;
+        // 5. Match History / Flight Logs
+        gbc.gridy = 4;
         AestheticButton historyBtn = new AestheticButton(
                 "◈   MATCH HISTORY (FLIGHT LOGS)",
                 new Color(56, 189, 248),
@@ -172,8 +185,8 @@ public class MenuPanel extends JPanel {
         historyBtn.addActionListener(e -> mainWindow.showMatchHistoryDialog());
         add(historyBtn, gbc);
 
-        // 5. Starfleet Pilot Registry (Account)
-        gbc.gridy = 4;
+        // 6. Starfleet Pilot Registry (Account)
+        gbc.gridy = 5;
         AestheticButton registryBtn = new AestheticButton(
                 "✦   STARFLEET PILOT REGISTRY",
                 new Color(168, 85, 247),
@@ -183,8 +196,8 @@ public class MenuPanel extends JPanel {
         registryBtn.addActionListener(e -> mainWindow.showAuthDialog());
         add(registryBtn, gbc);
 
-        // 6. Pilot Manual (Controls)
-        gbc.gridy = 5;
+        // 7. Pilot Manual (Controls)
+        gbc.gridy = 6;
         AestheticButton manualBtn = new AestheticButton(
                 "❖   PILOT MANUAL (CONTROLS)",
                 new Color(52, 211, 153),
@@ -194,8 +207,8 @@ public class MenuPanel extends JPanel {
         manualBtn.addActionListener(e -> mainWindow.showInstructions());
         add(manualBtn, gbc);
 
-        // 7. System Settings
-        gbc.gridy = 6;
+        // 8. System Settings
+        gbc.gridy = 7;
         AestheticButton settingsBtn = new AestheticButton(
                 "⚙   SYSTEM SETTINGS",
                 new Color(251, 146, 60),
@@ -205,8 +218,8 @@ public class MenuPanel extends JPanel {
         settingsBtn.addActionListener(e -> mainWindow.showSettings());
         add(settingsBtn, gbc);
 
-        // 8. Exit / Abort Button
-        gbc.gridy = 7;
+        // 9. Exit / Abort Button
+        gbc.gridy = 8;
         gbc.insets = new Insets(6, 12, 14, 12);
         AestheticButton exitBtn = new AestheticButton(
                 "✕   ABORT TO DESKTOP",

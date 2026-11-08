@@ -1,9 +1,19 @@
 ﻿# AIRSTRIKE: Master Unified Launcher (PowerShell Edition)
 # Connects all 4 subject modules and 20 enemy demonstrations.
+param(
+    [Parameter(Position=0)]
+    [string]$Option
+)
 
 $projectRoot = $PSScriptRoot
 if (Test-Path (Join-Path $projectRoot "bin")) {
     Set-Location $projectRoot
+}
+
+function Pause-IfInteractive {
+    if (-not $Option) {
+        Read-Host "`nPress Enter to return to master menu"
+    }
 }
 
 function Show-Menu {
@@ -66,13 +76,10 @@ function Show-Roster {
     Write-Host "`n==============================================================================" -ForegroundColor Cyan
     Write-Host "Total: Exactly 19 Course Outcomes (COs) | Exactly 20 Distinct Enemy Classes" -ForegroundColor Green
     Write-Host "==============================================================================" -ForegroundColor Cyan
-    Read-Host "`nPress Enter to return to master menu"
+    Pause-IfInteractive
 }
 
-while ($true) {
-    Show-Menu
-    $choice = Read-Host "Select an option [1-10]"
-
+function Invoke-LauncherOption([string]$choice) {
     switch ($choice) {
         "1" {
             Write-Host "`n==============================================================================" -ForegroundColor Cyan
@@ -82,16 +89,16 @@ while ($true) {
             if (-not $javaCmd) {
                 Write-Host "[ERROR] Java Runtime (java.exe) was not found in PATH!" -ForegroundColor Red
                 Write-Host "Please install Java 11 or higher and add it to your system PATH." -ForegroundColor Yellow
-                Read-Host "`nPress Enter to return to menu"
-                continue
+                Pause-IfInteractive
+                return
             }
             if (-not (Test-Path "bin\java\main\Main.class")) {
                 Write-Host "[INFO] Java classes not found in bin\java. Compiling module..." -ForegroundColor Yellow
                 & ".\scripts\build_java.ps1"
                 if ($LASTEXITCODE -ne 0) {
                     Write-Host "[ERROR] Java build failed!" -ForegroundColor Red
-                    Read-Host "`nPress Enter to return to menu"
-                    continue
+                    Pause-IfInteractive
+                    return
                 }
             }
             Write-Host "[INFO] Launching Java Desktop Game Client in an independent GUI window..." -ForegroundColor Green
@@ -108,16 +115,16 @@ while ($true) {
             if (-not $nodeCmd -or -not $npmCmd) {
                 Write-Host "[ERROR] Node.js and npm were not found in PATH!" -ForegroundColor Red
                 Write-Host "Please install Node.js 18+ and ensure 'node' and 'npm' are in your PATH." -ForegroundColor Yellow
-                Read-Host "`nPress Enter to return to menu"
-                continue
+                Pause-IfInteractive
+                return
             }
             if (-not (Test-Path "web\node_modules")) {
                 Write-Host "[INFO] web/node_modules not found. Installing web dependencies..." -ForegroundColor Yellow
                 npm --prefix web install
                 if ($LASTEXITCODE -ne 0) {
                     Write-Host "[ERROR] npm install failed!" -ForegroundColor Red
-                    Read-Host "`nPress Enter to return to menu"
-                    continue
+                    Pause-IfInteractive
+                    return
                 }
             }
             Write-Host "[INFO] Starting local Vite development server for Web client..." -ForegroundColor Green
@@ -145,13 +152,18 @@ while ($true) {
             }
             Write-Host "[INFO] Executing live programmatic verification for all 5 PSOOP enemy types..." -ForegroundColor Yellow
             java -cp bin\java test.GameUnitTest
-            Write-Host "`n[NOTE] In normal gameplay, all 5 enemies spawn across Waves 1 to 5." -ForegroundColor Cyan
-            $launchGame = Read-Host "Launch active Java Space Shooter GUI now? (Y/N)"
-            if ($launchGame -eq "Y" -or $launchGame -eq "y") {
-                Start-Process -FilePath "java" -ArgumentList "-cp", "bin\java", "main.Main"
-                Write-Host "[INFO] Java combat window launched." -ForegroundColor Green
+            Write-Host "`n[NOTE] In normal gameplay, all 5 enemies spawn across progressive combat sectors (Waves 1 to 5)." -ForegroundColor Cyan
+            if ($Option) {
+                Start-Process -FilePath "java" -ArgumentList "-cp", "bin\java", "main.Main", "--demo"
+                Write-Host "[INFO] Java 5-Enemy Demonstration arena launched." -ForegroundColor Green
+            } else {
+                $launchGame = Read-Host "Launch active Java 5-Enemy Academic Showcase GUI arena now? [Y/N, default=Y]"
+                if ($launchGame -eq "" -or $launchGame -eq "Y" -or $launchGame -eq "y") {
+                    Start-Process -FilePath "java" -ArgumentList "-cp", "bin\java", "main.Main", "--demo"
+                    Write-Host "[INFO] Java 5-Enemy Demonstration arena launched." -ForegroundColor Green
+                }
             }
-            Read-Host "`nPress Enter to return to menu"
+            Pause-IfInteractive
         }
         "4" {
             Write-Host "`n==============================================================================" -ForegroundColor Cyan
@@ -165,7 +177,7 @@ while ($true) {
                 & ".\scripts\build_pl.ps1"
             }
             & "bin\pl\pl_test_runner.exe"
-            Read-Host "`nPress Enter to return to menu"
+            Pause-IfInteractive
         }
         "5" {
             Write-Host "`n==============================================================================" -ForegroundColor Cyan
@@ -182,7 +194,7 @@ while ($true) {
                 & ".\scripts\build_coa.ps1"
             }
             & "bin\coa\coa_runner.exe"
-            Read-Host "`nPress Enter to return to menu"
+            Pause-IfInteractive
         }
         "6" {
             Write-Host "`n==============================================================================" -ForegroundColor Cyan
@@ -204,22 +216,29 @@ while ($true) {
             }
             Write-Host "[INFO] Launching CGL OpenGL Visual Demonstration Window..." -ForegroundColor Green
             Start-Process -FilePath "bin\cgl\cgl_runner.exe"
-            Read-Host "`nPress Enter to return to menu"
+            Pause-IfInteractive
         }
         "7" {
             Write-Host "`n[BUILD] Building all four subject modules..." -ForegroundColor Cyan
             & ".\build_all.ps1"
-            Read-Host "`nPress Enter to return to menu"
+            Pause-IfInteractive
         }
         "8" {
             Write-Host "`n[TEST] Running master automated test suite across all 4 modules..." -ForegroundColor Cyan
             & ".\scripts\test_all.ps1"
-            Read-Host "`nPress Enter to return to menu"
+            Pause-IfInteractive
         }
         "9" {
             Show-Roster
         }
+        "roster" {
+            Show-Roster
+        }
         "10" {
+            Write-Host "`nThank you for evaluating AIRSTRIKE. Systems safely powered down." -ForegroundColor Green
+            exit 0
+        }
+        "exit" {
             Write-Host "`nThank you for evaluating AIRSTRIKE. Systems safely powered down." -ForegroundColor Green
             exit 0
         }
@@ -228,4 +247,16 @@ while ($true) {
             Start-Sleep -Seconds 1
         }
     }
+}
+
+if ($Option) {
+    Invoke-LauncherOption -choice $Option
+    exit 0
+}
+
+while ($true) {
+    Show-Menu
+    $choice = Read-Host "Select an option [1-10]"
+    if ([string]::IsNullOrWhiteSpace($choice)) { break }
+    Invoke-LauncherOption -choice $choice
 }

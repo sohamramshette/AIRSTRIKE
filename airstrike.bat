@@ -4,6 +4,21 @@ setlocal enabledelayedexpansion
 rem Anchor working directory to project root
 if exist "%~dp0bin" cd /d "%~dp0"
 
+if "%~1"=="" goto :interactive_menu
+set "PARAM_CHOICE=%~1"
+if "%PARAM_CHOICE%"=="1" goto :launch_psoop_play
+if "%PARAM_CHOICE%"=="2" goto :launch_browser
+if "%PARAM_CHOICE%"=="3" goto :launch_psoop_enemies
+if "%PARAM_CHOICE%"=="4" goto :launch_pl_enemies
+if "%PARAM_CHOICE%"=="5" goto :launch_coa_enemies
+if "%PARAM_CHOICE%"=="6" goto :launch_cgl_enemies
+if "%PARAM_CHOICE%"=="7" goto :launch_build
+if "%PARAM_CHOICE%"=="8" goto :launch_tests
+if "%PARAM_CHOICE%"=="9" goto :show_roster
+if /i "%PARAM_CHOICE%"=="roster" goto :show_roster
+if "%PARAM_CHOICE%"=="10" goto :exit_launcher
+if /i "%PARAM_CHOICE%"=="exit" goto :exit_launcher
+
 :interactive_menu
 cls
 echo ==============================================================================
@@ -132,13 +147,14 @@ if not exist "bin\java\test\GameUnitTest.class" (
 echo [INFO] Executing live programmatic verification for all 5 PSOOP enemy types...
 java -cp bin\java test.GameUnitTest
 echo.
-echo [NOTE] In normal gameplay, all 5 enemies spawn across Waves 1 to 5.
-set "LAUNCH_GAME=N"
-set /p "LAUNCH_GAME=Launch active Java Space Shooter GUI now? (Y/N): "
+echo [NOTE] In normal gameplay, all 5 enemies spawn across progressive combat sectors (Waves 1 to 5).
+set "LAUNCH_GAME=Y"
+set /p "LAUNCH_GAME=Launch active Java 5-Enemy Academic Showcase GUI arena now? [Y/N, default=Y]: "
 if /i "%LAUNCH_GAME%"=="Y" (
-    start "AIRSTRIKE - Java Combat Client" java -cp bin\java main.Main
-    echo [INFO] Java combat window launched.
+    start "AIRSTRIKE - Java Enemy Showcase" java -cp bin\java main.Main --demo
+    echo [INFO] Java 5-Enemy Demonstration arena launched.
 )
+if defined PARAM_CHOICE exit /b 0
 pause
 goto :interactive_menu
 
@@ -166,6 +182,7 @@ if not exist "bin\pl\pl_test_runner.exe" (
 bin\pl\pl_test_runner.exe
 echo.
 echo [INFO] Returned from PL application.
+if defined PARAM_CHOICE exit /b 0
 pause
 goto :interactive_menu
 
@@ -196,6 +213,7 @@ if not exist "bin\coa\coa_runner.exe" (
 bin\coa\coa_runner.exe
 echo.
 echo [INFO] Returned from COA application.
+if defined PARAM_CHOICE exit /b 0
 pause
 goto :interactive_menu
 
@@ -229,6 +247,7 @@ if not exist "bin\cgl\cgl_runner.exe" (
 )
 echo [INFO] Launching CGL OpenGL Visual Demonstration Window...
 start "AIRSTRIKE - Computer Graphics Lab (OpenGL)" bin\cgl\cgl_runner.exe
+if defined PARAM_CHOICE exit /b 0
 pause
 goto :interactive_menu
 
@@ -239,6 +258,7 @@ rem --------------------------------------------------------------------------
 echo.
 call build_all.bat
 echo.
+if defined PARAM_CHOICE exit /b 0
 pause
 goto :interactive_menu
 
@@ -249,6 +269,7 @@ rem --------------------------------------------------------------------------
 echo.
 call test_all.bat
 echo.
+if defined PARAM_CHOICE exit /b 0
 pause
 goto :interactive_menu
 
@@ -295,6 +316,7 @@ echo ===========================================================================
 echo Total: Exactly 19 Course Outcomes (COs) ^| Exactly 20 Distinct Enemy Classes
 echo ==============================================================================
 echo.
+if defined PARAM_CHOICE exit /b 0
 pause
 goto :interactive_menu
 
