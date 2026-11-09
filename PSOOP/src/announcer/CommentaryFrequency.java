@@ -1,9 +1,9 @@
 package announcer;
 
 public enum CommentaryFrequency {
-    LOW("Low (Relaxed)", 18.0, 30.0),
-    NORMAL("Normal (Balanced)", 8.5, 18.0),
-    HIGH("High (Non-stop Desi Banter)", 4.5, 10.0);
+    LOW("Low (Relaxed)", 45.0, 90.0),
+    NORMAL("Normal (Balanced)", 26.0, 55.0),
+    HIGH("High (Active Banter)", 14.0, 28.0);
 
     private final String label;
     private final double minCooldown;
@@ -27,3 +27,4 @@ public enum CommentaryFrequency {
         return randomInterval;
     }
 }
+

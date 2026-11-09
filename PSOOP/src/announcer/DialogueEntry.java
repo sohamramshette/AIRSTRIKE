@@ -43,3 +43,4 @@ public class DialogueEntry {
         return triggers.contains(event);
     }
 }
+

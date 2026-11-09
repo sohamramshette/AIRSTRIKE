@@ -108,7 +108,7 @@ export class AnnouncerManager {
   public showBanner(text: string, category: DialogueCategory, highPriority: boolean): void {
     this.activeText = text;
     this.activeCategory = category;
-    this.bannerDuration = highPriority ? 5.2 : 4.4;
+    this.bannerDuration = highPriority ? 3.4 : 2.8;
     this.bannerTimer = this.bannerDuration;
     this.bannerAlpha = 0;
   }
@@ -140,18 +140,18 @@ export class AnnouncerManager {
   private getMinCooldown(): number {
     const freq = AnnouncerSettingsManager.getInstance().getSettings().frequency;
     switch (freq) {
-      case 'HIGH': return 4.5;
-      case 'LOW': return 18.0;
-      default: return 8.5;
+      case 'HIGH': return 14.0;
+      case 'LOW': return 45.0;
+      default: return 26.0;
     }
   }
 
   private getRandomInterval(): number {
     const freq = AnnouncerSettingsManager.getInstance().getSettings().frequency;
     switch (freq) {
-      case 'HIGH': return 10.0;
-      case 'LOW': return 28.0;
-      default: return 16.0;
+      case 'HIGH': return 28.0;
+      case 'LOW': return 90.0;
+      default: return 55.0;
     }
   }
 
@@ -190,15 +190,15 @@ export class AnnouncerManager {
       this.criticalHealthTriggered = false;
     }
 
-    // 2. Damage Taken
-    if (this.lastHealth >= 0 && player.health < this.lastHealth) {
+    // 2. Significant Damage Taken (shield depleted or substantial hull damage)
+    if (this.lastHealth >= 0 && (this.lastHealth - player.health >= 20 || (player.shield <= 0 && this.lastHealth - player.health >= 15))) {
       if (healthRatio > 0.25) {
         this.trigger('PLAYER_DAMAGE', false);
       }
     }
     this.lastHealth = player.health;
 
-    // 3. Missed Shots Tracking
+    // 3. Missed Shots Tracking (only when player is spraying repeatedly)
     const shotsFired = engine.shotsFired || 0;
     const shotsHit = engine.shotsHit || 0;
     const newFired = shotsFired - this.lastShotsFired;
@@ -207,7 +207,7 @@ export class AnnouncerManager {
     if (newFired > 0) {
       if (newHits === 0) {
         this.consecutiveMisses += newFired;
-        if (this.consecutiveMisses >= 14) {
+        if (this.consecutiveMisses >= 28 && shotsFired >= 35) {
           this.trigger('MISSED_SHOTS', false);
           this.consecutiveMisses = 0;
         }
@@ -218,21 +218,21 @@ export class AnnouncerManager {
     this.lastShotsFired = shotsFired;
     this.lastShotsHit = shotsHit;
 
-    // 4. Low Accuracy Roast
-    if (shotsFired >= 25 && shotsFired % 30 === 0) {
+    // 4. Low Accuracy Roast (evaluated infrequently)
+    if (shotsFired >= 50 && shotsFired % 50 === 0) {
       const acc = shotsHit / shotsFired;
-      if (acc < 0.22) {
+      if (acc < 0.20) {
         this.trigger('LOW_ACCURACY', false);
-      } else if (acc > 0.78) {
+      } else if (acc > 0.80) {
         this.trigger('HIGH_ACCURACY', false);
       }
     }
 
-    // 5. Corner Camping Detection
+    // 5. Corner Camping Detection (only when squatting for extended duration)
     const screenW = engine.width || 800;
     if (player.x < 70 || player.x > screenW - 120) {
       this.campingTimer += dt;
-      if (this.campingTimer >= 5.0) {
+      if (this.campingTimer >= 8.5) {
         this.trigger('CAMPING', false);
         this.campingTimer = 0;
       }
@@ -240,7 +240,7 @@ export class AnnouncerManager {
       this.campingTimer = Math.max(0, this.campingTimer - dt * 1.5);
     }
 
-    // 6. Kill Streak Tracking
+    // 6. Kill Streak Tracking (rewards destroying multiple enemies in succession)
     const streak = engine.scoreCalc
       ? (typeof engine.scoreCalc.getStreak === 'function'
           ? engine.scoreCalc.getStreak()
@@ -248,7 +248,7 @@ export class AnnouncerManager {
               ? engine.scoreCalc.getCurrentStreak()
               : 0))
       : 0;
-    if (streak >= 8 && streak !== this.lastReportedKillStreak && streak % 8 === 0) {
+    if (streak >= 5 && streak !== this.lastReportedKillStreak && streak % 5 === 0) {
       this.lastReportedKillStreak = streak;
       this.trigger('KILL_STREAK', false);
     } else if (streak === 0) {
@@ -409,7 +409,7 @@ export class AnnouncerManager {
 
   public reset(): void {
     this.cooldownTimer = 0;
-    this.randomInterruptTimer = 14.0;
+    this.randomInterruptTimer = 35.0;
     this.lastHealth = -1;
     this.lastShotsFired = 0;
     this.lastShotsHit = 0;

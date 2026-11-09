@@ -245,7 +245,7 @@ public class AnnouncerManager {
     public void showBanner(String text, DialogueCategory category, boolean highPriority) {
         this.activeText = text;
         this.activeCategory = category != null ? category : DialogueCategory.GENERAL_ROAST;
-        this.bannerDuration = highPriority ? 5.2 : 4.4;
+        this.bannerDuration = highPriority ? 3.4 : 2.8;
         this.bannerTimer = this.bannerDuration;
         this.bannerAlpha = 0.0f;
     }
@@ -289,15 +289,15 @@ public class AnnouncerManager {
             criticalHealthTriggered = false;
         }
 
-        // 2. Damage Taken Detection
-        if (lastHealth >= 0 && player.getHealth() < lastHealth) {
+        // 2. Significant Damage Taken Detection (shield depleted or substantial hull loss)
+        if (lastHealth >= 0 && ((lastHealth - player.getHealth() >= 20) || (player.getShield() <= 0 && lastHealth - player.getHealth() >= 15))) {
             if (healthPct > 0.25f) {
                 trigger(AnnouncerEvent.PLAYER_DAMAGE, false);
             }
         }
         lastHealth = player.getHealth();
 
-        // 3. Shooting Accuracy & Missed Shots Detection
+        // 3. Shooting Accuracy & Missed Shots Detection (only when player is repeatedly spraying)
         int shotsFired = engine.getShotsFired();
         int shotsHit = engine.getShotsHit();
         int newFired = shotsFired - lastShotsFired;
@@ -306,7 +306,7 @@ public class AnnouncerManager {
         if (newFired > 0) {
             if (newHits == 0) {
                 consecutiveMisses += newFired;
-                if (consecutiveMisses >= 14) {
+                if (consecutiveMisses >= 28 && shotsFired >= 35) {
                     trigger(AnnouncerEvent.MISSED_SHOTS, false);
                     consecutiveMisses = 0;
                 }
@@ -317,21 +317,21 @@ public class AnnouncerManager {
         lastShotsFired = shotsFired;
         lastShotsHit = shotsHit;
 
-        // 4. Low Accuracy Roast (after at least 25 shots fired)
-        if (shotsFired >= 25 && shotsFired % 30 == 0) {
+        // 4. Low Accuracy Roast (evaluated infrequently)
+        if (shotsFired >= 50 && shotsFired % 50 == 0) {
             double acc = (double) shotsHit / shotsFired;
-            if (acc < 0.22) {
+            if (acc < 0.20) {
                 trigger(AnnouncerEvent.LOW_ACCURACY, false);
-            } else if (acc > 0.78) {
+            } else if (acc > 0.80) {
                 trigger(AnnouncerEvent.HIGH_ACCURACY, false);
             }
         }
 
-        // 5. Corner Camping Detection
+        // 5. Corner Camping Detection (only when squatting for extended duration)
         int screenW = engine.getScreenWidth();
         if (player.getX() < 70 || player.getX() > (screenW - 120)) {
             campingTimer += delta;
-            if (campingTimer >= 5.0) {
+            if (campingTimer >= 8.5) {
                 trigger(AnnouncerEvent.CAMPING, false);
                 campingTimer = 0.0;
             }
@@ -339,9 +339,9 @@ public class AnnouncerManager {
             campingTimer = Math.max(0.0, campingTimer - delta * 1.5);
         }
 
-        // 6. Kill Streak / Combo milestones
+        // 6. Kill Streak / Multiple Enemies Destroyed (rewards consecutive eliminations)
         int currentStreak = engine.getScoreCalculator() != null ? engine.getScoreCalculator().getKillStreak() : 0;
-        if (currentStreak >= 8 && currentStreak != lastReportedKillStreak && currentStreak % 8 == 0) {
+        if (currentStreak >= 5 && currentStreak != lastReportedKillStreak && currentStreak % 5 == 0) {
             lastReportedKillStreak = currentStreak;
             trigger(AnnouncerEvent.KILL_STREAK, false);
         } else if (currentStreak == 0) {
@@ -508,7 +508,7 @@ public class AnnouncerManager {
 
     public void reset() {
         cooldownTimer = 0.0;
-        randomInterruptTimer = 14.0;
+        randomInterruptTimer = 35.0;
         lastHealth = -1;
         lastShotsFired = 0;
         lastShotsHit = 0;

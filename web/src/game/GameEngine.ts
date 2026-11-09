@@ -185,6 +185,7 @@ export class GameEngine {
           // Level cleared bonus
           this.scoreCalc.addBonus(500);
           this.particles.spawnFloatingText(400, 300, 'SECTOR CLEAR +500', '#00E5FF');
+          AnnouncerManager.getInstance().trigger('WAVE_CLEARED', true);
         }
       );
 

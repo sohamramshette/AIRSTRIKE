@@ -58,3 +58,4 @@ public class AnnouncerSettings {
         this.volume = Math.max(0.0f, Math.min(1.0f, volume));
     }
 }
+

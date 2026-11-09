@@ -222,3 +222,4 @@ The captured screenshots below demonstrate the visual design of the Announcer ac
    - `web/tests/capture_phase10_web.ts` (Puppeteer screenshot generator)
 4. **Documentation**:
    - `docs/PHASE_10_HINGLISH_ANNOUNCER.md` (This document)
+

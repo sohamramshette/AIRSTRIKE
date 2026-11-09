@@ -192,3 +192,4 @@ public class AnnouncerTest {
         assertTrue("Trigger resumes when announcer is re-enabled", triggeredWhileReEnabled);
     }
 }
+

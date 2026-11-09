@@ -50,3 +50,4 @@ export interface AnnouncerSettings {
   voiceEnabled: boolean;
   volume: number;
 }
+

@@ -77,3 +77,4 @@ export class AnnouncerSettingsManager {
     this.saveToStorage();
   }
 }
+

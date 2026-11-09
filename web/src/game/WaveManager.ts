@@ -16,6 +16,7 @@ export class WaveManager {
   public isBossWave: boolean = false;
   public bossActive: boolean = false;
   public bannerText: string | null = null;
+  public bannerTimer: number = 0;
 
   constructor() {
     this.startLevel(1);
@@ -31,6 +32,7 @@ export class WaveManager {
     this.bossActive = false;
     this.waveClearTimer = 0;
     this.bannerText = `SECTOR ${this.currentLevel}: ${this.isBossWave ? 'FLAGSHIP INCOMING' : 'INVASION FLEET'}`;
+    this.bannerTimer = 2.0; // Display sector banner for only 2.0 seconds then auto-dismiss!
 
     if (this.isBossWave) {
       this.waveEnemiesRemaining = 1; // The boss
@@ -47,7 +49,15 @@ export class WaveManager {
     onSpawnEnemy: (enemy: Enemy) => void,
     onWaveCleared: (level: number) => void
   ): void {
-    // Wave clear banner delay
+    // 1. Sector entrance banner countdown (auto-clears after 2 seconds)
+    if (this.bannerTimer > 0) {
+      this.bannerTimer -= dt;
+      if (this.bannerTimer <= 0) {
+        this.bannerText = null;
+      }
+    }
+
+    // 2. Wave clear banner delay
     if (this.waveClearTimer > 0) {
       this.waveClearTimer -= dt;
       if (this.waveClearTimer <= 0) {

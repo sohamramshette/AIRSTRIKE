@@ -289,7 +289,11 @@ public class GameEngine {
 
         // 2. Wave Manager updates (enemy spawning & difficulty)
         if (!enemyDemoMode) {
+            boolean wasNotice = waveManager.isWaveClearNotice();
             waveManager.update(delta, enemies, screenWidth);
+            if (!wasNotice && waveManager.isWaveClearNotice()) {
+                announcer.AnnouncerManager.getInstance().trigger(announcer.AnnouncerEvent.WAVE_CLEARED, true);
+            }
         } else {
             updateDemoFleet(delta);
         }

@@ -26,3 +26,4 @@ public enum AnnouncerEvent {
     HIGH_SCORE_BEATEN,
     RANDOM_INTERRUPT
 }
+
