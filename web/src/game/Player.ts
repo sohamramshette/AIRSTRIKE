@@ -17,6 +17,8 @@ export class Player extends Entity {
   public invulnerableTimer: number = 0;
   public blinkTimer: number = 0;
   public isVisible: boolean = true;
+  public controlsInverted: boolean = false;
+  public damageMultiplier: number = 1.0;
 
   private animTime: number = 0;
 
@@ -40,6 +42,8 @@ export class Player extends Entity {
     this.blinkTimer = 0;
     this.isVisible = true;
     this.active = true;
+    this.controlsInverted = false;
+    this.damageMultiplier = 1.0;
   }
 
   public respawn(): void {
@@ -57,6 +61,11 @@ export class Player extends Entity {
   public updateMovement(inputX: number, inputY: number): void {
     let dx = inputX;
     let dy = inputY;
+
+    if (this.controlsInverted) {
+      dx = -dx;
+      dy = -dy;
+    }
 
     if (dx !== 0 && dy !== 0) {
       const norm = 1.0 / Math.SQRT2; // 0.70710678
@@ -103,6 +112,7 @@ export class Player extends Entity {
 
     this.shootTimer = this.shootCooldown;
     const bullets: Projectile[] = [];
+    const dmgMul = this.damageMultiplier || 1.0;
 
     if (this.weaponLevel === 1) {
       // Single Cannon
@@ -112,7 +122,7 @@ export class Player extends Entity {
           this.y - 4,
           0,
           -560.0,
-          30, // 25 + 5 * 1
+          Math.round(30 * dmgMul), // 25 + 5 * 1
           true,
           6,
           16,
@@ -128,7 +138,7 @@ export class Player extends Entity {
           this.y + 4,
           0,
           -560.0,
-          35, // 25 + 5 * 2
+          Math.round(35 * dmgMul), // 25 + 5 * 2
           true,
           6,
           16,
@@ -140,7 +150,7 @@ export class Player extends Entity {
           this.y + 4,
           0,
           -560.0,
-          35,
+          Math.round(35 * dmgMul),
           true,
           6,
           16,
@@ -156,7 +166,7 @@ export class Player extends Entity {
           this.y - 4,
           0,
           -560.0,
-          45, // Center heavy
+          Math.round(45 * dmgMul), // Center heavy
           true,
           6,
           18,
@@ -168,7 +178,7 @@ export class Player extends Entity {
           this.y + 4,
           -110.0,
           -560.0,
-          40, // Left angled
+          Math.round(40 * dmgMul), // Left angled
           true,
           6,
           16,
@@ -180,7 +190,7 @@ export class Player extends Entity {
           this.y + 4,
           110.0,
           -560.0,
-          40, // Right angled
+          Math.round(40 * dmgMul), // Right angled
           true,
           6,
           16,

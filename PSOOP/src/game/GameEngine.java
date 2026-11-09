@@ -40,6 +40,7 @@ public class GameEngine {
     private final ScoreCalculator scoreCalculator;
     private final WaveManager waveManager;
     private final AssetManager assetManager;
+    private final chaos.ChaosScheduler chaosScheduler;
 
     private int screenWidth;
     private int screenHeight;
@@ -95,6 +96,7 @@ public class GameEngine {
         this.scoreCalculator = new ScoreCalculator();
         this.waveManager = new WaveManager();
         this.assetManager = new AssetManager(this.screenWidth, this.screenHeight, 140);
+        this.chaosScheduler = new chaos.ChaosScheduler();
         this.shootingTriggered = false;
     }
 
@@ -152,6 +154,7 @@ public class GameEngine {
 
         scoreCalculator.resetGame();
         waveManager.resetToLevel(1);
+        chaosScheduler.reset(this);
         player.resetFull((screenWidth - player.getWidth()) / 2, screenHeight - 110);
 
         this.matchStartTimeMs = System.currentTimeMillis();
@@ -274,6 +277,9 @@ public class GameEngine {
 
         // Live announcer telemetry & in-game commentary
         announcer.AnnouncerManager.getInstance().update(delta, this);
+
+        // Chaos Protocol scheduler & dynamic anomaly simulation
+        chaosScheduler.update(delta, this);
 
         // 1. Update Player kinematics and boundaries
         player.update(delta);
@@ -562,7 +568,10 @@ public class GameEngine {
         g.setFont(new Font("SansSerif", Font.BOLD, 10));
         g.drawString("[P] PAUSE", pillX + 14, pillY + 15);
 
-        // --- 4. Center Tactical Desi Announcer Banner ---
+        // --- 4. Chaos Protocol Status Indicator ---
+        chaosScheduler.renderHUD(g, screenWidth, screenHeight);
+
+        // --- 5. Center Tactical Desi Announcer Banner ---
         announcer.AnnouncerManager.getInstance().renderHUD(g, screenWidth, screenHeight);
     }
 
@@ -890,5 +899,6 @@ public class GameEngine {
     public List<Particle> getParticles() { return particles; }
     public ScoreCalculator getScoreCalculator() { return scoreCalculator; }
     public WaveManager getWaveManager() { return waveManager; }
+    public chaos.ChaosScheduler getChaosScheduler() { return chaosScheduler; }
 }
 

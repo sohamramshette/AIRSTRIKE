@@ -10,6 +10,7 @@ import { CollisionManager } from './CollisionManager';
 import { InputManager } from './InputManager';
 import { SoundService } from './../services/SoundService';
 import { AnnouncerManager } from '../announcer/AnnouncerManager';
+import { ChaosScheduler } from '../chaos/ChaosScheduler';
 import { Starfield } from './Starfield';
 
 export class GameEngine {
@@ -27,6 +28,7 @@ export class GameEngine {
   public inputManager: InputManager;
   public soundService: SoundService;
   public starfield: Starfield;
+  public chaosScheduler: ChaosScheduler;
 
   private matchDuration: number = 0;
   private enemiesDestroyed: number = 0;
@@ -53,6 +55,7 @@ export class GameEngine {
     this.inputManager = new InputManager();
     this.soundService = SoundService.getInstance();
     this.starfield = new Starfield(canvas.width, canvas.height);
+    this.chaosScheduler = new ChaosScheduler();
 
     this.inputManager.attachCanvas(canvas);
   }
@@ -85,6 +88,7 @@ export class GameEngine {
     this.particles.clear();
     this.scoreCalc.reset();
     this.waveManager.reset();
+    this.chaosScheduler.reset(this);
 
     this.matchDuration = 0;
     this.enemiesDestroyed = 0;
@@ -155,6 +159,9 @@ export class GameEngine {
 
       // Desi Toxic Announcer AI telemetry and live commentary
       AnnouncerManager.getInstance().update(dt, this);
+
+      // Chaos Protocol scheduler & dynamic anomaly simulation (Phase 11)
+      this.chaosScheduler.update(dt, this);
 
       // 1. Player input & movement
       const move = this.inputManager.getMovementVector();
@@ -510,6 +517,9 @@ export class GameEngine {
 
     // --- 5. Center Tactical Desi Announcer Banner ---
     AnnouncerManager.getInstance().renderHUD(ctx, w, _h);
+
+    // --- 6. Top Chaos Protocol HUD Indicator (Phase 11) ---
+    this.chaosScheduler.renderHUD(ctx, w);
 
     ctx.restore();
   }

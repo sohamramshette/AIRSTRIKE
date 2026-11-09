@@ -39,10 +39,18 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [TEST 4/4] Running Hinglish Meme and Bollywood Announcer Test Suite...
+echo [TEST 4/5] Running Hinglish Meme and Bollywood Announcer Test Suite...
 java -cp bin\java test.AnnouncerTest
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] AnnouncerTest failed!
+    exit /b 1
+)
+
+echo.
+echo [TEST 5/5] Running Chaos Protocol CO-Mapped Test Suite...
+java -cp bin\java test.ChaosProtocolTest
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] ChaosProtocolTest failed!
     exit /b 1
 )
 

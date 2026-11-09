@@ -238,6 +238,13 @@ public class AnnouncerManager {
         return true;
     }
 
+    public void triggerChaosLine(String line, DialogueCategory category) {
+        AnnouncerSettings settings = AnnouncerSettings.getInstance();
+        if (!settings.isEnabled() || line == null || line.isBlank()) return;
+        showBanner(line, category != null ? category : DialogueCategory.GENERAL_ROAST, true);
+        cooldownTimer = Math.max(cooldownTimer, 5.0);
+    }
+
     public void showBanner(String text, DialogueCategory category, boolean highPriority) {
         this.activeText = text;
         this.activeCategory = category != null ? category : DialogueCategory.GENERAL_ROAST;

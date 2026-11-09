@@ -105,6 +105,16 @@ export class AnnouncerManager {
     return true;
   }
 
+  public triggerChaosLine(text: string, category: DialogueCategory): void {
+    const settings = AnnouncerSettingsManager.getInstance().getSettings();
+    if (!settings.enabled || !text) return;
+    this.showBanner(text, category || 'GENERAL_ROAST', true);
+    this.cooldownTimer = Math.max(this.cooldownTimer, 5.0);
+    if (settings.voiceEnabled) {
+      this.speak(text);
+    }
+  }
+
   public showBanner(text: string, category: DialogueCategory, highPriority: boolean): void {
     this.activeText = text;
     this.activeCategory = category;

@@ -22,6 +22,8 @@ public class Player extends Ship {
     private boolean invulnerable;
     private long invulnerableEndTime;
     private double enginePulse;
+    private boolean controlsInverted;
+    private double damageMultiplier;
 
     public Player(double x, double y) {
         // Player stats: width 48, height 56, maxHealth 100, maxShield 100, speed 320, cooldown 180ms
@@ -35,6 +37,8 @@ public class Player extends Ship {
         this.invulnerable = false;
         this.invulnerableEndTime = 0;
         this.enginePulse = 0.0;
+        this.controlsInverted = false;
+        this.damageMultiplier = 1.0;
     }
 
     @Override
@@ -47,6 +51,11 @@ public class Player extends Ship {
         if (moveRight && !moveLeft) vx = speed;
         if (moveUp && !moveDown) vy = -speed;
         if (moveDown && !moveUp) vy = speed;
+
+        if (controlsInverted) {
+            vx = -vx;
+            vy = -vy;
+        }
 
         // Diagonal normalization to prevent faster speed on diagonal
         if (vx != 0.0 && vy != 0.0) {
@@ -82,7 +91,7 @@ public class Player extends Ship {
 
         recordShot();
         double bulletSpeed = -560.0; // Moving upwards
-        int damage = 25 + (weaponLevel * 5);
+        int damage = (int) Math.round((25 + (weaponLevel * 5)) * damageMultiplier);
 
         double centerX = getCenterX();
         double noseY = y - 4;
@@ -154,6 +163,8 @@ public class Player extends Ship {
         this.weaponLevel = 1;
         this.active = true;
         this.invulnerable = false;
+        this.controlsInverted = false;
+        this.damageMultiplier = 1.0;
         this.moveLeft = false;
         this.moveRight = false;
         this.moveUp = false;
@@ -231,5 +242,11 @@ public class Player extends Ship {
     public int getLives() { return lives; }
     public void setLives(int lives) { this.lives = Math.max(0, lives); }
     public int getWeaponLevel() { return weaponLevel; }
+    public void setWeaponLevel(int lvl) { this.weaponLevel = Math.max(1, Math.min(3, lvl)); }
     public boolean isInvulnerable() { return invulnerable; }
+    public void setInvulnerable(boolean invulnerable) { this.invulnerable = invulnerable; }
+    public boolean isControlsInverted() { return controlsInverted; }
+    public void setControlsInverted(boolean inverted) { this.controlsInverted = inverted; }
+    public double getDamageMultiplier() { return damageMultiplier; }
+    public void setDamageMultiplier(double multiplier) { this.damageMultiplier = Math.max(0.1, multiplier); }
 }
