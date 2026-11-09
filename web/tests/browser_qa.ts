@@ -5,7 +5,7 @@ import path from 'node:path';
 
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const EDGE_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-const BASE_URL = 'http://127.0.0.1:4173/';
+const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:3000/';
 
 interface QAResult {
   browser: string;

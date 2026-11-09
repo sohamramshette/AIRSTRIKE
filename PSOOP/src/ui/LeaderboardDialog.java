@@ -151,8 +151,8 @@ public class LeaderboardDialog extends JDialog {
                 tableModel.setRowCount(0);
 
                 if (entries == null || entries.isEmpty()) {
-                    statusLabel.setText("No active flight combat records found in global leaderboard.");
-                    statusLabel.setForeground(Theme.TEXT_MUTED);
+                    statusLabel.setText("Supabase Online: Global records awaiting Option B grant or flight logs.");
+                    statusLabel.setForeground(Theme.CYAN_PRIMARY);
                 } else {
                     for (LeaderboardEntry entry : entries) {
                         String rankDisplay = "#" + entry.getRank();

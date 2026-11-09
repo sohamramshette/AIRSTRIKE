@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const BASE_URL = 'http://127.0.0.1:4173/';
+const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:3000/';
 const OUTPUT_DIR = path.resolve('..', 'docs', 'phase9_screenshots');
 
 async function captureScreen(page: Page, filename: string): Promise<void> {

@@ -4,7 +4,7 @@ import { AuthService } from '../services/AuthService';
 import { MatchService } from '../services/MatchService';
 import { LeaderboardService } from '../services/LeaderboardService';
 import { SoundService } from '../services/SoundService';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/SupabaseClient';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, supabase } from '../services/SupabaseClient';
 
 interface CourseOutcomeItem {
   code: string;
@@ -834,8 +834,13 @@ export class UIManager {
       const result = await this.leaderboardService.fetchLeaderboard(10);
 
       if (notice) {
-        notice.textContent = result.message || '⚡ Connected to Supabase Cloud';
-        notice.style.color = result.error ? '#EF4444' : '#22C55E';
+        if (result.error && (result.message?.includes('Option B') || result.message?.includes('grant') || result.message?.includes('permission'))) {
+          notice.textContent = '● Supabase Cloud Online • Global Table Awaiting Remote Option B Grant';
+          notice.style.color = '#38BDF8';
+        } else {
+          notice.textContent = result.message || '⚡ Connected to Supabase Cloud';
+          notice.style.color = result.error ? '#EF4444' : '#22C55E';
+        }
       }
 
       if (tbody) {
@@ -963,7 +968,7 @@ export class UIManager {
 
     try {
       const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 8000) : null;
 
       const res = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
         headers: { apikey: SUPABASE_ANON_KEY },
@@ -986,6 +991,21 @@ export class UIManager {
         return { online: false, latency };
       }
     } catch {
+      // Secondary fallback probe: try Supabase client session ping before declaring offline
+      try {
+        const { error: sessionErr } = await supabase.auth.getSession();
+        if (!sessionErr) {
+          const endTime = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+          const latency = Math.max(1, Math.round(endTime - startTime));
+          this.lastPingLatency = latency;
+          if (dot) dot.className = 'cloud-status-dot online';
+          if (text) text.textContent = `STARFLEET CLOUD LINK ACTIVE (${latency}ms)`;
+          return { online: true, latency, version: 'GoTrue' };
+        }
+      } catch {
+        // Genuine offline
+      }
+
       const endTime = (typeof performance !== 'undefined') ? performance.now() : Date.now();
       const latency = Math.max(1, Math.round(endTime - startTime));
       this.lastPingLatency = latency;

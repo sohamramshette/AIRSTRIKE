@@ -86,10 +86,14 @@ public class SupabaseConfig {
         }
         if (isNullOrEmpty(timeoutStr)) timeoutStr = System.getenv("SUPABASE_TIMEOUT_MS");
 
-        // 3. File search: config/supabase.properties then supabase.properties
+        // 3. File search: config/supabase.properties then supabase.properties (including parent dirs)
         File[] candidateFiles = new File[] {
                 new File("config/supabase.properties"),
-                new File("supabase.properties")
+                new File("supabase.properties"),
+                new File("../config/supabase.properties"),
+                new File("../supabase.properties"),
+                new File("web/.env"),
+                new File("../web/.env")
         };
 
         for (File file : candidateFiles) {
@@ -98,12 +102,18 @@ public class SupabaseConfig {
                 try (InputStream in = new FileInputStream(file)) {
                     props.load(in);
                     if (isPlaceholder(url)) {
-                        url = props.getProperty("supabase.url", props.getProperty("SUPABASE_URL"));
+                        url = props.getProperty("supabase.url", props.getProperty("SUPABASE_URL", props.getProperty("VITE_SUPABASE_URL")));
                     }
                     if (isPlaceholder(key)) {
                         key = props.getProperty("supabase.key", props.getProperty("SUPABASE_KEY"));
                         if (isPlaceholder(key)) {
                             key = props.getProperty("supabase.anon.key", props.getProperty("SUPABASE_ANON_KEY"));
+                        }
+                        if (isPlaceholder(key)) {
+                            key = props.getProperty("supabase.publishable.key", props.getProperty("VITE_SUPABASE_PUBLISHABLE_KEY"));
+                        }
+                        if (isPlaceholder(key)) {
+                            key = props.getProperty("VITE_SUPABASE_ANON_KEY");
                         }
                     }
                     if (isNullOrEmpty(timeoutStr)) {
