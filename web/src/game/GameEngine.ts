@@ -9,6 +9,7 @@ import { WaveManager } from './WaveManager';
 import { CollisionManager } from './CollisionManager';
 import { InputManager } from './InputManager';
 import { SoundService } from './../services/SoundService';
+import { AnnouncerManager } from '../announcer/AnnouncerManager';
 import { Starfield } from './Starfield';
 
 export class GameEngine {
@@ -90,6 +91,9 @@ export class GameEngine {
     this.shotsFired = 0;
     this.shotsHit = 0;
 
+    AnnouncerManager.getInstance().reset();
+    AnnouncerManager.getInstance().trigger('WAVE_START', false);
+
     this.setState(GameState.PLAYING);
   }
 
@@ -110,6 +114,9 @@ export class GameEngine {
   }
 
   private setState(newState: GameState): void {
+    if (this.state !== GameState.GAME_OVER && newState === GameState.GAME_OVER) {
+      AnnouncerManager.getInstance().trigger('GAME_OVER', true);
+    }
     this.state = newState;
     if (this.onStateChangeCallback) {
       this.onStateChangeCallback(newState);
@@ -145,6 +152,9 @@ export class GameEngine {
       }
 
       this.matchDuration += dt;
+
+      // Desi Toxic Announcer AI telemetry and live commentary
+      AnnouncerManager.getInstance().update(dt, this);
 
       // 1. Player input & movement
       const move = this.inputManager.getMovementVector();
@@ -497,6 +507,9 @@ export class GameEngine {
       ctx.strokeRect(bx, 54, bw, 10);
     }
 
+    // --- 5. Center Tactical Desi Announcer Banner ---
+    AnnouncerManager.getInstance().renderHUD(ctx, w, _h);
+
     ctx.restore();
   }
 
@@ -516,6 +529,10 @@ export class GameEngine {
     ctx.shadowColor = '#00E5FF';
     ctx.fillText(text, w / 2, h / 2);
     ctx.restore();
+  }
+
+  public isBossActive(): boolean {
+    return this.enemies.some(e => e.active && e.enemyType === 'BOSS');
   }
 
   public getCombatStats(): CombatStats {

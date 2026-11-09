@@ -1,0 +1,2661 @@
+{
+  "version": "1.0.0",
+  "name": "AIRSTRIKE AI — THE DESI TOXIC ANNOUNCER",
+  "description": "Hinglish Meme & Bollywood Sarcastic Voice/Text Announcer Collection",
+  "dialogues": [
+    {
+      "id": "desi_001",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CRITICAL_HEALTH",
+        "PLAYER_DAMAGE"
+      ],
+      "text": "GHEE KHATAM! Ab teri spaceship kaise chalegi?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_002",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DAMAGE",
+        "MISSED_SHOTS"
+      ],
+      "text": "AREY BHAI BHAI BHAI! Ye kya kar diya?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_003",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DAMAGE",
+        "LOW_ACCURACY"
+      ],
+      "text": "Ye dukh kaahe khatam nahi hota be?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_004",
+      "category": "DESI_MEME",
+      "triggers": [
+        "HIGH_COMBO",
+        "KILL_STREAK"
+      ],
+      "text": "Control Uday, control! Itna aggro theek nahi!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_005",
+      "category": "DESI_MEME",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED",
+        "KILL_STREAK"
+      ],
+      "text": "Bade harami ho beta! Enemy ko dhuan kar diya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_006",
+      "category": "DESI_MEME",
+      "triggers": [
+        "MISSED_SHOTS",
+        "LOW_ACCURACY"
+      ],
+      "text": "Aayein? Baigan? Bullet kahan gayi?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_007",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DEATH",
+        "GAME_OVER"
+      ],
+      "text": "Moye Moye! Spaceship toh gayi hawa mein!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_008",
+      "category": "DESI_MEME",
+      "triggers": [
+        "BOSS_APPEARS",
+        "WAVE_START"
+      ],
+      "text": "Ab maza aayega na bhidu! Asli bawaal shuru!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_009",
+      "category": "DESI_MEME",
+      "triggers": [
+        "LOW_ACCURACY",
+        "MISSED_SHOTS"
+      ],
+      "text": "Kya kijiyega itni accuracy ka? Donation mein de do!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_010",
+      "category": "DESI_MEME",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Seedhi baat, no bakwaas. Aim sudhaar pehle!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_011",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Thukra ke mera pyaar, mera damage return kar!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_012",
+      "category": "DESI_MEME",
+      "triggers": [
+        "DODGE_STREAK",
+        "CAMPING"
+      ],
+      "text": "Itna sannata kyun hai bhai? Enemy bhi so gaya kya?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_013",
+      "category": "DESI_MEME",
+      "triggers": [
+        "MISSED_SHOTS",
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Bhai, ye gameplay hai ya Comedy Circus ka audition?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_014",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Ghee khatam, tel khatam, ab toh teri health bhi khatam!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_015",
+      "category": "DESI_MEME",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Aap chronology samajhiye... pehle aim karo, phir fire!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_016",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Bhai ne toh apni hi spaceship ki band baja di!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_017",
+      "category": "DESI_MEME",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Kya mast joke maara hai, bas enemy ko hasi nahi aayi!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_018",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CAMPING",
+        "SURROUNDED"
+      ],
+      "text": "Player sahab, zara apni GPS location bhi check kar lijiye!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_019",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Arrey kehna kya chahte ho? Seedha restart hi bol do!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_020",
+      "category": "DESI_MEME",
+      "triggers": [
+        "HIGH_COMBO"
+      ],
+      "text": "Wah bete wah! Mauj kardi tune toh!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_021",
+      "category": "DESI_MEME",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Ye hum hain, ye hamari ship hai, aur yahan aim ki pawri ho rahi hai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_022",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Khatam! Bye bye! Tata! Goodbye! Gaya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_023",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Bhai maro mujhe, koi maro! Ye kya dodge tha?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_024",
+      "category": "DESI_MEME",
+      "triggers": [
+        "WAVE_START"
+      ],
+      "text": "Chaliye shuru karte hain bina kisi bakwaas ke!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_025",
+      "category": "DESI_MEME",
+      "triggers": [
+        "POWERUP_COLLECTED"
+      ],
+      "text": "Jalwa hai hamara yahan! Power-up loot liya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_026",
+      "category": "DESI_MEME",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Achha sila diya tune mere ammo ka!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_027",
+      "category": "DESI_MEME",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Ye toh latest news hai! Boss tumhara wait kar raha hai!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_028",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "Dekh rahe ho Binod? Kaise baal-baal bach raha hai ladka!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_029",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Risk hai toh ishq hai... par itna bhi risk mat le bhai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_030",
+      "category": "DESI_MEME",
+      "triggers": [
+        "GAME_OVER"
+      ],
+      "text": "Samajh rahe ho? Samajh rahe ho aap? Game over ho gaya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_031",
+      "category": "DESI_MEME",
+      "triggers": [
+        "HIGH_COMBO"
+      ],
+      "text": "Systumm pe systumm bitha diya chhore ne!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_032",
+      "category": "DESI_MEME",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Aise kaise chalega didi/bhaiya? Saare laser space mein!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_033",
+      "category": "DESI_MEME",
+      "triggers": [
+        "BOSS_DEFEATED"
+      ],
+      "text": "Aadha kilo kaju katli baant do colony mein, boss gaya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_034",
+      "category": "DESI_MEME",
+      "triggers": [
+        "WAVE_CLEARED"
+      ],
+      "text": "Hisaab barabar! Mohalle mein dhol bajwa do!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_035",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Doctor ko call lagao re, oxygen cylinder lao spaceship pe!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_036",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Chhoti bacchi ho kya? Bullet se takra rahe ho!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_037",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Corner mein tent daal ke rehne ka plan hai kya?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_038",
+      "category": "DESI_MEME",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED"
+      ],
+      "text": "Isko kehte hain hip-hop hip-hop! Elite enemy blown!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_001",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "MISSED_SHOTS",
+        "LOW_ACCURACY"
+      ],
+      "text": "Bro is NOT beating the bad aim allegations.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_002",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Born to be a legendary pilot, forced to dodge ek normal bullet.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_003",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "MISSED_SHOTS",
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Nobody saw me missing 47 bullets. Everybody saw me getting wrecked.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_004",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE",
+        "LOW_ACCURACY"
+      ],
+      "text": "Aura points: minus 10,000 for that embarrassing move!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_005",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "POV: You thought you were the anime main character.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_006",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "BOSS_APPEARS",
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Nah bro, you are genuinely cooked. No cap.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_007",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Chat, should we tell him his hull integrity is 2%?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_008",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Bro got humbled in 4K ultra-wide resolution.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_009",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "It's giving... terminal skill issue, bestie.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_010",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Bhai thought he cooked... unfortunately khud hi tandoor ban gaya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_011",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "We got AIRSTRIKE ka final boss before GTA 6!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_012",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "WAVE_START"
+      ],
+      "text": "Blud thinks he's the final boss of the galaxy.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_013",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Main character energy khatam, ab side-NPC ban jao!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_014",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE",
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Bro's villain arc ended in exactly 12 seconds.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_015",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "CAMPING",
+        "MISSED_SHOTS"
+      ],
+      "text": "NPC behaviour detected! Why are you moving like a microwave?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_016",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Canon event tha bhai, main interfere nahi kar sakta tha.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_017",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Let him cook... arre bhai, kitchen hi jal gayi!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_018",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "WAVE_CLEARED",
+        "KILL_STREAK"
+      ],
+      "text": "Absolute cinema! Bas gameplay ka camera angle sudhaaro.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_019",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "HIGH_COMBO"
+      ],
+      "text": "Bro unlocked infinite rizz with that triple combo!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_020",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Blud is fighting the vacuum of space, not the alien fleet.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_021",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Bro is one paper cut away from the lobby.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_022",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Aura points: +50,000! Starfleet respects you now.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_023",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "L + Ratio + No shield + Zero precision + Get good.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_024",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Bro is gatekeeping the bottom left corner.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_025",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "BOSS_DEFEATED"
+      ],
+      "text": "Bro sent that boss to the gulag in 1080p 60fps!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_026",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "DODGE_STREAK"
+      ],
+      "text": "Look at him standing on business! Smooth matrix dodge!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_027",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Emotional damage! Replay dekho aur cry karo.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_028",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Are you playing with a trackpad from 2004? Be real.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_029",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "POWERUP_COLLECTED"
+      ],
+      "text": "Powerup secured! Bro's glow up is so valid.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_030",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Bro is firing in lowercase letters.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_031",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "HIGH_COMBO"
+      ],
+      "text": "Nah he's dialed in! He's literally the guy!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_032",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "WAVE_START"
+      ],
+      "text": "Entering your villain arc in 3, 2, 1...",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_033",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "That bullet had personal beef with your cockpit.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_034",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "Plot armor heavier than a neutron star!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_035",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "GAME_OVER"
+      ],
+      "text": "Speedrunning to the game over screen, I see you!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_036",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED"
+      ],
+      "text": "Vibe check passed! That elite got cancelled.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_037",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Bro is ghosting the enemies. Literally zero contact.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_038",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "HIGH_ACCURACY"
+      ],
+      "text": "Aimbot who? Bro is locked in like a missile!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_039",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "WAVE_FLAWLESS"
+      ],
+      "text": "Flawless wave? Clean like freshly minted crypto!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_040",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Delulu is the only solulu right now brother.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_041",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Cooked, seasoned, and served in five-star style!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_042",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Bro is shooting warning shots in an intergalactic war.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_043",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Taking hits like a crash test dummy on overtime.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_044",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Boss pulled up with maximum negative aura for you.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_045",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "WAVE_CLEARED"
+      ],
+      "text": "Another sector cleared. The grind never stops, king.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_001",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Kitne bullets the? Aur sab ke sab miss kar diye!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_002",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Gabbar bhi teri accuracy dekh ke hans raha hoga!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_003",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Boss aa gaya! Ab tera kya hoga Kaalia?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_004",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "SURROUNDED"
+      ],
+      "text": "Arre O player! Itne saare enemies se akele ladega?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_005",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Utha le re baba, utha le! Is player ko koi training center utha le!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_006",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Babu bhaiya, ye plan tha ya direct accident tha?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_007",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "HIGH_COMBO"
+      ],
+      "text": "Paisa hi paisa hoga... agar tu aakhri wave tak tik gaya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_008",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Khopdi tod saale ka! Lekin pehle apni cockpit sambhal!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_009",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CAMPING",
+        "DODGE_STREAK"
+      ],
+      "text": "Ye spaceship uda raha hai ya Majnu bhai ki painting bana raha hai?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_010",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Control bhai control! Enemy ko confuse karne ke chakkar mein khud damage mat le!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_011",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Bhai, ye kya kar diya? Don ko bhi ye geometry samajh nahi aayegi!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_012",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Crime Master Gogo ke saamne bhi tera aim fail ho jayega!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_013",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Teja main hoon, mark idhar hai... par tera aim kidhar hai?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_014",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Aankhein nikaal ke gotiyan khel raha tha kya?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_015",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Mogambo khush... bilkul nahi hua teri piloting dekh ke!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_016",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Picture abhi baaki hai mere dost... par teri health toh khatam!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_017",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Pushpa, jhukega nahi... par spaceship toh seedhi niche giregi!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_018",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Don ko pakadna mushkil hi nahi namumkin hai... tujhe bachana bhi!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_019",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "All is well bolne se shield regenerate nahi hoti bhai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_020",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Ek chutki shield ki keemat tum kya jaano, player babu!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_021",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Tension lene ka nahi, sirf damage lene ka... aisa policy hai kya?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_022",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Jaa Simran, jee le apni zindagi... lekin pehle is boss ko pel!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_023",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "GAME_OVER"
+      ],
+      "text": "Bhai, ye toh interval se pehle hi the end ho gaya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_024",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Hero banne aaya tha space mein, background stuntman ban gaya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_025",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Rishte mein toh hum tumhare baap lagte hain, naam hai AIRSTRIKE!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_026",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "BOSS_DEFEATED"
+      ],
+      "text": "Mogambo sach mein khush hua! Boss ko dho dala!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_027",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "WAVE_START"
+      ],
+      "text": "Tareekh pe tareekh, wave pe wave! Kab jeetega re tu?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_028",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED"
+      ],
+      "text": "Chhota chhatri samajh ke uda diya us elite fighter ko!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_029",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "HIGH_COMBO"
+      ],
+      "text": "Dhan te nan! Kya speed hai, kya swag hai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_030",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Bhai mere, kangan toh bik gaye, ab spaceship ki EMI kaise bharega?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_031",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Tumse na ho payega! Humein tumhare lakshan theek nahi lag rahe!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_032",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "Kabhi kabhi jeetne ke liye kuch haarna padta hai... aur haar kar jeetne wale ko Baazigar kehte hain!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_033",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Bhaag DK bose, bhaag! Bullet peeche aa rahi hai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_034",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "POWERUP_COLLECTED"
+      ],
+      "text": "Jaadhu mila kya? Dhoop leke power full charge ho gayi!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_035",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "WAVE_FLAWLESS"
+      ],
+      "text": "Apna time aayega nahi, apna time aa gaya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_036",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Shakaal ke tahe-khane mein aapka swagat hai, player!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_037",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Target idhar hai! Tu deewar pe painting kyun bana raha hai?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_038",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Parampara, pratishtha, anushasan... sab mitti mein mila diya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_039",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Ek baar jo maine commitment kar di... phir main enemy ki bhi nahi sunta!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_040",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Hamare paas Maa hai... aur tere paas bas 5% health!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_041",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "HIGH_ACCURACY"
+      ],
+      "text": "Kanoon ke haath aur tera laser, dono bohot lambe hain!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_042",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "WAVE_CLEARED"
+      ],
+      "text": "Thappad se darr nahi lagta sahab, bas wave clearance se lagta tha!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_043",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "BOSS_DEFEATED"
+      ],
+      "text": "Boss ka dialogue baazi band! The real Singham in town!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_044",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Itaani shiddat se tune damage liya hai, ki har bullet ne tujhe chu liya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_045",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "DODGE_STREAK"
+      ],
+      "text": "Chal nikal, koi zaroorat nahi teri bullets ki! Matrix level dodge!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_001",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Bhai, aim kar raha hai ya hawa mein Diwali ke patakhe phod raha hai?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_002",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Enemy ko maarna tha, uske charo taraf rangoli nahi banani thi!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_003",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Itni bullets waste? Petrol aur ammo ka bill tera baap bharega?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_004",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Enemy tujhe target kar raha hai ya tu khud bullet ke aage hug de raha hai?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_005",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Har ek enemy projectile se personal dosti nibhana zaroori hai kya?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_006",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Bhai, ye spaceship hai ya flying scrap-metal damage report?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_007",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Doctor ko bulaun ya direct restart button daba ke mukti doon?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_008",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Health 10% hai par attitude 100%! Deadly combination bhai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_009",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Thoda left, thoda right! Spaceship ko bhi morning walk kara le!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_010",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Itna overconfidence kis baat ka hai? Bullet toh ek bhi nahi lagi!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_011",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Aaj toh tera aim Sunday mana raha hai lagta hai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_012",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Enemy ship ko bhi ab tere upar sympathy aa rahi hogi!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_013",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Respawn button ke saath 7 phere le liye kya? Bar-bar wahi ja raha hai!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_014",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Game khel raha hai ya enemy ke saath chupan-chupai?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_015",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Itni jaldi haar maan gaya? BSNL ka net bhi tujhse zyada stable hai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_016",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Enemy ships safe hain, bas space dust mar rahi hai tere laser se!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_017",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Spaceship ka horn baj raha hai bhai, engine chhod ke bhaag ja!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_018",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Shield thi ya transparent plastic sheet? Ek shot mein break!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_019",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Glasses ka number check kara le, screen pe enemy center mein tha!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_020",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "SURROUNDED"
+      ],
+      "text": "Ghir gaya beta chaaro taraf se! Ab hanuman chalisa padh le!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_021",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Laser battery charge karne ke paise main nahi doonga!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_022",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Starfleet academy ne tujhe degree kaise di thi vaise?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_023",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Corner mein rent pe flat le liya hai kya tune?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_024",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Itna damage toh road pe pothole se bhi nahi lagta!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_025",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Bhai, enemy stationary tha... usko bhi miss kar diya? Salute!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_026",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "GAME_OVER"
+      ],
+      "text": "Chalo beta ghar jao, doodh peeo aur so jao. Gameplay kal seekhna!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_027",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Yeh boss nahi tera report card hai... fail hone ke poore aasaar!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_028",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Dodge button keyboard pe decorative purpose ke liye nahi hai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_029",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Tera cursor aur tera dhyan dono alag direction mein chal rahe hain!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_030",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Sirf duaon ke sahare spaceship chal rahi hai abhi!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_031",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Ek kaam karo, enemy ko peace treaty bhej do... laser se toh kuch ho nahi raha!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_032",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Aise khel raha hai jaise control setting random generate hui ho!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_033",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "WAVE_START"
+      ],
+      "text": "Naya wave shuru... taiyyar ho jao naye bahaane ke saath!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_034",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Bottom-screen camper alert! thoda aage badho sahasi pilot!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_035",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Black box recording: Pilot was overconfident and underprepared.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_001",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "HIGH_COMBO",
+        "KILL_STREAK"
+      ],
+      "text": "OHO! Aaj toh tu unexpectedly dangerous lag raha hai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_002",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "NAHHH BRO COOKED! Pure fleet ka tandoor bana diya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_003",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "BOSS_DEFEATED",
+        "WAVE_FLAWLESS"
+      ],
+      "text": "Aura points: +1,000,000! Mainframe is shaking in respect!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_004",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "HIGH_ACCURACY",
+        "HIGH_COMBO"
+      ],
+      "text": "Bro finally understood the assignment! Respect level 100!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_005",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "BOSS_DEFEATED"
+      ],
+      "text": "Boss defeated! Aaj toh sach mein mummy ko proud karega!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_006",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Alien fleet ki union complaint aane wali hai tere khilaaf!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_007",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "WAVE_CLEARED"
+      ],
+      "text": "Aaj toh AIRSTRIKE AI bhi impressed hai... thoda sa, zyaada hawa mein mat udna!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_008",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Itni kills? Bhai, galaxy ki population single-handedly kam kar di tune!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_009",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "The comeback was personal! Low health clutch king!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_010",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "HIGH_SCORE_BEATEN"
+      ],
+      "text": "NEW ALL-TIME RECORD! Screen pe garlands daal do!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_011",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "WAVE_FLAWLESS"
+      ],
+      "text": "Flawless clear! Ek scratch tak nahi aaya ship pe, gazab!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_012",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "WAVE_SPEED_RUN"
+      ],
+      "text": "Itni tez speed? Pizza delivery se bhi tez wave khatam kar di!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_013",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "HIGH_COMBO"
+      ],
+      "text": "20x Streak! Hathiyaar garm ho chuke hain completely!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_014",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED"
+      ],
+      "text": "Special unit neutralized like a pro operator! Shabaash!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_015",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "1% health pe survive kar gaya? Kis mandir mein prasad chadha ke aaya tha?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_016",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "BOSS_DEFEATED"
+      ],
+      "text": "Flagship grounded! Starfleet headquarters is clapping!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_017",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "HIGH_ACCURACY"
+      ],
+      "text": "Sniper laser mode on! Har shot ka exact hisaab!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_018",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "STREAK_WAVES"
+      ],
+      "text": "Hat-trick of waves! Consistency dekh ke AI ka dil pighal gaya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_019",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Rampage mode! Enemies surrender karne ki soch rahe hain!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_020",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "WAVE_CLEARED"
+      ],
+      "text": "Ekdum jhakas! Next sector ko bol do ready rahe!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_001",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "What's up brah? Still missing easy shots?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_002",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Chat, rate this gameplay out of 10. Be brutally honest!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_003",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Bhai ek second... mujhe bhi samajh nahi aa raha tu plan kya kar raha hai.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_004",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "System report: Player confidence 100%, spatial awareness 0%.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_005",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "AIRSTRIKE AI ko bhi ab do minute ka cutting chai break chahiye.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_006",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Enemy commander ne resignation letter draft kar liya hai.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_007",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Bhai, thoda normal khel le na... main server lag me aa jaunga hasste hasste!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_008",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Main advanced AI hoon, par teri strategy decode karne ke liye alien bhasha seekhni padegi.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_009",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Interstellar transmission: Teri mummy puch rahi hain padhai kab karega?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_010",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "NASA wants to know your location: Unhe dekhna hai itna unique gameplay kahan se aaya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_011",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Did you know? Blinking during boss fights reduces survival by 99%!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_012",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Break le le bhai, keyboard ke switches ro rahe hain tere heavy hands se!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_013",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "AIRSTRIKE AI status: Vibe-checking this entire combat run.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_014",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Fun fact: Space is silent, but your scream was heard in Mars orbit!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_015",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Current mood: Sarcastic. Current pilot: Confused.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_016",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Warning: High levels of desi drama detected in cockpit!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_017",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Agar ye match jeeta toh party dega na? AI bhi paneer khata hai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_018",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Attention all sectors: One pilot is currently creating chaotic art!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_019",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Keep calm and pretend this was your master strategy all along.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_020",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Pilot review: 4 out of 5 stars. Deducted 1 star for dodging backwards.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_039",
+      "category": "DESI_MEME",
+      "triggers": [
+        "SURROUNDED",
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Arey mori maiya, ye kya dekhna pad raha hai!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_040",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Kone mein baith ke kya kheer bana raha hai? Aage badh!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_041",
+      "category": "DESI_MEME",
+      "triggers": [
+        "LOW_ACCURACY",
+        "MISSED_SHOTS"
+      ],
+      "text": "Chacha vidhayak hain kya jo bina dekhe goliyan chala raha hai?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_042",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Samajh rahe ho? Samajh rahe ho aap? Khatam, tata, bye-bye!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_043",
+      "category": "DESI_MEME",
+      "triggers": [
+        "KILL_STREAK",
+        "HIGH_COMBO"
+      ],
+      "text": "Aag laga di bhai ne! System hang kar diya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_044",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Jaan bachao andolan chalu karo cockpit mein jaldi!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_045",
+      "category": "DESI_MEME",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Maut ko chhu ke tak se wapas aana hai ya sidha swarg jana hai?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_046",
+      "category": "DESI_MEME",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Goliyan sasti hain kya? Diwali ki tarah phod raha hai bina aim ke!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_047",
+      "category": "DESI_MEME",
+      "triggers": [
+        "WAVE_CLEARED"
+      ],
+      "text": "Shaandar, zabardast, zindabad! Agla wave aane do!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_048",
+      "category": "DESI_MEME",
+      "triggers": [
+        "DODGE_STREAK"
+      ],
+      "text": "Heisenberg level reflexes! Bach gaya re tu!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_049",
+      "category": "DESI_MEME",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Lag gaye 440 volt chhoone se tere!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_050",
+      "category": "DESI_MEME",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "Kudrat ka nizaam dekho, ye abhi bhi zinda hai!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "desi_051",
+      "category": "DESI_MEME",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED"
+      ],
+      "text": "Enemy ko full desi treatment mila! Patak ke mara!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "desi_052",
+      "category": "DESI_MEME",
+      "triggers": [
+        "HIGH_SCORE_BEATEN"
+      ],
+      "text": "Mohalle mein mithai banto, bhai ne record bana diya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_046",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Bro is shooting at the ghosts of past failures.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_047",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Health bar is hanging on thoughts and prayers rn fr.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_048",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "DODGE_STREAK"
+      ],
+      "text": "Bro hit that immaculate drift, valid uncs in chat!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_049",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Bro took damage and acted like nobody saw that reel.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_050",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "SURROUNDED"
+      ],
+      "text": "Bro is in the trenches with zero rizz and zero ammo.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_051",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Final boss pulled up with max drip, chat are we cooked?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_052",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Bro woke up and chose galactic violence today!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_053",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Bro is corner camping like he is hiding from his ex.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_054",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Stormtrooper academy called, they want their top student back.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_055",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "HIGH_COMBO"
+      ],
+      "text": "Cooked, served, ate, and left no galactic crumbs!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_056",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Bro respawning faster than my screen time alert.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_057",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "1 HP and a dream! Main character plot armor activated!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "genz_058",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED"
+      ],
+      "text": "Special enemy caught lacking in 4K 120 FPS!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_059",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "WAVE_CLEARED"
+      ],
+      "text": "Vibe check passed. That wave was an absolute flop.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_060",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "POWERUP_COLLECTED"
+      ],
+      "text": "Bro collected powerup with that majestic main character stride.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_061",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "HIGH_ACCURACY"
+      ],
+      "text": "Aimbot allegations incoming, bro is not missing today!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "genz_062",
+      "category": "INSTAGRAM_GENZ",
+      "triggers": [
+        "GAME_OVER"
+      ],
+      "text": "L + ratio + touch grass + skill issue confirmed.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_046",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Don ko pakadna mushkil hi nahi... boss ke saamne namumkin hai!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_047",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Itne chhed karenge body mein ki confuse ho jaoge saans kahan se lein!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_048",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "Jisko darr lagta hai wo ghar baithe, hum toh chhappad phaad ke nikal gaye!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_049",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Mogambo khush hua! Kya dhuandhaar firing ki hai!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_050",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Tarikh pe tarikh, miss pe miss... insaaf kab milega crosshair ko?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_051",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "SURROUNDED"
+      ],
+      "text": "Rishte mein toh hum tumhare baap lagte hain, par ye 10 enemy kaun hain?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_052",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Kone mein baithe baithe Baburao ka style maar raha hai kya?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_053",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "BOSS_DEFEATED"
+      ],
+      "text": "Picture abhi baaki hai mere dost, par ye boss toh nipat gaya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_054",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Hum jahan khade hote hain line wahin se shuru hoti hai... swarg ki line!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_055",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "Babumoshai, zindagi badi honi chahiye, lambi nahi... teri dono nahi thi!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_056",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "WAVE_CLEARED"
+      ],
+      "text": "All is well! All is well! Sector clear ho gaya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_057",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED"
+      ],
+      "text": "Crime Master Gogo aya tha, par goli kha ke chala gaya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_058",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "HIGH_ACCURACY"
+      ],
+      "text": "Ek chutki sindoor ki keemat enemy pilot kya jaane, par sniper shot samajh aa gaya!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_059",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Teja main hoon, mark idhar hai! Goli udhar kyun maar raha hai?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_060",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "POWERUP_COLLECTED"
+      ],
+      "text": "Ja Simran ja, jee le apni combat power!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "bolly_061",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "HIGH_SCORE_BEATEN"
+      ],
+      "text": "Parampara, Pratishtha, Anushasan! Naya high score ban gaya!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "bolly_062",
+      "category": "BOLLYWOOD",
+      "triggers": [
+        "DODGE_STREAK"
+      ],
+      "text": "Pushpa sunke flower samjhe kya? Fire nikla bhai dodges mein!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_036",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Enemies are offering you a consultation on basic hand-eye coordination.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_037",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Were you trying to headbutt their lasers or was that accidental?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_038",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Your hit percentage is lower than room temperature in Celsius!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_039",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CAMPING"
+      ],
+      "text": "Rent is due for that corner you have been squatting in!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_040",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "SURROUNDED"
+      ],
+      "text": "Congratulations, you successfully boxed yourself in like a parcel!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_041",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DEATH"
+      ],
+      "text": "That respawn timer was invented exclusively for pilots like you.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_042",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Your shield melted faster than ice-cream in June!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_043",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "WAVE_START"
+      ],
+      "text": "Wave starting! Let us see if you survive past 10 seconds this time.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_044",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "MISSED_SHOTS"
+      ],
+      "text": "Space dust has taken more casualties from your shots than actual enemies.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_045",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "BOSS_APPEARS"
+      ],
+      "text": "Boss is here! Have you written your will or should I generate one?",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_046",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "PLAYER_DAMAGE"
+      ],
+      "text": "Enemy pilot just yawned while hitting your spaceship!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_047",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "DODGE_STREAK"
+      ],
+      "text": "You dodged three shots by pure luck, don’t let your ego inflate now.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_048",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED"
+      ],
+      "text": "You got that special kill, but we both know it was an accident.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_049",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "GAME_OVER"
+      ],
+      "text": "That performance was an audition for the enemy team.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_050",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "Cheating death only delays your inevitable embarrassment!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "roast_051",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "LOW_ACCURACY"
+      ],
+      "text": "Firing everywhere except at the targets. Revolutionary strategy!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "roast_052",
+      "category": "GENERAL_ROAST",
+      "triggers": [
+        "CRITICAL_HEALTH"
+      ],
+      "text": "Sparks flying, alarms screaming, pilot panicking. Classic Tuesday.",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_021",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "BOSS_DEFEATED"
+      ],
+      "text": "AIRSTRIKE AI bows down! That boss stood absolutely zero chance!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_022",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Unstoppable galactic menace! Keep feeding them plasma!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_023",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "HIGH_COMBO"
+      ],
+      "text": "Combo multiplier is screaming! You are an absolute combat artist!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_024",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "WAVE_FLAWLESS"
+      ],
+      "text": "Flawless wave! Not a scratch on the paint! Majestic work!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_025",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "HIGH_ACCURACY"
+      ],
+      "text": "Laser-guided precision! Are you running military-grade cybernetics?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_026",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "HIGH_SCORE_BEATEN"
+      ],
+      "text": "New all-time high score! The leaderboard officially belongs to you!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_027",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "CLUTCH_SURVIVAL"
+      ],
+      "text": "Outmaneuvered the entire fleet with 5% hull! Pure legend!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_028",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "WAVE_SPEED_RUN"
+      ],
+      "text": "Speed-cleared in record time! Enemies didn’t even finish spawning!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_029",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "SPECIAL_ENEMY_KILLED"
+      ],
+      "text": "Target liquidated instantly! That’s how real aces operate!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "praise_030",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "KILL_STREAK"
+      ],
+      "text": "Sensors blinded by your kill counter! Absolute masterpiece!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_031",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "BOSS_DEFEATED"
+      ],
+      "text": "Boss turned into cosmic scrap metal! Put that on your resume!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "praise_032",
+      "category": "VICTORY_PRAISE",
+      "triggers": [
+        "STREAK_WAVES"
+      ],
+      "text": "Five consecutive waves dominated! Sarcasm module temporarily offline from sheer awe!",
+      "priority": "HIGH"
+    },
+    {
+      "id": "rand_021",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Chai peeyega bhai? Ya lasers hi digest karega?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_022",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "AI horoscope update: Stars say your shields look suspicious today.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_023",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Fun fact: In space, nobody can hear you complain about mouse sensitivity.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_024",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Blink three times if your thruster keys are sticking.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_025",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Reminder: Taking 10 deep breaths does not replenish spaceship shields.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_026",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "AIRSTRIKE AI tip: Dodge the glowing things. Thank me later.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_027",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Cockpit AC temperature adjusted to chilling levels of drama.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_028",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Enemies reported your ship for disruptive flying patterns.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_029",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Did someone invite this pilot or did you just sneak into the cockpit?",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_030",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Tactical analysis: 10% skill, 20% luck, 70% pure Hinglish willpower.",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_031",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Checking pilot pulse... still alive, surprisingly!",
+      "priority": "NORMAL"
+    },
+    {
+      "id": "rand_032",
+      "category": "RANDOM_INTERRUPT",
+      "triggers": [
+        "RANDOM_INTERRUPT"
+      ],
+      "text": "Interstellar Spotify queue: Sad violin music pre-buffered just in case.",
+      "priority": "NORMAL"
+    }
+  ]
+}

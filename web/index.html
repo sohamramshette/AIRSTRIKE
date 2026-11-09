@@ -205,9 +205,53 @@
               </div>
             </div>
 
-            <div class="settings-row" style="border-bottom: none;">
+            <div class="settings-row">
               <span style="font-weight: bold; color: var(--text-white);">Renderer Pipeline:</span>
               <span style="color: var(--emerald-status); font-weight: bold; font-size: 12px;">HTML5 Hardware Double-Buffer</span>
+            </div>
+
+            <!-- Phase 10: Desi Toxic Announcer Settings -->
+            <div style="color: #F59E0B; font-weight: bold; font-size: 13px; margin: 12px 0 6px; display: flex; align-items: center; gap: 6px;">
+              <span>⚡ AIRSTRIKE AI — DESI TOXIC ANNOUNCER</span>
+            </div>
+
+            <div class="settings-row">
+              <span style="font-weight: bold; color: var(--text-white);">Active Commentary:</span>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
+                <input type="checkbox" id="settings-announcer-check" checked /> Enable Sarcastic Hinglish Commentary
+              </label>
+            </div>
+
+            <div class="settings-row">
+              <span style="font-weight: bold; color: var(--text-white);">Meme & Dialogue Pack:</span>
+              <select id="settings-announcer-pack" class="settings-select">
+                <option value="ALL_PACKS">All Packs (Ultimate Hinglish Chaos)</option>
+                <option value="DESI_MEME">Desi Viral Memes</option>
+                <option value="INSTAGRAM_GENZ">Instagram Reels & Gen-Z Slang</option>
+                <option value="BOLLYWOOD">Bollywood Classics & Comedy</option>
+                <option value="GENERAL_ROAST">Toxic Pilot Roasts & Sarcasm</option>
+                <option value="VICTORY_PRAISE">Exaggerated Victory & Praise</option>
+                <option value="RANDOM_INTERRUPT">Bizarre Space Interruptions</option>
+              </select>
+            </div>
+
+            <div class="settings-row">
+              <span style="font-weight: bold; color: var(--text-white);">Commentary Frequency:</span>
+              <select id="settings-announcer-freq" class="settings-select">
+                <option value="NORMAL">Normal (Balanced ~10-18s)</option>
+                <option value="HIGH">High (Non-stop Desi Banter ~5-10s)</option>
+                <option value="LOW">Low (Relaxed ~20-30s)</option>
+              </select>
+            </div>
+
+            <div class="settings-row" style="border-bottom: none;">
+              <span style="font-weight: bold; color: var(--text-white);">Voice Synthesis (TTS):</span>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                  <input type="checkbox" id="settings-announcer-voice" /> Voiceover (TTS)
+                </label>
+                <button type="button" id="btn-test-announcer" class="cyber-btn btn-tactical cyan" style="width: auto; padding: 0 10px; height: 26px; font-size: 10px; margin: 0;">TEST BANTER</button>
+              </div>
             </div>
           </div>
 

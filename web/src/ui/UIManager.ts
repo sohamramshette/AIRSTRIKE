@@ -5,6 +5,9 @@ import { MatchService } from '../services/MatchService';
 import { LeaderboardService } from '../services/LeaderboardService';
 import { SoundService } from '../services/SoundService';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, supabase } from '../services/SupabaseClient';
+import { AnnouncerManager } from '../announcer/AnnouncerManager';
+import { AnnouncerSettingsManager } from '../announcer/AnnouncerSettingsManager';
+import { DialogueCategory, CommentaryFrequency } from '../announcer/types';
 
 interface CourseOutcomeItem {
   code: string;
@@ -402,6 +405,7 @@ export class UIManager {
   private initProfileSettingsModal(): void {
     document.getElementById('btn-open-profile')?.addEventListener('click', () => {
       this.updatePilotDossier();
+      this.syncAnnouncerSettingsUI();
       this.openModal('profile-settings-modal');
     });
 
@@ -411,6 +415,12 @@ export class UIManager {
 
     document.getElementById('btn-close-settings')?.addEventListener('click', () => {
       this.closeModal('profile-settings-modal');
+    });
+
+    // Test Announcer Preview
+    document.getElementById('btn-test-announcer')?.addEventListener('click', () => {
+      AnnouncerManager.getInstance().testAnnounce();
+      this.showToast('Triggered AI Announcer voice & banner preview.');
     });
 
     // Save preferences
@@ -431,7 +441,19 @@ export class UIManager {
         // Ignore localStorage error
       }
 
-      this.showToast('Hardware preferences saved to enclave storage.');
+      // Save Announcer settings
+      const annMgr = AnnouncerSettingsManager.getInstance();
+      const annCheck = document.getElementById('settings-announcer-check') as HTMLInputElement | null;
+      const packSelect = document.getElementById('settings-announcer-pack') as HTMLSelectElement | null;
+      const freqSelect = document.getElementById('settings-announcer-freq') as HTMLSelectElement | null;
+      const voiceCheck = document.getElementById('settings-announcer-voice') as HTMLInputElement | null;
+
+      if (annCheck) annMgr.setEnabled(annCheck.checked);
+      if (packSelect) annMgr.setActiveCategory(packSelect.value as DialogueCategory);
+      if (freqSelect) annMgr.setFrequency(freqSelect.value as CommentaryFrequency);
+      if (voiceCheck) annMgr.setVoiceEnabled(voiceCheck.checked);
+
+      this.showToast('Hardware preferences & Desi Announcer saved.');
       this.closeModal('profile-settings-modal');
     });
 
@@ -463,6 +485,21 @@ export class UIManager {
     } catch {
       // Ignore
     }
+
+    this.syncAnnouncerSettingsUI();
+  }
+
+  private syncAnnouncerSettingsUI(): void {
+    const annSettings = AnnouncerSettingsManager.getInstance().getSettings();
+    const annCheck = document.getElementById('settings-announcer-check') as HTMLInputElement | null;
+    const packSelect = document.getElementById('settings-announcer-pack') as HTMLSelectElement | null;
+    const freqSelect = document.getElementById('settings-announcer-freq') as HTMLSelectElement | null;
+    const voiceCheck = document.getElementById('settings-announcer-voice') as HTMLInputElement | null;
+
+    if (annCheck) annCheck.checked = annSettings.enabled;
+    if (packSelect) packSelect.value = annSettings.activeCategory;
+    if (freqSelect) freqSelect.value = annSettings.frequency;
+    if (voiceCheck) voiceCheck.checked = annSettings.voiceEnabled;
   }
 
   private updatePilotDossier(): void {

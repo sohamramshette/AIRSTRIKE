@@ -39,6 +39,14 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
+echo [TEST 4/4] Running Hinglish Meme and Bollywood Announcer Test Suite...
+java -cp bin\java test.AnnouncerTest
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] AnnouncerTest failed!
+    exit /b 1
+)
+
+echo.
 echo ========================================================
 echo [SUCCESS] All PSOOP Java test suites passed!
 echo ========================================================

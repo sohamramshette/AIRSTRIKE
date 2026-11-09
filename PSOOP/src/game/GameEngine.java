@@ -117,6 +117,7 @@ public class GameEngine {
     }
 
     private void onGameOver() {
+        announcer.AnnouncerManager.getInstance().trigger(announcer.AnnouncerEvent.GAME_OVER, true);
         if (matchUploaded) return; // Prevent duplicate submission
         matchUploaded = true;
 
@@ -159,6 +160,9 @@ public class GameEngine {
         this.enemiesDestroyed = 0;
         this.shotsFired = 0;
         this.shotsHit = 0;
+
+        announcer.AnnouncerManager.getInstance().reset();
+        announcer.AnnouncerManager.getInstance().trigger(announcer.AnnouncerEvent.WAVE_START, false);
 
         try {
             setState(GameState.PLAYING);
@@ -268,6 +272,9 @@ public class GameEngine {
             return;
         }
 
+        // Live announcer telemetry & in-game commentary
+        announcer.AnnouncerManager.getInstance().update(delta, this);
+
         // 1. Update Player kinematics and boundaries
         player.update(delta);
         player.clampToBounds(0, screenWidth, 0, screenHeight);
@@ -355,6 +362,7 @@ public class GameEngine {
                 player.setActive(true);
             } else {
                 boolean hasRemainingLives = player.loseLifeAndRespawn((screenWidth - player.getWidth()) / 2, screenHeight - 110);
+                announcer.AnnouncerManager.getInstance().trigger(announcer.AnnouncerEvent.PLAYER_DEATH, true);
                 if (!hasRemainingLives) {
                     try {
                         setState(GameState.GAME_OVER);
@@ -549,6 +557,9 @@ public class GameEngine {
         g.setColor(new Color(148, 163, 184));
         g.setFont(new Font("SansSerif", Font.BOLD, 10));
         g.drawString("[P] PAUSE", pillX + 14, pillY + 15);
+
+        // --- 4. Center Tactical Desi Announcer Banner ---
+        announcer.AnnouncerManager.getInstance().renderHUD(g, screenWidth, screenHeight);
     }
 
     private void renderBanner(Graphics2D g, String mainText, String subText, Color color) {
@@ -838,6 +849,9 @@ public class GameEngine {
     // Input hooks
     public void setShooting(boolean shooting) { this.shootingTriggered = shooting; }
 
+    public int getScreenWidth() { return screenWidth; }
+    public int getScreenHeight() { return screenHeight; }
+
     public int getEnemiesDestroyed() { return enemiesDestroyed; }
     public int getShotsFired() { return shotsFired; }
     public int getShotsHit() { return shotsHit; }
@@ -854,6 +868,15 @@ public class GameEngine {
     public long getMatchStartTimeMs() { return matchStartTimeMs; }
     public boolean isMatchUploaded() { return matchUploaded; }
     public String getMatchUploadStatus() { return matchUploadStatus; }
+
+    public boolean isBossActive() {
+        for (Enemy e : enemies) {
+            if (e.isActive() && e instanceof model.BossEnemy) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public GameState getState() { return state; }
     public Player getPlayer() { return player; }
