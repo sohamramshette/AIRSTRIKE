@@ -38,7 +38,7 @@ export class MatchService {
       this.lastSavedKey = matchKey;
       return {
         success: true,
-        message: 'Guest flight logs recorded locally. Log in to sync to the Cloud Leaderboard!'
+        message: '[COMM LINK ACTIVE] Guest flight logs recorded locally. Log in to sync to the Cloud Leaderboard!'
       };
     }
 

@@ -26,6 +26,12 @@
             <button id="auth-action-btn" class="pilot-btn-action">LOGIN / REGISTER</button>
           </div>
 
+          <div class="cloud-status-pill" id="cloud-status-badge">
+            <span class="cloud-status-dot online" id="cloud-status-dot">●</span>
+            <span id="cloud-status-text" class="cloud-status-label">INITIALIZING CLOUD LINK...</span>
+            <button id="btn-cloud-diag" class="cloud-diag-btn" title="Inspect Cloud Connection & Telemetry">DIAGNOSTICS</button>
+          </div>
+
           <button id="btn-start-game" class="cyber-btn btn-primary">LAUNCH MISSION</button>
           <button id="btn-open-leaderboard" class="cyber-btn">GLOBAL LEADERBOARD</button>
           <button id="btn-open-history" class="cyber-btn">PILOT FLIGHT LOGS</button>
@@ -171,6 +177,60 @@
               <!-- Populated dynamically -->
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Cloud Link Diagnostics Modal -->
+      <div id="cloud-diag-modal" class="modal-overlay hidden">
+        <div class="modal-dialog" style="max-width: 580px;">
+          <div class="modal-header">
+            <h3 class="modal-title">STARFLEET CLOUD LINK TELEMETRY</h3>
+            <button id="cloud-diag-modal-close" class="modal-close-btn">&times;</button>
+          </div>
+
+          <div style="font-family: var(--font-mono); font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <span style="color: var(--text-muted);">SUPABASE ENDPOINT:</span>
+              <span id="diag-endpoint" style="color: var(--cyan-neon);">https://qbhotsqwpxbmtpqbgpjy.supabase.co</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <span style="color: var(--text-muted);">GOTRUE AUTH SERVICE:</span>
+              <span id="diag-auth-status" style="color: #22C55E; font-weight: bold;">● ONLINE</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <span style="color: var(--text-muted);">POSTGREST REST API:</span>
+              <span id="diag-rest-status" style="color: #22C55E; font-weight: bold;">● CONNECTED</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <span style="color: var(--text-muted);">ROUNDTRIP LATENCY:</span>
+              <span id="diag-latency" style="color: var(--cyan-neon); font-weight: bold;">-- ms</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <span style="color: var(--text-muted);">PILOT AUTH SESSION:</span>
+              <span id="diag-session" style="color: #FFFFFF;">CADET (GUEST)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+              <span style="color: var(--text-muted);">FLIGHT LOG SYNC:</span>
+              <span id="diag-match-sync" style="color: #38BDF8;">READY (Local + Cloud RLS)</span>
+            </div>
+          </div>
+
+          <!-- RLS Notice & SQL Helper -->
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(0,229,255,0.2); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+            <div style="color: var(--cyan-neon); font-size: 12px; font-weight: bold; margin-bottom: 4px;">PUBLIC LEADERBOARD ACCESS GRANT</div>
+            <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
+              Supabase Row-Level Security restricts unauthenticated queries on <code>public.leaderboard</code> by default. To enable public read access for all cadets, execute in Supabase SQL Editor:
+            </p>
+            <pre id="diag-sql-code" style="background: rgba(10,14,24,0.9); padding: 8px 12px; border-radius: 6px; font-size: 11px; color: #38BDF8; overflow-x: auto; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1);">GRANT SELECT ON public.leaderboard TO anon;
+GRANT SELECT ON public.leaderboard TO authenticated;
+CREATE POLICY "anon_select_leaderboard" ON public.leaderboard FOR SELECT TO anon USING (true);</pre>
+            <button id="btn-copy-sql" class="cyber-btn" style="width: auto; padding: 4px 12px; font-size: 11px;">COPY SQL</button>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button id="btn-ping-now" class="cyber-btn btn-primary" style="width: auto; padding: 6px 18px; font-size: 13px;">TEST COMM LINK</button>
+            <span id="diag-feedback" style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon);"></span>
+          </div>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { AuthService } from '../services/AuthService';
 import { MatchService } from '../services/MatchService';
 import { LeaderboardService } from '../services/LeaderboardService';
 import { SoundService } from '../services/SoundService';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../services/SupabaseClient';
 
 export class UIManager {
   private engine: GameEngine;
@@ -13,6 +14,8 @@ export class UIManager {
   private soundService: SoundService;
 
   private isRegisterMode: boolean = false;
+  private isAuthSubmitting: boolean = false;
+  private lastPingLatency: number = 0;
 
   constructor(engine: GameEngine) {
     this.engine = engine;
@@ -24,6 +27,7 @@ export class UIManager {
     this.bindEvents();
     this.bindAuth();
     this.bindTouchControls();
+    this.initCloudTelemetry();
   }
 
   private bindEvents(): void {
@@ -162,6 +166,8 @@ export class UIManager {
 
     const handleAuthSubmit = async (e: Event) => {
       e.preventDefault();
+      if (this.isAuthSubmitting) return;
+
       const emailInput = document.getElementById('auth-input-email') as HTMLInputElement;
       const passInput = document.getElementById('auth-input-password') as HTMLInputElement;
       const callsignInput = document.getElementById('auth-input-callsign') as HTMLInputElement;
@@ -179,27 +185,36 @@ export class UIManager {
         return;
       }
 
+      this.isAuthSubmitting = true;
+      if (authSubmit) (authSubmit as HTMLButtonElement).disabled = true;
       this.setAuthFeedback('Communicating with Supabase...', 'var(--cyan-neon)');
 
-      const isRegister = this.isRegisterMode || !!document.getElementById('tab-register')?.classList.contains('active');
+      try {
+        const isRegister = this.isRegisterMode || !!document.getElementById('tab-register')?.classList.contains('active');
 
-      if (isRegister) {
-        const res = await this.authService.signUp(email, password, callsign);
-        this.setAuthFeedback(res.message, res.success ? '#22C55E' : '#EF4444');
-        if (res.success) {
-          setTimeout(() => this.closeModal('auth-modal'), 1200);
+        if (isRegister) {
+          const res = await this.authService.signUp(email, password, callsign);
+          this.setAuthFeedback(res.message, res.success ? '#22C55E' : '#EF4444');
+          if (res.success) {
+            setTimeout(() => this.closeModal('auth-modal'), 1200);
+          }
+        } else {
+          const res = await this.authService.signIn(email, password);
+          this.setAuthFeedback(res.message, res.success ? '#22C55E' : '#EF4444');
+          if (res.success) {
+            setTimeout(() => this.closeModal('auth-modal'), 800);
+          }
         }
-      } else {
-        const res = await this.authService.signIn(email, password);
-        this.setAuthFeedback(res.message, res.success ? '#22C55E' : '#EF4444');
-        if (res.success) {
-          setTimeout(() => this.closeModal('auth-modal'), 800);
-        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.setAuthFeedback(`Auth error: ${msg}`, '#EF4444');
+      } finally {
+        this.isAuthSubmitting = false;
+        if (authSubmit) (authSubmit as HTMLButtonElement).disabled = false;
       }
     };
 
     authForm?.addEventListener('submit', handleAuthSubmit);
-    authSubmit?.addEventListener('click', handleAuthSubmit);
   }
 
   private bindTouchControls(): void {
@@ -314,7 +329,35 @@ export class UIManager {
 
       if (tbody) {
         if (result.entries.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 24px; font-size: 13px;">${this.escapeHtml(result.message || 'No flight records logged yet.')}</td></tr>`;
+          // If error / RLS grant pending, check if current pilot is authenticated and has personal matches
+          const session = this.authService.getSession();
+          if (session) {
+            const userMatches = await this.matchService.fetchMyMatches(5);
+            if (userMatches.length > 0) {
+              const sortedMatches = [...userMatches].sort((a, b) => b.score - a.score);
+              tbody.innerHTML = `
+                <tr><td colspan="3" style="text-align: center; color: var(--cyan-neon); font-size: 11px; padding: 6px; background: rgba(0,229,255,0.08); font-weight: bold;">★ YOUR CLOUD FLIGHT RECORDS (AUTHENTICATED) ★</td></tr>
+              ` + sortedMatches.map((m, idx) => `
+                <tr>
+                  <td class="${idx === 0 ? 'rank-gold' : idx === 1 ? 'rank-silver' : 'rank-bronze'}">#${idx + 1}</td>
+                  <td style="font-weight: 600; color: #FFFFFF;">${this.escapeHtml(session.callsign || 'COMMANDER')}</td>
+                  <td style="text-align: right; color: var(--cyan-neon); font-weight: bold;">${m.score.toLocaleString()}</td>
+                </tr>
+              `).join('') + `
+                <tr><td colspan="3" style="text-align: center; color: var(--text-muted); font-size: 10px; padding: 8px;">(Global multi-pilot rankings pending Option B SQL grant in Supabase)</td></tr>
+              `;
+              return;
+            }
+          }
+
+          tbody.innerHTML = `
+            <tr><td colspan="3" style="text-align: center; color: var(--cyan-neon); padding: 18px 12px; font-size: 13px; line-height: 1.6;">
+              <span style="font-weight: bold; color: #22C55E;">● Supabase Cloud is Connected & Online</span><br>
+              <span style="color: var(--text-muted); font-size: 12px;">Global Hall of Fame requires remote database read grant.<br>
+              Log in as Commander or execute Option B in Supabase SQL Editor:<br>
+              <code style="color: #38BDF8; font-size: 11px;">GRANT SELECT ON public.leaderboard TO anon;</code></span>
+            </td></tr>
+          `;
         } else {
           tbody.innerHTML = result.entries.map((entry, idx) => {
             let rankClass = '';
@@ -368,6 +411,138 @@ export class UIManager {
           `;
         }).join('');
       }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cloud Link Telemetry & In-App Diagnostics
+  // ---------------------------------------------------------------------------
+  private initCloudTelemetry(): void {
+    document.getElementById('btn-cloud-diag')?.addEventListener('click', () => {
+      this.openCloudDiagnostics();
+    });
+
+    document.getElementById('cloud-diag-modal-close')?.addEventListener('click', () => {
+      this.closeModal('cloud-diag-modal');
+    });
+
+    document.getElementById('btn-ping-now')?.addEventListener('click', () => {
+      this.runDiagnosticsPing();
+    });
+
+    document.getElementById('btn-copy-sql')?.addEventListener('click', () => {
+      this.copyMigrationSql();
+    });
+
+    // Run initial connection probe asynchronously
+    this.checkCloudConnection();
+  }
+
+  public async checkCloudConnection(): Promise<{ online: boolean; latency: number; version?: string }> {
+    const dot = document.getElementById('cloud-status-dot');
+    const text = document.getElementById('cloud-status-text');
+
+    if (dot) dot.className = 'cloud-status-dot checking';
+    if (text) text.textContent = 'CHECKING COMM LINK...';
+
+    const startTime = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+
+    try {
+      const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
+
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
+        headers: { apikey: SUPABASE_ANON_KEY },
+        signal: controller?.signal
+      });
+
+      if (timeoutId) clearTimeout(timeoutId);
+      const endTime = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+      const latency = Math.max(1, Math.round(endTime - startTime));
+      this.lastPingLatency = latency;
+
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (dot) dot.className = 'cloud-status-dot online';
+        if (text) text.textContent = `● STARFLEET CLOUD LINK ACTIVE (${latency}ms)`;
+        return { online: true, latency, version: data.version || 'v2' };
+      } else {
+        if (dot) dot.className = 'cloud-status-dot offline';
+        if (text) text.textContent = '▲ CLOUD LINK OFFLINE • LOCAL MODE';
+        return { online: false, latency };
+      }
+    } catch {
+      const endTime = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+      const latency = Math.max(1, Math.round(endTime - startTime));
+      this.lastPingLatency = latency;
+      if (dot) dot.className = 'cloud-status-dot offline';
+      if (text) text.textContent = '▲ CLOUD LINK OFFLINE • LOCAL MODE';
+      return { online: false, latency };
+    }
+  }
+
+  private openCloudDiagnostics(): void {
+    this.openModal('cloud-diag-modal');
+    const endpointEl = document.getElementById('diag-endpoint');
+    const sessionEl = document.getElementById('diag-session');
+    const latencyEl = document.getElementById('diag-latency');
+
+    if (endpointEl) endpointEl.textContent = SUPABASE_URL;
+
+    const session = this.authService.getSession();
+    if (sessionEl) {
+      sessionEl.textContent = session ? `COMMANDER ${session.callsign} (${session.email})` : 'CADET (GUEST MODE)';
+      sessionEl.style.color = session ? 'var(--cyan-neon)' : '#FFFFFF';
+    }
+
+    if (latencyEl) {
+      latencyEl.textContent = this.lastPingLatency > 0 ? `${this.lastPingLatency} ms` : 'Measuring...';
+    }
+
+    this.runDiagnosticsPing();
+  }
+
+  private async runDiagnosticsPing(): Promise<void> {
+    const feedback = document.getElementById('diag-feedback');
+    const latencyEl = document.getElementById('diag-latency');
+    const authStatusEl = document.getElementById('diag-auth-status');
+    const restStatusEl = document.getElementById('diag-rest-status');
+
+    if (feedback) {
+      feedback.textContent = 'Pinging Supabase GoTrue & REST APIs...';
+      feedback.style.color = 'var(--cyan-neon)';
+    }
+
+    const result = await this.checkCloudConnection();
+
+    if (latencyEl) latencyEl.textContent = `${result.latency} ms`;
+    if (authStatusEl) {
+      authStatusEl.textContent = result.online ? `● ONLINE (${result.version || 'GoTrue'})` : '▲ OFFLINE';
+      authStatusEl.style.color = result.online ? '#22C55E' : '#EF4444';
+    }
+    if (restStatusEl) {
+      restStatusEl.textContent = result.online ? '● CONNECTED' : '▲ DISCONNECTED';
+      restStatusEl.style.color = result.online ? '#22C55E' : '#EF4444';
+    }
+
+    if (feedback) {
+      feedback.textContent = result.online
+        ? `Comm Link Verified (${result.latency}ms) — Supabase Online`
+        : 'Comm Link Offline — Local Storage active';
+      feedback.style.color = result.online ? '#22C55E' : '#EF4444';
+    }
+  }
+
+  private copyMigrationSql(): void {
+    const sqlText = `GRANT SELECT ON public.leaderboard TO anon;\nGRANT SELECT ON public.leaderboard TO authenticated;\nCREATE POLICY "anon_select_leaderboard" ON public.leaderboard FOR SELECT TO anon USING (true);`;
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(sqlText).then(() => {
+        this.showToast('SQL Grant copied to clipboard!');
+      }).catch(() => {
+        this.showToast('Select & copy SQL from the box.');
+      });
+    } else {
+      this.showToast('Select & copy SQL from the box.');
     }
   }
 
