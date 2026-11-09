@@ -237,7 +237,7 @@ public class MenuPanel extends JPanel {
 
         infoPanel.add(Box.createHorizontalStrut(6));
 
-        pilotStatusLabel = new JLabel("PILOT: GUEST / OFFLINE");
+        pilotStatusLabel = new JLabel("PILOT: CADET (LOCAL GUEST)");
         pilotStatusLabel.setFont(Theme.BODY_BOLD);
         pilotStatusLabel.setForeground(Theme.TEXT_WHITE);
         infoPanel.add(pilotStatusLabel);
@@ -280,7 +280,7 @@ public class MenuPanel extends JPanel {
             pilotRegisterBtn.setVisible(false);
             pilotLogoutBtn.setVisible(true);
         } else {
-            pilotStatusLabel.setText("PILOT: GUEST / OFFLINE");
+            pilotStatusLabel.setText("PILOT: CADET (LOCAL GUEST)");
             pilotStatusLabel.setForeground(new Color(186, 230, 253));
             pilotBeaconDot.setForeground(Theme.BLUE_ACCENT);
             pilotLoginBtn.setVisible(true);

@@ -514,10 +514,10 @@ export class UIManager {
         dossierAuthBtn.className = 'pilot-pill-btn logout';
       }
     } else {
-      if (pilotDisplay) pilotDisplay.textContent = 'PILOT: GUEST / OFFLINE';
+      if (pilotDisplay) pilotDisplay.textContent = 'PILOT: CADET (LOCAL GUEST)';
       if (pilotBeacon) {
-        pilotBeacon.style.color = 'var(--gold-accent)';
-        pilotBeacon.style.textShadow = '0 0 8px #F59E0B';
+        pilotBeacon.style.color = 'var(--cyan-neon)';
+        pilotBeacon.style.textShadow = '0 0 8px rgba(0, 229, 255, 0.6)';
       }
       if (authBtn) {
         authBtn.textContent = 'LOGIN';
