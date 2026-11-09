@@ -32,6 +32,25 @@ export class InputManager {
     if (typeof window === 'undefined') return;
 
     window.addEventListener('keydown', (e: KeyboardEvent) => {
+      // 1. If the user is currently typing inside an input field, textarea, select, or editable element,
+      // completely bypass all game shortcuts so characters like 'P', 'p', Space, 'R', 'M' type normally.
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      // 2. If any modal dialog overlay is currently open, do not intercept keys for gameplay
+      const openModal = document.querySelector('.modal-overlay:not(.hidden)');
+      if (openModal) {
+        return;
+      }
+
       this.keys[e.code] = true;
       this.keys[e.key] = true;
 
@@ -49,6 +68,22 @@ export class InputManager {
     });
 
     window.addEventListener('keyup', (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const openModal = document.querySelector('.modal-overlay:not(.hidden)');
+      if (openModal) {
+        return;
+      }
+
       this.keys[e.code] = false;
       this.keys[e.key] = false;
       if (e.code === 'Space' || e.key === ' ') {

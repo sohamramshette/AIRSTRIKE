@@ -1,4 +1,4 @@
-﻿# AIRSTRIKE: Master Unified Launcher (PowerShell Edition)
+# AIRSTRIKE: Master Unified Launcher (PowerShell Edition)
 # Connects all 4 subject modules and 20 enemy demonstrations.
 param(
     [Parameter(Position=0)]
