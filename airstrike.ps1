@@ -130,8 +130,8 @@ function Invoke-LauncherOption([string]$choice) {
             Write-Host "[INFO] Starting local Vite development server for Web client..." -ForegroundColor Green
             Start-Process -FilePath "cmd.exe" -ArgumentList "/c cd /d `"$projectRoot\web`" && npm run dev"
             Start-Sleep -Seconds 2
-            Write-Host "[INFO] Opening browser at http://localhost:5173..." -ForegroundColor Green
-            Start-Process "http://localhost:5173"
+            Write-Host "[INFO] Opening browser at http://localhost:3000..." -ForegroundColor Green
+            Start-Process "http://localhost:3000"
             Write-Host "[INFO] Browser client running in background. Returning to master menu..." -ForegroundColor Gray
             Start-Sleep -Seconds 1
         }

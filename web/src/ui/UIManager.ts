@@ -661,6 +661,10 @@ export class UIManager {
         this.setAuthFeedback('Email and security password are required.', '#EF4444');
         return;
       }
+      if (!email.includes('@')) {
+        this.setAuthFeedback('Please enter your full email address (e.g. pilot@example.com), not your callsign.', '#F59E0B');
+        return;
+      }
       if (password.length < 6) {
         this.setAuthFeedback('Security password must be at least 6 characters.', '#EF4444');
         return;
@@ -686,17 +690,26 @@ export class UIManager {
       try {
         if (isRegister) {
           const res = await this.authService.signUp(email, password, callsign);
-          this.setAuthFeedback(res.message, res.success ? '#22C55E' : '#EF4444');
           if (res.success) {
+            this.setAuthFeedback(`Welcome aboard, Cadet ${callsign}! Clearance confirmed.`, '#22C55E');
             this.updatePilotDossier();
             setTimeout(() => this.closeModal('auth-modal'), 1200);
+          } else {
+            this.setAuthFeedback(res.message, '#EF4444');
           }
         } else {
           const res = await this.authService.signIn(email, password);
-          this.setAuthFeedback(res.message, res.success ? '#22C55E' : '#EF4444');
           if (res.success) {
+            this.setAuthFeedback(res.message, '#22C55E');
             this.updatePilotDossier();
             setTimeout(() => this.closeModal('auth-modal'), 800);
+          } else {
+            const isInvalidCreds = res.message?.toLowerCase().includes('invalid login credentials');
+            if (isInvalidCreds) {
+              this.setAuthFeedback('Invalid credentials. If this account is not registered yet, click "NEW REGISTRATION" above to enlist!', '#F59E0B');
+            } else {
+              this.setAuthFeedback(res.message, '#EF4444');
+            }
           }
         }
       } catch (err: unknown) {

@@ -34,7 +34,7 @@ echo.
 echo [WEB] Launching Browser Client development server...
 start "AIRSTRIKE - Web Server" cmd /k "cd /d web && npm run dev"
 timeout /t 2 >nul
-start http://localhost:5173
+start http://localhost:3000
 exit /b 0
 
 :run_pl

@@ -313,6 +313,11 @@ public class AuthDialog extends JDialog {
             return;
         }
 
+        if (!email.contains("@")) {
+            setStatus("Please enter your full pilot email (e.g. pilot@example.com), not your callsign.", Theme.GOLD_ACCENT);
+            return;
+        }
+
         setBusy(true, "Transmitting clearance to Starfleet Command...");
 
         authService.login(email, pass).thenAccept(result -> {
@@ -323,6 +328,8 @@ public class AuthDialog extends JDialog {
                     new javax.swing.Timer(700, e -> dispose()).start();
                 } else if (result.isConfirmationPending()) {
                     setStatus("Pending: Please verify email before logging in.", Theme.GOLD_ACCENT);
+                } else if (result.getMessage() != null && result.getMessage().toLowerCase().contains("invalid login credentials")) {
+                    setStatus("Invalid credentials. If you are new to this station, click REGISTER PILOT first.", Theme.GOLD_ACCENT);
                 } else {
                     setStatus(result.getMessage(), Theme.CORAL_DANGER);
                 }
