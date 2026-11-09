@@ -81,7 +81,16 @@ public class MainWindow extends JFrame {
     }
 
     public void showSettings() {
-        SettingsDialog dialog = new SettingsDialog(this, engine);
+        showProfileSettingsDialog();
+    }
+
+    public void showProfileSettingsDialog() {
+        ProfileSettingsDialog dialog = new ProfileSettingsDialog(this, this, engine, authService);
+        dialog.setVisible(true);
+    }
+
+    public void showSubjectCODialog() {
+        SubjectCODialog dialog = new SubjectCODialog(this, this);
         dialog.setVisible(true);
     }
 

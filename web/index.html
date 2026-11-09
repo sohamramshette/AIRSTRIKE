@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AIRSTRIKE - Orbital Defense Initiative</title>
+  <title>AIRSTRIKE – Tactical Combat Simulator & Academic Demonstration System</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,10 90,85 50,70 10,85' fill='%2300E5FF'/></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,74 +18,245 @@
       <!-- Main Menu Overlay -->
       <div id="main-menu-overlay" class="ui-overlay">
         <div class="cyber-card">
-          <h1 class="game-title">AIRSTRIKE</h1>
-          <p class="game-subtitle">ORBITAL DEFENSE INITIATIVE</p>
+          <h1 class="game-title">
+            <span class="game-title-wings left"></span>
+            A I R S T R I K E
+            <span class="game-title-wings right"></span>
+          </h1>
+          <p class="game-subtitle">TACTICAL COMBAT SIMULATOR & ACADEMIC DEMONSTRATION SYSTEM</p>
 
-          <div class="pilot-status-pill">
-            <span>STATUS: <span id="pilot-callsign-display" class="pilot-tag">CADET (GUEST)</span></span>
-            <button id="auth-action-btn" class="pilot-btn-action">LOGIN / REGISTER</button>
+          <!-- Pilot Status Capsule -->
+          <div class="pilot-status-capsule" id="pilot-capsule">
+            <div style="display: flex; align-items: center;">
+              <span class="pilot-beacon" id="pilot-beacon">●</span>
+              <span id="pilot-callsign-display" class="pilot-tag">PILOT: GUEST / OFFLINE</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button id="auth-action-btn" class="pilot-pill-btn">LOGIN</button>
+              <button id="auth-register-btn" class="pilot-pill-btn register">REGISTER</button>
+            </div>
           </div>
 
+          <!-- Cloud Telemetry Link Pill -->
           <div class="cloud-status-pill" id="cloud-status-badge">
             <span class="cloud-status-dot online" id="cloud-status-dot">●</span>
-            <span id="cloud-status-text" class="cloud-status-label">INITIALIZING CLOUD LINK...</span>
+            <span id="cloud-status-text" class="cloud-status-label">● STARFLEET CLOUD LINK ACTIVE  •  SUPABASE POSTGREST 2.2</span>
             <button id="btn-cloud-diag" class="cloud-diag-btn" title="Inspect Cloud Connection & Telemetry">DIAGNOSTICS</button>
           </div>
 
-          <button id="btn-start-game" class="cyber-btn btn-primary">LAUNCH MISSION</button>
-          <button id="btn-open-leaderboard" class="cyber-btn">GLOBAL LEADERBOARD</button>
-          <button id="btn-open-history" class="cyber-btn">PILOT FLIGHT LOGS</button>
+          <!-- Tactical Command Button Stack (Matching Java Swing MainWindow) -->
+          <button id="btn-start-game" class="cyber-btn btn-hero">▶   LAUNCH MISSION</button>
+          <button id="btn-open-subjects" class="cyber-btn btn-tactical purple">✦   COURSE OUTCOMES & SUBJECTS (19 COs)</button>
+          <button id="btn-open-leaderboard" class="cyber-btn btn-tactical gold">★   GLOBAL LEADERBOARD (HALL OF FAME)</button>
+          <button id="btn-open-profile" class="cyber-btn btn-tactical blue">◈   PILOT PROFILE & SYSTEM SETTINGS</button>
+          <button id="btn-open-history" class="cyber-btn btn-tactical">⟡   MATCH HISTORY (FLIGHT LOGS)</button>
+          <button id="btn-open-instructions" class="cyber-btn btn-tactical emerald">❖   PILOT MANUAL (FLIGHT CONTROLS)</button>
+          <button id="btn-abort-game" class="cyber-btn btn-danger">✕   ABORT TO HEADQUARTERS</button>
+
+          <!-- Academic Suite Footer -->
+          <div class="academic-footer-bar">
+            <span>ACADEMIC SUITE:  [PSOOP Java]  •  [PL C++17]  •  [COA 80386]  •  [CGL OpenGL]</span>
+            <span id="menu-record-display" class="academic-record-tag">RECORD: 0 PTS</span>
+          </div>
 
           <div class="key-hint">
             <span><span class="key-badge">WASD / ARROWS</span> MOVE</span>
             <span><span class="key-badge">SPACE</span> FIRE</span>
             <span><span class="key-badge">P</span> PAUSE</span>
+            <span><span class="key-badge">M</span> MENU</span>
           </div>
         </div>
       </div>
 
       <!-- Pause Overlay -->
       <div id="pause-overlay" class="ui-overlay hidden">
-        <div class="cyber-card">
-          <h2 class="game-title" style="font-size: 32px;">TACTICAL PAUSE</h2>
-          <p class="game-subtitle">COMBAT SUSPENDED</p>
+        <div class="cyber-card" style="max-width: 440px;">
+          <h2 class="game-title" style="font-size: 24px; margin-bottom: 2px;">TACTICAL PAUSE</h2>
+          <p class="game-subtitle" style="margin-bottom: 16px;">COMBAT SUSPENDED  •  STARFLEET STANDBY</p>
 
-          <button id="btn-resume-game" class="cyber-btn btn-primary">RESUME MISSION</button>
-          <button id="btn-restart-game" class="cyber-btn">RESTART SECTOR</button>
-          <button id="btn-menu-from-pause" class="cyber-btn btn-danger">ABORT TO HEADQUARTERS</button>
+          <button id="btn-resume-game" class="cyber-btn btn-tactical" style="color: #00E5FF; border-color: rgba(0, 229, 255, 0.5);">▶   RESUME MISSION</button>
+          <button id="btn-restart-game" class="cyber-btn btn-tactical gold">↺   RESTART SECTOR  [R]</button>
+          <button id="btn-settings-from-pause" class="cyber-btn btn-tactical blue">⚙   MISSION SETTINGS</button>
+          <button id="btn-menu-from-pause" class="cyber-btn btn-tactical purple">◈   RETURN TO MAIN MENU  [M]</button>
+          <button id="btn-abort-from-pause" class="cyber-btn btn-danger">✕   ABORT TO HEADQUARTERS</button>
         </div>
       </div>
 
       <!-- Game Over Overlay -->
       <div id="gameover-overlay" class="ui-overlay hidden">
-        <div class="cyber-card">
-          <h2 class="game-title" style="font-size: 34px; color: #EF4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);">VESSEL LOST</h2>
-          <p class="game-subtitle" style="color: #F87171;">MISSION TERMINATED</p>
+        <div class="cyber-card" style="max-width: 480px; border-color: var(--coral-danger);">
+          <h2 class="game-title" style="font-size: 26px; color: #FFFFFF; text-shadow: 0 0 20px rgba(239, 68, 68, 0.7); margin-bottom: 2px;">VESSEL DESTROYED</h2>
+          <p class="game-subtitle" style="color: #F87171; margin-bottom: 14px;">TACTICAL ENVELOPE BREACHED  •  MISSION TERMINATED</p>
 
-          <div style="width: 100%; margin: 12px 0 20px; font-family: var(--font-mono); font-size: 14px; background: rgba(0,0,0,0.4); border-radius: 8px; padding: 14px 18px; border: 1px solid rgba(255,255,255,0.08);">
+          <!-- Statistics Panel -->
+          <div style="width: 100%; margin-bottom: 14px; font-family: var(--font-display); font-size: 13px; background: var(--bg-input); border-radius: 10px; padding: 12px 18px; border: 1px solid rgba(50, 65, 95, 0.8);">
             <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--text-muted);">FINAL SCORE:</span>
-              <span id="gameover-score" style="color: var(--cyan-neon); font-weight: bold; font-size: 16px;">0</span>
+              <span style="color: var(--text-muted); font-weight: bold;">FINAL SCORE:</span>
+              <span id="gameover-score" style="color: var(--cyan-primary); font-weight: bold; font-size: 15px;">0</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--text-muted);">SECTOR REACHED:</span>
-              <span id="gameover-sector" style="color: #FFFFFF; font-weight: bold;">1</span>
+              <span style="color: var(--text-muted); font-weight: bold;">ALL-TIME RECORD:</span>
+              <span id="gameover-highscore" style="color: var(--gold-accent); font-weight: bold;">0</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--text-muted);">FLIGHT TIME:</span>
-              <span id="gameover-time" style="color: #FFFFFF; font-weight: bold;">0s</span>
+              <span style="color: var(--text-muted); font-weight: bold;">SECTOR REACHED:</span>
+              <span id="gameover-sector" style="color: #FFFFFF; font-weight: bold;">Sector 1</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-              <span style="color: var(--text-muted);">HOSTILES NEUTRALIZED:</span>
+              <span style="color: var(--text-muted); font-weight: bold;">HOSTILES DESTROYED:</span>
               <span id="gameover-kills" style="color: #FFFFFF; font-weight: bold;">0</span>
             </div>
-            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: var(--text-muted);">
-              <span id="gameover-sync-status">Score saving in progress...</span>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="color: var(--text-muted); font-weight: bold;">FLIGHT TIME / ACCURACY:</span>
+              <span id="gameover-time-acc" style="color: var(--emerald-status); font-weight: bold;">0s / 0%</span>
+            </div>
+            <div style="padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 11px; color: var(--blue-accent); font-weight: bold;">
+              <span id="gameover-sync-status">● CLOUD SYNC: READY</span>
             </div>
           </div>
 
-          <button id="btn-play-again" class="cyber-btn btn-primary">DEPLOY AGAIN</button>
-          <button id="btn-menu-from-gameover" class="cyber-btn">RETURN TO HEADQUARTERS</button>
+          <button id="btn-play-again" class="cyber-btn btn-hero">▶   REDEPLOY VESSEL  [R]</button>
+          <button id="btn-menu-from-gameover" class="cyber-btn btn-tactical purple">◈   RETURN TO HEADQUARTERS  [M]</button>
+        </div>
+      </div>
+
+      <!-- Subject & Course Outcomes Modal -->
+      <div id="subject-co-modal" class="modal-overlay hidden">
+        <div class="modal-dialog wide">
+          <div class="modal-header">
+            <div>
+              <h3 class="modal-title">ACADEMIC CURRICULUM & 19 COURSE OUTCOMES</h3>
+              <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">4 Undergraduate Subjects • 19 Mapped Outcomes • 418 Verified Assertions</p>
+            </div>
+            <button id="subject-co-modal-close" class="modal-close-btn">&times;</button>
+          </div>
+
+          <div class="subject-nav-tabs">
+            <button id="tab-co-psoop" class="subject-nav-btn active">1. PSOOP (Java)</button>
+            <button id="tab-co-pl" class="subject-nav-btn">2. PL (C++17)</button>
+            <button id="tab-co-coa" class="subject-nav-btn">3. COA (80386 ASM)</button>
+            <button id="tab-co-cgl" class="subject-nav-btn">4. CGL (OpenGL)</button>
+          </div>
+
+          <!-- Dynamic CO Container -->
+          <div id="co-cards-list" class="co-cards-container">
+            <!-- Injected via UIManager -->
+          </div>
+
+          <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+            <span style="font-size: 12px; color: var(--emerald-status); font-weight: bold;">● 418 / 418 Academic Assertions Verified (100% Pass Rate)</span>
+            <button id="btn-launch-demo-from-modal" class="cyber-btn btn-hero" style="width: auto; padding: 0 20px; height: 34px; font-size: 12px;">✦   LAUNCH PSOOP ARENA</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pilot Profile & Settings Modal -->
+      <div id="profile-settings-modal" class="modal-overlay hidden">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h3 class="modal-title">PILOT DOSSIER & MISSION SETTINGS</h3>
+            <button id="profile-settings-modal-close" class="modal-close-btn">&times;</button>
+          </div>
+
+          <!-- Dossier Card -->
+          <div class="dossier-card">
+            <div style="color: var(--blue-accent); font-weight: bold; font-size: 14px; margin-bottom: 6px;">STARFLEET PILOT DOSSIER</div>
+            <div class="dossier-grid">
+              <span class="dossier-label">PILOT CALLSIGN:</span>
+              <span id="dossier-callsign" class="dossier-val" style="color: var(--emerald-status);">CADET (GUEST)</span>
+
+              <span class="dossier-label">COMM CHANNEL:</span>
+              <span id="dossier-email" class="dossier-val">LOCAL ENCLAVE ONLY</span>
+
+              <span class="dossier-label">CLEARANCE STATUS:</span>
+              <span id="dossier-clearance" class="dossier-val" style="color: var(--gold-accent);">UNREGISTERED CADET</span>
+
+              <span class="dossier-label">COMBAT RECORD:</span>
+              <span id="dossier-record" class="dossier-val" style="color: var(--gold-accent);">0 PTS</span>
+            </div>
+
+            <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+              <button id="dossier-auth-toggle-btn" class="pilot-pill-btn logout">LOGOUT</button>
+            </div>
+          </div>
+
+          <!-- Settings Card -->
+          <div class="settings-card">
+            <div style="color: var(--cyan-primary); font-weight: bold; font-size: 14px; margin-bottom: 8px;">SIMULATION & HARDWARE PREFERENCES</div>
+
+            <div class="settings-row">
+              <span style="font-weight: bold; color: var(--text-white);">Simulation Threat Level:</span>
+              <select id="settings-threat-level" class="settings-select">
+                <option value="0">Cadet (100 HP Standard)</option>
+                <option value="1">Veteran (85 HP Faster Waves)</option>
+                <option value="2">Ace Commander (70 HP Elite)</option>
+              </select>
+            </div>
+
+            <div class="settings-row">
+              <span style="font-weight: bold; color: var(--text-white);">Audio Feedback:</span>
+              <div style="display: flex; gap: 12px;">
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">
+                  <input type="checkbox" id="settings-sfx-check" checked /> Tactical SFX
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">
+                  <input type="checkbox" id="settings-music-check" checked /> Comm Audio
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-row" style="border-bottom: none;">
+              <span style="font-weight: bold; color: var(--text-white);">Renderer Pipeline:</span>
+              <span style="color: var(--emerald-status); font-weight: bold; font-size: 12px;">HTML5 Hardware Double-Buffer</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button id="btn-save-settings" class="cyber-btn btn-hero" style="width: auto; padding: 0 20px; height: 34px; font-size: 12px;">SAVE & CONFIRM</button>
+            <button id="btn-close-settings" class="cyber-btn btn-danger" style="width: auto; padding: 0 16px; height: 34px; font-size: 12px; margin: 0;">CLOSE</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pilot Manual Modal -->
+      <div id="instructions-modal" class="modal-overlay hidden">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h3 class="modal-title">PILOT FLIGHT MANUAL & CONTROLS</h3>
+            <button id="instructions-modal-close" class="modal-close-btn">&times;</button>
+          </div>
+
+          <div style="font-size: 13px; line-height: 1.6; color: var(--text-white);">
+            <h4 style="color: var(--cyan-primary); margin-bottom: 6px;">1. FLIGHT NAVIGATION</h4>
+            <ul style="color: var(--text-muted); margin-left: 20px; margin-bottom: 12px;">
+              <li><b style="color: #FFFFFF;">Move Forward / Climb:</b> [W] or [UP ARROW]</li>
+              <li><b style="color: #FFFFFF;">Move Aft / Dive:</b> [S] or [DOWN ARROW]</li>
+              <li><b style="color: #FFFFFF;">Bank Port (Left):</b> [A] or [LEFT ARROW]</li>
+              <li><b style="color: #FFFFFF;">Bank Starboard (Right):</b> [D] or [RIGHT ARROW]</li>
+              <li><b style="color: #FFFFFF;">Fire Primary Plasma Cannons:</b> [SPACEBAR] (Hold for continuous fire)</li>
+            </ul>
+
+            <h4 style="color: var(--gold-accent); margin-bottom: 6px;">2. TACTICAL MISSION SHORTCUTS</h4>
+            <ul style="color: var(--text-muted); margin-left: 20px; margin-bottom: 12px;">
+              <li><b style="color: #FFFFFF;">Tactical Pause:</b> [P] or [ESCAPE]</li>
+              <li><b style="color: #FFFFFF;">Quick Redeploy:</b> [R]</li>
+              <li><b style="color: #FFFFFF;">Return to Main Menu:</b> [M]</li>
+            </ul>
+
+            <h4 style="color: var(--emerald-status); margin-bottom: 6px;">3. COMBAT SYSTEMS & ORDNANCE</h4>
+            <ul style="color: var(--text-muted); margin-left: 20px;">
+              <li><b style="color: var(--cyan-primary);">Shield Capacitors:</b> Absorbs incoming laser fire before hull breach.</li>
+              <li><b style="color: var(--emerald-status);">[+] Repair Kit:</b> Instantly restores +40 Hull Integrity.</li>
+              <li><b style="color: var(--blue-accent);">[S] Shield Booster:</b> Rapidly recharges depleted shield reserves.</li>
+              <li><b style="color: var(--gold-accent);">[W] Weapon Upgrade:</b> Single &rarr; Dual &rarr; Triple Spread Cannons.</li>
+              <li><b style="color: var(--purple-accent);">[^] Hyper Drive:</b> Permanent propulsion acceleration increase.</li>
+              <li><b style="color: var(--coral-danger);">Kill Streaks:</b> Rapid kills grant up to 4x score multipliers!</li>
+            </ul>
+          </div>
+
+          <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+            <button id="btn-close-instructions" class="cyber-btn btn-hero" style="width: auto; padding: 0 20px; height: 34px; font-size: 12px;">RETURN TO COMMAND</button>
+          </div>
         </div>
       </div>
 
@@ -93,34 +264,41 @@
       <div id="auth-modal" class="modal-overlay hidden">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h3 id="auth-modal-title" class="modal-title">PILOT AUTHENTICATION</h3>
+            <h3 id="auth-modal-title" class="modal-title">STARFLEET COMMAND ACCESS</h3>
             <button id="auth-modal-close" class="modal-close-btn">&times;</button>
           </div>
 
           <div class="auth-tabs">
-            <div id="tab-login" class="auth-tab active">SIGN IN</div>
-            <div id="tab-register" class="auth-tab">REGISTER NEW PILOT</div>
+            <div id="tab-login" class="auth-tab active">PILOT LOGIN</div>
+            <div id="tab-register" class="auth-tab">NEW REGISTRATION</div>
           </div>
 
           <form id="auth-form">
             <div id="field-callsign-group" class="form-group" style="display: none;">
-              <label class="form-label">PILOT CALLSIGN</label>
+              <label class="form-label">CALLSIGN / DISPLAY NAME</label>
               <input type="text" id="auth-input-callsign" class="form-input" placeholder="e.g. STAR_VIPER" autocomplete="nickname" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">ACADEMY EMAIL</label>
+              <label class="form-label">PILOT COMM / ACADEMY EMAIL</label>
               <input type="email" id="auth-input-email" class="form-input" placeholder="pilot@college.edu" autocomplete="email" required />
             </div>
 
             <div class="form-group">
-              <label class="form-label">SECURITY PASSWORD</label>
+              <label class="form-label">SECURITY CLEARANCE PASSWORD</label>
               <input type="password" id="auth-input-password" class="form-input" placeholder="Minimum 6 characters" autocomplete="current-password" required />
             </div>
 
-            <div id="auth-feedback" style="font-family: var(--font-mono); font-size: 12px; margin-bottom: 12px; min-height: 16px; color: var(--cyan-neon);"></div>
+            <div id="field-confirm-group" class="form-group" style="display: none;">
+              <label class="form-label">CONFIRM SECURITY PASSWORD</label>
+              <input type="password" id="auth-input-confirm" class="form-input" placeholder="Re-enter password" autocomplete="new-password" />
+            </div>
 
-            <button type="submit" id="auth-submit-btn" class="cyber-btn btn-primary">AUTHENTICATE PILOT</button>
+            <div id="auth-feedback" style="font-family: var(--font-mono); font-size: 12px; margin-bottom: 12px; min-height: 16px; color: var(--cyan-primary);"></div>
+
+            <button type="submit" id="auth-submit-btn" class="cyber-btn btn-hero" style="max-width: 100%; margin-bottom: 12px;">AUTHENTICATE PILOT</button>
+
+            <button type="button" id="btn-auth-guest-mode" class="cyber-btn btn-tactical" style="max-width: 100%; justify-content: center;">CONTINUE AS GUEST / OFFLINE PILOT</button>
           </form>
         </div>
       </div>
@@ -129,20 +307,23 @@
       <div id="leaderboard-modal" class="modal-overlay hidden">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h3 class="modal-title">GLOBAL HALL OF FAME</h3>
+            <div>
+              <h3 class="modal-title" style="color: var(--gold-accent);">STARFLEET GLOBAL HALL OF FAME</h3>
+              <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Top 10 Ace Pilots Across the Cosmos – Synchronized via Supabase</p>
+            </div>
             <button id="leaderboard-modal-close" class="modal-close-btn">&times;</button>
           </div>
 
-          <p id="leaderboard-source-notice" style="font-size: 12px; font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 10px;">
+          <p id="leaderboard-source-notice" style="font-size: 12px; font-family: var(--font-display); color: var(--text-muted); margin-bottom: 8px;">
             Supabase Cloud Telemetry
           </p>
 
           <table class="cyber-table">
             <thead>
               <tr>
-                <th style="width: 15%;">RANK</th>
-                <th style="width: 55%;">PILOT CALLSIGN</th>
-                <th style="width: 30%; text-align: right;">BEST SCORE</th>
+                <th style="width: 20%;">RANK</th>
+                <th style="width: 50%;">PILOT CALLSIGN</th>
+                <th style="width: 30%; text-align: right;">ALL-TIME BEST</th>
               </tr>
             </thead>
             <tbody id="leaderboard-table-body">
@@ -150,8 +331,8 @@
             </tbody>
           </table>
 
-          <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
-            <button id="btn-refresh-leaderboard" class="cyber-btn" style="width: auto; padding: 6px 16px; font-size: 13px;">REFRESH</button>
+          <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+            <button id="btn-refresh-leaderboard" class="pilot-pill-btn" style="height: 28px; padding: 0 14px; font-size: 11px;">REFRESH</button>
           </div>
         </div>
       </div>
@@ -160,7 +341,10 @@
       <div id="history-modal" class="modal-overlay hidden">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h3 class="modal-title">PILOT FLIGHT LOGS</h3>
+            <div>
+              <h3 class="modal-title">STARFLEET FLIGHT LOG ARCHIVE</h3>
+              <p id="history-pilot-status" style="font-size: 11px; color: var(--emerald-status); margin-top: 2px;">PILOT: GUEST / OFFLINE</p>
+            </div>
             <button id="history-modal-close" class="modal-close-btn">&times;</button>
           </div>
 
@@ -168,9 +352,9 @@
             <thead>
               <tr>
                 <th>SECTOR</th>
-                <th>SCORE</th>
+                <th>FINAL SCORE</th>
                 <th>DURATION</th>
-                <th style="text-align: right;">DATE</th>
+                <th style="text-align: right;">DATE & TIME</th>
               </tr>
             </thead>
             <tbody id="history-table-body">
@@ -188,48 +372,48 @@
             <button id="cloud-diag-modal-close" class="modal-close-btn">&times;</button>
           </div>
 
-          <div style="font-family: var(--font-mono); font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <div style="font-family: var(--font-mono); font-size: 12px; line-height: 1.6; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
               <span style="color: var(--text-muted);">SUPABASE ENDPOINT:</span>
-              <span id="diag-endpoint" style="color: var(--cyan-neon);">https://qbhotsqwpxbmtpqbgpjy.supabase.co</span>
+              <span id="diag-endpoint" style="color: var(--cyan-primary);">https://qbhotsqwpxbmtpqbgpjy.supabase.co</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
               <span style="color: var(--text-muted);">GOTRUE AUTH SERVICE:</span>
               <span id="diag-auth-status" style="color: #22C55E; font-weight: bold;">● ONLINE</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
               <span style="color: var(--text-muted);">POSTGREST REST API:</span>
               <span id="diag-rest-status" style="color: #22C55E; font-weight: bold;">● CONNECTED</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
               <span style="color: var(--text-muted);">ROUNDTRIP LATENCY:</span>
-              <span id="diag-latency" style="color: var(--cyan-neon); font-weight: bold;">-- ms</span>
+              <span id="diag-latency" style="color: var(--cyan-primary); font-weight: bold;">-- ms</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
               <span style="color: var(--text-muted);">PILOT AUTH SESSION:</span>
               <span id="diag-session" style="color: #FFFFFF;">CADET (GUEST)</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+            <div style="display: flex; justify-content: space-between; padding: 5px 0;">
               <span style="color: var(--text-muted);">FLIGHT LOG SYNC:</span>
               <span id="diag-match-sync" style="color: #38BDF8;">READY (Local + Cloud RLS)</span>
             </div>
           </div>
 
           <!-- RLS Notice & SQL Helper -->
-          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(0,229,255,0.2); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
-            <div style="color: var(--cyan-neon); font-size: 12px; font-weight: bold; margin-bottom: 4px;">PUBLIC LEADERBOARD ACCESS GRANT</div>
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(0,229,255,0.2); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px;">
+            <div style="color: var(--cyan-primary); font-size: 12px; font-weight: bold; margin-bottom: 4px;">PUBLIC LEADERBOARD ACCESS GRANT</div>
             <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
               Supabase Row-Level Security restricts unauthenticated queries on <code>public.leaderboard</code> by default. To enable public read access for all cadets, execute in Supabase SQL Editor:
             </p>
             <pre id="diag-sql-code" style="background: rgba(10,14,24,0.9); padding: 8px 12px; border-radius: 6px; font-size: 11px; color: #38BDF8; overflow-x: auto; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1);">GRANT SELECT ON public.leaderboard TO anon;
 GRANT SELECT ON public.leaderboard TO authenticated;
 CREATE POLICY "anon_select_leaderboard" ON public.leaderboard FOR SELECT TO anon USING (true);</pre>
-            <button id="btn-copy-sql" class="cyber-btn" style="width: auto; padding: 4px 12px; font-size: 11px;">COPY SQL</button>
+            <button id="btn-copy-sql" class="pilot-pill-btn" style="height: 26px; padding: 0 12px;">COPY SQL</button>
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <button id="btn-ping-now" class="cyber-btn btn-primary" style="width: auto; padding: 6px 18px; font-size: 13px;">TEST COMM LINK</button>
-            <span id="diag-feedback" style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon);"></span>
+            <button id="btn-ping-now" class="cyber-btn btn-hero" style="width: auto; padding: 0 18px; height: 32px; font-size: 12px;">TEST COMM LINK</button>
+            <span id="diag-feedback" style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-primary);"></span>
           </div>
         </div>
       </div>
@@ -240,7 +424,7 @@ CREATE POLICY "anon_select_leaderboard" ON public.leaderboard FOR SELECT TO anon
         <button id="btn-fullscreen-toggle" class="icon-btn" title="Fullscreen">⛶</button>
       </div>
 
-      <!-- On-Screen Virtual Touch Controls for Mobile/Tablets -->
+      <!-- Touch Controls -->
       <div id="touch-controls">
         <div class="touch-dpad">
           <div style="display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 4px;">
@@ -268,4 +452,3 @@ CREATE POLICY "anon_select_leaderboard" ON public.leaderboard FOR SELECT TO anon
   <script type="module" src="./src/main.ts"></script>
 </body>
 </html>
-

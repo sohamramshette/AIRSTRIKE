@@ -3,66 +3,87 @@ package ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingConstants;
 
 /**
- * Dialog displaying player flight manual, key bindings, and combat mechanics.
+ * Pilot Flight Manual dialog displaying flight controls, mission shortcuts, and combat mechanics.
+ * Styled with the Phase 9 Design System.
  */
 public class InstructionsDialog extends JDialog {
 
     public InstructionsDialog(JFrame parent) {
-        super(parent, "AIRSTRIKE – Pilot Flight Manual", true);
-        setSize(560, 480);
+        super(parent, "STARFLEET COMMAND – PILOT FLIGHT MANUAL", true);
+        setSize(600, 520);
         setLocationRelativeTo(parent);
         setResizable(false);
+        getContentPane().setBackground(Theme.BG_DEEP);
+        setLayout(new BorderLayout());
 
-        JPanel content = new JPanel(new BorderLayout(10, 10));
-        content.setBackground(new Color(15, 18, 30));
-        content.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(Theme.BG_PANEL);
+        headerPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_SUBTLE),
+                BorderFactory.createEmptyBorder(16, 20, 14, 20)
+        ));
 
+        JLabel titleLbl = new JLabel("PILOT FLIGHT MANUAL & COMBAT CONTROLS", SwingConstants.CENTER);
+        titleLbl.setFont(Theme.HEADER_1);
+        titleLbl.setForeground(Theme.CYAN_PRIMARY);
+        headerPanel.add(titleLbl, BorderLayout.NORTH);
+
+        JLabel subLbl = new JLabel("Standard Spacecraft Navigation, Ordinance Operations & Survival Guidelines", SwingConstants.CENTER);
+        subLbl.setFont(Theme.BODY);
+        subLbl.setForeground(Theme.TEXT_MUTED);
+        subLbl.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+        headerPanel.add(subLbl, BorderLayout.SOUTH);
+        add(headerPanel, BorderLayout.NORTH);
+
+        // Body with HTML text pane
         JTextPane textPane = new JTextPane();
         textPane.setContentType("text/html");
         textPane.setEditable(false);
-        textPane.setBackground(new Color(22, 28, 45));
-        textPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        textPane.setBackground(Theme.BG_INPUT);
+        textPane.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
 
         String html = """
             <html>
-            <body style='font-family: sans-serif; color: #E0E8F5;'>
-                <h2 style='color: #00D2FF; margin-bottom: 2px;'>FLIGHT MANUAL & CONTROLS</h2>
-                <hr style='border: 1px solid #285082;'/>
-                
-                <h3 style='color: #FFB428; margin-top: 8px;'>1. NAVIGATION CONTROLS</h3>
-                <ul>
-                    <li><b>Move Up / Forward:</b> [W] or [UP ARROW]</li>
-                    <li><b>Move Down / Aft:</b> [S] or [DOWN ARROW]</li>
-                    <li><b>Move Left:</b> [A] or [LEFT ARROW]</li>
-                    <li><b>Move Right:</b> [D] or [RIGHT ARROW]</li>
-                    <li><b>Fire Plasma Laser:</b> [SPACEBAR] (Hold for sustained fire)</li>
+            <body style='font-family: sans-serif; color: #F8FAFC; background-color: #161F38;'>
+                <h3 style='color: #00E5FF; margin-top: 4px; margin-bottom: 6px;'>1. FLIGHT NAVIGATION</h3>
+                <ul style='color: #CBD5E1; line-height: 1.5;'>
+                    <li><b style='color: #FFFFFF;'>Move Forward / Climb:</b> [W] or [UP ARROW]</li>
+                    <li><b style='color: #FFFFFF;'>Move Aft / Dive:</b> [S] or [DOWN ARROW]</li>
+                    <li><b style='color: #FFFFFF;'>Bank Port (Left):</b> [A] or [LEFT ARROW]</li>
+                    <li><b style='color: #FFFFFF;'>Bank Starboard (Right):</b> [D] or [RIGHT ARROW]</li>
+                    <li><b style='color: #FFFFFF;'>Fire Primary Plasma Cannons:</b> [SPACEBAR] (Hold for sustained fire)</li>
                 </ul>
 
-                <h3 style='color: #FFB428; margin-top: 8px;'>2. MISSION SYSTEM KEYS</h3>
-                <ul>
-                    <li><b>Pause / Resume Mission:</b> [P] or [ESCAPE]</li>
-                    <li><b>Quick Redeploy (Restart):</b> [R]</li>
-                    <li><b>Return to Main Menu:</b> [M] (From Pause or Game Over)</li>
+                <h3 style='color: #FBBF24; margin-top: 10px; margin-bottom: 6px;'>2. TACTICAL MISSION SHORTCUTS</h3>
+                <ul style='color: #CBD5E1; line-height: 1.5;'>
+                    <li><b style='color: #FFFFFF;'>Tactical Pause:</b> [P] or [ESCAPE]</li>
+                    <li><b style='color: #FFFFFF;'>Quick Redeploy (Restart):</b> [R]</li>
+                    <li><b style='color: #FFFFFF;'>Abort to Main Menu:</b> [M] (From Pause or Game Over)</li>
+                    <li><b style='color: #FFFFFF;'>Audio Mute:</b> [MUTE TOGGLE in Settings]</li>
                 </ul>
 
-                <h3 style='color: #FFB428; margin-top: 8px;'>3. COMBAT & POWER-UPS</h3>
-                <ul>
-                    <li><b>Shields:</b> Absorbs incoming laser damage before hull is breached.</li>
-                    <li><b>[+] Health Pack:</b> Repairs hull integrity by +40 points.</li>
-                    <li><b>[S] Shield Boost:</b> Recharges protective shield capacitors.</li>
-                    <li><b>[W] Plasma Cannon:</b> Upgrades primary weapons (Single -> Dual -> Triple Spread).</li>
-                    <li><b>[^] Hyper Engine:</b> Grants permanent propulsion speed boost.</li>
-                    <li><b>Combos:</b> Rapid kills grant up to 4x score multipliers!</li>
+                <h3 style='color: #34D399; margin-top: 10px; margin-bottom: 6px;'>3. COMBAT SYSTEMS & ORDNANCE</h3>
+                <ul style='color: #CBD5E1; line-height: 1.5;'>
+                    <li><b style='color: #00E5FF;'>Shield Capacitors:</b> Absorbs incoming plasma energy before hull breach.</li>
+                    <li><b style='color: #34D399;'>[+] Repair Kit:</b> Instantly restores +40 Hull Integrity.</li>
+                    <li><b style='color: #38BDF8;'>[S] Shield Booster:</b> Rapidly recharges depleted shield reserves.</li>
+                    <li><b style='color: #FBBF24;'>[W] Weapon Upgrade:</b> Dual Cannons &rarr; Triple Spread Cannons.</li>
+                    <li><b style='color: #A855F7;'>[^] Hyper Drive:</b> Permanent propulsion acceleration increase.</li>
+                    <li><b style='color: #EF4444;'>Kill Streaks:</b> Rapid kills grant up to 4x score multipliers!</li>
                 </ul>
             </body>
             </html>
@@ -71,23 +92,20 @@ public class InstructionsDialog extends JDialog {
         textPane.setCaretPosition(0);
 
         JScrollPane scroll = new JScrollPane(textPane);
-        scroll.setBorder(BorderFactory.createLineBorder(new Color(40, 60, 90)));
-        content.add(scroll, BorderLayout.CENTER);
+        scroll.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        scroll.getViewport().setBackground(Theme.BG_DEEP);
+        add(scroll, BorderLayout.CENTER);
 
-        JButton closeBtn = new JButton("RETURN TO COMMAND");
-        closeBtn.setFont(new Font("SansSerif", Font.BOLD, 13));
-        closeBtn.setBackground(new Color(0, 150, 220));
-        closeBtn.setForeground(Color.WHITE);
-        closeBtn.setFocusPainted(false);
-        closeBtn.setPreferredSize(new Dimension(200, 36));
+        // Footer
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 10));
+        footer.setBackground(Theme.BG_PANEL);
+        footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER_SUBTLE));
+
+        CyberButton closeBtn = CyberButton.hero("RETURN TO COMMAND");
+        closeBtn.setPreferredSize(new Dimension(190, 34));
         closeBtn.addActionListener(e -> dispose());
+        footer.add(closeBtn);
 
-        JPanel btnPanel = new JPanel();
-        btnPanel.setBackground(new Color(15, 18, 30));
-        btnPanel.add(closeBtn);
-        content.add(btnPanel, BorderLayout.SOUTH);
-
-        setContentPane(content);
+        add(footer, BorderLayout.SOUTH);
     }
 }
-

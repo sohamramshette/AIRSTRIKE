@@ -12,10 +12,12 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -27,14 +29,8 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 /**
- * Authentication dialog for AIRSTRIKE pilots.
- *
- * Provides:
- * - Tabbed and cross-linked pilot login and registration interfaces.
- * - Registration form with Email, Password, and Confirm Password verification.
- * - Asynchronous background authentication without freezing Swing EDT.
- * - Dynamic feedback banner for authentication status, errors, and email confirmation.
- * - Direct "Play Offline (Guest)" entry to ensure uninterrupted space combat.
+ * Modern, futuristic Starfleet Authentication & Pilot Registry Dialog.
+ * Implements Phase 9 dark glassmorphism, responsive status feedback, and guest entry.
  */
 public class AuthDialog extends JDialog {
 
@@ -48,14 +44,14 @@ public class AuthDialog extends JDialog {
     // Login Form Fields
     private JTextField loginEmailField;
     private JPasswordField loginPasswordField;
-    private JButton loginSubmitBtn;
+    private CyberButton loginSubmitBtn;
 
     // Register Form Fields
     private JTextField regCallsignField;
     private JTextField regEmailField;
     private JPasswordField regPasswordField;
     private JPasswordField regConfirmPasswordField;
-    private JButton regSubmitBtn;
+    private CyberButton regSubmitBtn;
 
     // Status Banner
     private JLabel statusBanner;
@@ -68,10 +64,10 @@ public class AuthDialog extends JDialog {
         super(parent, "STARFLEET REGISTRY – PILOT AUTHENTICATION", true);
         this.authService = authService;
 
-        setSize(480, 560);
+        setSize(480, 570);
         setLocationRelativeTo(parent);
         setResizable(false);
-        getContentPane().setBackground(new Color(13, 17, 30));
+        getContentPane().setBackground(Theme.BG_DEEP);
         setLayout(new BorderLayout());
 
         // Header Panel with Tabs
@@ -81,7 +77,7 @@ public class AuthDialog extends JDialog {
         // Card Container for Login & Register Forms
         cardLayout = new CardLayout();
         cardsPanel = new JPanel(cardLayout);
-        cardsPanel.setBackground(new Color(13, 17, 30));
+        cardsPanel.setBackground(Theme.BG_DEEP);
 
         cardsPanel.add(buildLoginPanel(), "LOGIN");
         cardsPanel.add(buildRegisterPanel(), "REGISTER");
@@ -96,33 +92,28 @@ public class AuthDialog extends JDialog {
 
     private JPanel buildHeaderPanel() {
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(new Color(10, 13, 24));
+        header.setBackground(Theme.BG_PANEL);
         header.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(30, 42, 68)),
-                BorderFactory.createEmptyBorder(16, 20, 12, 20)
+                BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER_SUBTLE),
+                BorderFactory.createEmptyBorder(16, 24, 12, 24)
         ));
 
         JLabel title = new JLabel("STARFLEET COMMAND ACCESS", SwingConstants.CENTER);
-        title.setFont(new Font("SansSerif", Font.BOLD, 17));
-        title.setForeground(new Color(0, 210, 255));
+        title.setFont(Theme.HEADER_1);
+        title.setForeground(Theme.CYAN_PRIMARY);
         header.add(title, BorderLayout.NORTH);
 
-        JPanel tabs = new JPanel(new GridBagLayout());
-        tabs.setBackground(new Color(10, 13, 24));
+        JPanel tabs = new JPanel(new GridLayout(1, 2, 8, 0));
+        tabs.setOpaque(false);
         tabs.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 0.5;
-        gbc.insets = new Insets(0, 4, 0, 4);
 
         tabLoginBtn = createTabButton("PILOT LOGIN");
         tabLoginBtn.addActionListener(e -> selectTab("LOGIN"));
-        tabs.add(tabLoginBtn, gbc);
+        tabs.add(tabLoginBtn);
 
         tabRegisterBtn = createTabButton("NEW REGISTRATION");
         tabRegisterBtn.addActionListener(e -> selectTab("REGISTER"));
-        tabs.add(tabRegisterBtn, gbc);
+        tabs.add(tabRegisterBtn);
 
         header.add(tabs, BorderLayout.SOUTH);
         return header;
@@ -130,8 +121,8 @@ public class AuthDialog extends JDialog {
 
     private JPanel buildLoginPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(new Color(13, 17, 30));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 10, 30));
+        panel.setBackground(Theme.BG_DEEP);
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 32, 10, 32));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -140,7 +131,7 @@ public class AuthDialog extends JDialog {
         gbc.insets = new Insets(6, 0, 4, 0);
 
         // Email Label & Field
-        JLabel emailLbl = createFieldLabel("PILOT COMM / EMAIL");
+        JLabel emailLbl = createFieldLabel("PILOT COMM / ACADEMY EMAIL");
         panel.add(emailLbl, gbc);
 
         loginEmailField = createStyledTextField();
@@ -169,14 +160,15 @@ public class AuthDialog extends JDialog {
         panel.add(loginPasswordField, gbc);
 
         // Submit Button
-        loginSubmitBtn = createActionButton("AUTHENTICATE PILOT", new Color(0, 180, 255));
+        loginSubmitBtn = CyberButton.hero("AUTHENTICATE PILOT");
+        loginSubmitBtn.setPreferredSize(new Dimension(380, 40));
         loginSubmitBtn.addActionListener(e -> executeLogin());
         panel.add(loginSubmitBtn, gbc);
 
         // Registration Navigation link
-        JButton toRegBtn = createLinkButton("Need an account? Enlist as a new pilot ->");
+        JButton toRegBtn = createLinkButton("Need starfleet clearance? Register as new pilot ->");
         toRegBtn.addActionListener(e -> selectTab("REGISTER"));
-        gbc.insets = new Insets(10, 0, 0, 0);
+        gbc.insets = new Insets(12, 0, 0, 0);
         panel.add(toRegBtn, gbc);
 
         return panel;
@@ -184,8 +176,8 @@ public class AuthDialog extends JDialog {
 
     private JPanel buildRegisterPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(new Color(13, 17, 30));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 30, 10, 30));
+        panel.setBackground(Theme.BG_DEEP);
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 32, 8, 32));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -202,7 +194,7 @@ public class AuthDialog extends JDialog {
         panel.add(regCallsignField, gbc);
 
         // Email Field
-        JLabel emailLbl = createFieldLabel("PILOT COMM / EMAIL");
+        JLabel emailLbl = createFieldLabel("PILOT COMM / ACADEMY EMAIL");
         gbc.insets = new Insets(2, 0, 2, 0);
         panel.add(emailLbl, gbc);
 
@@ -241,7 +233,8 @@ public class AuthDialog extends JDialog {
         panel.add(regConfirmPasswordField, gbc);
 
         // Submit Button
-        regSubmitBtn = createActionButton("REGISTER NEW PILOT", new Color(60, 220, 120));
+        regSubmitBtn = CyberButton.hero("REGISTER NEW PILOT");
+        regSubmitBtn.setPreferredSize(new Dimension(380, 40));
         regSubmitBtn.addActionListener(e -> executeRegister());
         panel.add(regSubmitBtn, gbc);
 
@@ -256,32 +249,30 @@ public class AuthDialog extends JDialog {
 
     private JPanel buildFooterPanel() {
         JPanel footer = new JPanel(new BorderLayout());
-        footer.setBackground(new Color(10, 13, 24));
+        footer.setBackground(Theme.BG_PANEL);
         footer.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(30, 42, 68)),
-                BorderFactory.createEmptyBorder(10, 20, 12, 20)
+                BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER_SUBTLE),
+                BorderFactory.createEmptyBorder(10, 24, 12, 24)
         ));
 
         statusBanner = new JLabel("Status: Ready for authentication.", SwingConstants.CENTER);
-        statusBanner.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        statusBanner.setForeground(new Color(160, 180, 210));
+        statusBanner.setFont(Theme.BODY);
+        statusBanner.setForeground(Theme.TEXT_MUTED);
         statusBanner.setPreferredSize(new Dimension(420, 22));
         footer.add(statusBanner, BorderLayout.NORTH);
 
-        JButton guestBtn = new JButton("CONTINUE AS GUEST / OFFLINE PILOT");
-        guestBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
-        guestBtn.setForeground(new Color(140, 160, 190));
-        guestBtn.setBackground(new Color(20, 26, 42));
-        guestBtn.setFocusPainted(false);
-        guestBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        guestBtn.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        CyberButton guestBtn = CyberButton.tactical(
+                "CONTINUE AS GUEST / OFFLINE PILOT",
+                Theme.TEXT_MUTED,
+                Theme.BG_PANEL
+        );
         guestBtn.addActionListener(e -> {
             SessionManager.getInstance().clearSession();
             dispose();
         });
 
         JPanel guestWrap = new JPanel(new BorderLayout());
-        guestWrap.setBackground(new Color(10, 13, 24));
+        guestWrap.setOpaque(false);
         guestWrap.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
         guestWrap.add(guestBtn, BorderLayout.CENTER);
 
@@ -292,16 +283,22 @@ public class AuthDialog extends JDialog {
     public void selectTab(String tabName) {
         cardLayout.show(cardsPanel, tabName);
         if ("LOGIN".equals(tabName)) {
-            tabLoginBtn.setBackground(new Color(0, 180, 255));
-            tabLoginBtn.setForeground(Color.BLACK);
-            tabRegisterBtn.setBackground(new Color(22, 29, 48));
-            tabRegisterBtn.setForeground(Color.LIGHT_GRAY);
+            tabLoginBtn.setBackground(new Color(0, 229, 255, 40));
+            tabLoginBtn.setForeground(Theme.CYAN_PRIMARY);
+            tabLoginBtn.setBorder(BorderFactory.createLineBorder(Theme.CYAN_PRIMARY, 1));
+
+            tabRegisterBtn.setBackground(Theme.BG_INPUT);
+            tabRegisterBtn.setForeground(Theme.TEXT_MUTED);
+            tabRegisterBtn.setBorder(BorderFactory.createLineBorder(Theme.BORDER_SUBTLE, 1));
             loginEmailField.requestFocusInWindow();
         } else {
-            tabRegisterBtn.setBackground(new Color(60, 220, 120));
-            tabRegisterBtn.setForeground(Color.BLACK);
-            tabLoginBtn.setBackground(new Color(22, 29, 48));
-            tabLoginBtn.setForeground(Color.LIGHT_GRAY);
+            tabRegisterBtn.setBackground(new Color(52, 211, 153, 40));
+            tabRegisterBtn.setForeground(Theme.EMERALD_STATUS);
+            tabRegisterBtn.setBorder(BorderFactory.createLineBorder(Theme.EMERALD_STATUS, 1));
+
+            tabLoginBtn.setBackground(Theme.BG_INPUT);
+            tabLoginBtn.setForeground(Theme.TEXT_MUTED);
+            tabLoginBtn.setBorder(BorderFactory.createLineBorder(Theme.BORDER_SUBTLE, 1));
             regCallsignField.requestFocusInWindow();
         }
         clearStatus();
@@ -312,7 +309,7 @@ public class AuthDialog extends JDialog {
         String pass = new String(loginPasswordField.getPassword());
 
         if (email.isEmpty() || pass.isEmpty()) {
-            setStatus("Please provide email and clearance password.", new Color(255, 90, 90));
+            setStatus("Please provide email and clearance password.", Theme.CORAL_DANGER);
             return;
         }
 
@@ -322,12 +319,12 @@ public class AuthDialog extends JDialog {
             SwingUtilities.invokeLater(() -> {
                 setBusy(false, null);
                 if (result.isSuccess()) {
-                    setStatus("Access Granted! Welcome, Commander " + result.getSession().getUsername(), new Color(80, 250, 120));
+                    setStatus("Access Granted! Welcome, Commander " + result.getSession().getUsername(), Theme.EMERALD_STATUS);
                     new javax.swing.Timer(700, e -> dispose()).start();
                 } else if (result.isConfirmationPending()) {
-                    setStatus("Pending: Please verify email before logging in.", new Color(255, 190, 50));
+                    setStatus("Pending: Please verify email before logging in.", Theme.GOLD_ACCENT);
                 } else {
-                    setStatus(result.getMessage(), new Color(255, 90, 90));
+                    setStatus(result.getMessage(), Theme.CORAL_DANGER);
                 }
             });
         });
@@ -340,17 +337,17 @@ public class AuthDialog extends JDialog {
         String confirmPass = new String(regConfirmPasswordField.getPassword());
 
         if (email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
-            setStatus("Please provide email, password, and confirm password.", new Color(255, 90, 90));
+            setStatus("Please provide email, password, and confirm password.", Theme.CORAL_DANGER);
             return;
         }
 
         if (!pass.equals(confirmPass)) {
-            setStatus("Passwords do not match.", new Color(255, 90, 90));
+            setStatus("Passwords do not match.", Theme.CORAL_DANGER);
             return;
         }
 
         if (pass.length() < 6) {
-            setStatus("Password must contain at least 6 characters.", new Color(255, 90, 90));
+            setStatus("Password must contain at least 6 characters.", Theme.CORAL_DANGER);
             return;
         }
 
@@ -360,12 +357,12 @@ public class AuthDialog extends JDialog {
             SwingUtilities.invokeLater(() -> {
                 setBusy(false, null);
                 if (result.isSuccess()) {
-                    setStatus("Registry Accepted! Welcome, Pilot " + result.getSession().getUsername(), new Color(80, 250, 120));
+                    setStatus("Registry Accepted! Welcome, Pilot " + result.getSession().getUsername(), Theme.EMERALD_STATUS);
                     new javax.swing.Timer(700, e -> dispose()).start();
                 } else if (result.isConfirmationPending()) {
-                    setStatus("Application accepted! Check your inbox to confirm.", new Color(80, 250, 120));
+                    setStatus("Application accepted! Check your inbox to confirm.", Theme.EMERALD_STATUS);
                 } else {
-                    setStatus(result.getMessage(), new Color(255, 90, 90));
+                    setStatus(result.getMessage(), Theme.CORAL_DANGER);
                 }
             });
         });
@@ -375,7 +372,7 @@ public class AuthDialog extends JDialog {
         loginSubmitBtn.setEnabled(!busy);
         regSubmitBtn.setEnabled(!busy);
         if (busy) {
-            setStatus(message, new Color(0, 210, 255));
+            setStatus(message, Theme.CYAN_PRIMARY);
         }
     }
 
@@ -386,12 +383,12 @@ public class AuthDialog extends JDialog {
 
     private void clearStatus() {
         statusBanner.setText("Status: Ready.");
-        statusBanner.setForeground(new Color(160, 180, 210));
+        statusBanner.setForeground(Theme.TEXT_MUTED);
     }
 
     private JButton createTabButton(String text) {
         JButton btn = new JButton(text);
-        btn.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btn.setFont(Theme.BODY_BOLD);
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
@@ -400,56 +397,37 @@ public class AuthDialog extends JDialog {
 
     private JLabel createFieldLabel(String text) {
         JLabel lbl = new JLabel(text);
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 11));
-        lbl.setForeground(new Color(140, 170, 210));
+        lbl.setFont(Theme.BODY_BOLD);
+        lbl.setForeground(Theme.BLUE_ACCENT);
         return lbl;
     }
 
     private JTextField createStyledTextField() {
         JTextField field = new JTextField();
-        field.setBackground(new Color(22, 29, 48));
+        field.setBackground(Theme.BG_INPUT);
         field.setForeground(Color.WHITE);
-        field.setCaretColor(new Color(0, 210, 255));
+        field.setCaretColor(Theme.CYAN_PRIMARY);
         field.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        field.setPreferredSize(new Dimension(380, 34));
-        field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(40, 56, 90), 1),
-                BorderFactory.createEmptyBorder(3, 10, 3, 10)
-        ));
+        field.setPreferredSize(new Dimension(380, 36));
+        field.setBorder(Theme.createFieldBorder());
         return field;
     }
 
     private JPasswordField createStyledPasswordField() {
         JPasswordField field = new JPasswordField();
-        field.setBackground(new Color(22, 29, 48));
+        field.setBackground(Theme.BG_INPUT);
         field.setForeground(Color.WHITE);
-        field.setCaretColor(new Color(0, 210, 255));
+        field.setCaretColor(Theme.CYAN_PRIMARY);
         field.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        field.setPreferredSize(new Dimension(380, 34));
-        field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(40, 56, 90), 1),
-                BorderFactory.createEmptyBorder(3, 10, 3, 10)
-        ));
+        field.setPreferredSize(new Dimension(380, 36));
+        field.setBorder(Theme.createFieldBorder());
         return field;
-    }
-
-    private JButton createActionButton(String text, Color accentColor) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("SansSerif", Font.BOLD, 14));
-        btn.setForeground(Color.WHITE);
-        btn.setBackground(accentColor.darker());
-        btn.setFocusPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(380, 38));
-        btn.setBorder(BorderFactory.createEmptyBorder(6, 16, 6, 16));
-        return btn;
     }
 
     private JButton createLinkButton(String text) {
         JButton btn = new JButton(text);
-        btn.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        btn.setForeground(new Color(120, 180, 240));
-        btn.setBackground(new Color(13, 17, 30));
+        btn.setFont(Theme.BODY);
+        btn.setForeground(Theme.BLUE_ACCENT);
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);

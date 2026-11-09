@@ -35,6 +35,7 @@ export interface MatchSummary {
   levelReached: number;
   durationSeconds: number;
   enemiesDestroyed: number;
+  accuracy?: number;
 }
 
 export interface CombatStats {

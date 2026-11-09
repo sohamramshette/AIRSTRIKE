@@ -35,11 +35,52 @@ public class GameCanvas extends JPanel {
     }
 
     private void setupFocusHandlers() {
-        // Regain keyboard focus if user clicks anywhere on canvas
+        // Regain keyboard focus and handle interactive Pause & Game Over button clicks
         addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mousePressed(java.awt.event.MouseEvent e) {
                 requestFocusInWindow();
+
+                if (engine.getState() == GameState.PAUSED) {
+                    GameEngine.PauseButton pb = engine.getClickedPauseButton(e.getX(), e.getY());
+                    switch (pb) {
+                        case RESUME -> engine.resumeGame();
+                        case RESTART -> engine.startNewGame();
+                        case SETTINGS -> {
+                            if (mainWindow != null) mainWindow.showProfileSettingsDialog();
+                        }
+                        case MENU -> {
+                            try {
+                                engine.setState(GameState.MENU);
+                                if (mainWindow != null) mainWindow.showMainMenu();
+                            } catch (InvalidGameStateException ignored) {}
+                        }
+                        case EXIT -> System.exit(0);
+                        case NONE -> {}
+                    }
+                } else if (engine.getState() == GameState.GAME_OVER) {
+                    GameEngine.GameOverButton gb = engine.getClickedGameOverButton(e.getX(), e.getY());
+                    switch (gb) {
+                        case REDEPLOY -> engine.startNewGame();
+                        case MENU -> {
+                            try {
+                                engine.setState(GameState.MENU);
+                                if (mainWindow != null) mainWindow.showMainMenu();
+                            } catch (InvalidGameStateException ignored) {}
+                        }
+                        case NONE -> {}
+                    }
+                }
+            }
+        });
+
+        addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                if (engine.getState() == GameState.PAUSED || engine.getState() == GameState.GAME_OVER) {
+                    engine.setMousePos(e.getX(), e.getY());
+                    repaint();
+                }
             }
         });
 
