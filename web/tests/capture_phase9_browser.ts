@@ -151,3 +151,4 @@ main().catch(err => {
   console.error('[ERROR] Failed capturing browser screenshots:', err);
   process.exit(1);
 });
+

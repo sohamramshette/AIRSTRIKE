@@ -17,10 +17,10 @@
 
       <!-- Main Menu Overlay -->
       <div id="main-menu-overlay" class="ui-overlay">
-        <div class="cyber-card">
+        <div class="cyber-card main-menu-card">
           <h1 class="game-title">
             <span class="game-title-wings left"></span>
-            A I R S T R I K E
+            <span class="game-title-text">A I R S T R I K E</span>
             <span class="game-title-wings right"></span>
           </h1>
           <p class="game-subtitle">TACTICAL COMBAT SIMULATOR & ACADEMIC DEMONSTRATION SYSTEM</p>
@@ -40,7 +40,7 @@
           <!-- Cloud Telemetry Link Pill -->
           <div class="cloud-status-pill" id="cloud-status-badge">
             <span class="cloud-status-dot online" id="cloud-status-dot">●</span>
-            <span id="cloud-status-text" class="cloud-status-label">● STARFLEET CLOUD LINK ACTIVE  •  SUPABASE POSTGREST 2.2</span>
+            <span id="cloud-status-text" class="cloud-status-label">STARFLEET CLOUD LINK ACTIVE  •  SUPABASE POSTGREST 2.2</span>
             <button id="btn-cloud-diag" class="cloud-diag-btn" title="Inspect Cloud Connection & Telemetry">DIAGNOSTICS</button>
           </div>
 
@@ -52,19 +52,19 @@
           <button id="btn-open-history" class="cyber-btn btn-tactical">⟡   MATCH HISTORY (FLIGHT LOGS)</button>
           <button id="btn-open-instructions" class="cyber-btn btn-tactical emerald">❖   PILOT MANUAL (FLIGHT CONTROLS)</button>
           <button id="btn-abort-game" class="cyber-btn btn-danger">✕   ABORT TO HEADQUARTERS</button>
+        </div>
 
-          <!-- Academic Suite Footer -->
-          <div class="academic-footer-bar">
-            <span>ACADEMIC SUITE:  [PSOOP Java]  •  [PL C++17]  •  [COA 80386]  •  [CGL OpenGL]</span>
-            <span id="menu-record-display" class="academic-record-tag">RECORD: 0 PTS</span>
-          </div>
+        <!-- Academic Suite Footer Bar (Full width across viewport bottom, matching Java Swing) -->
+        <div class="academic-footer-bar">
+          <span class="academic-footer-modules">ACADEMIC SUITE:  [PSOOP Java]  •  [PL C++17]  •  [COA 80386]  •  [CGL OpenGL]</span>
+          <span id="menu-record-display" class="academic-record-tag">RECORD: 0 PTS</span>
+        </div>
 
-          <div class="key-hint">
-            <span><span class="key-badge">WASD / ARROWS</span> MOVE</span>
-            <span><span class="key-badge">SPACE</span> FIRE</span>
-            <span><span class="key-badge">P</span> PAUSE</span>
-            <span><span class="key-badge">M</span> MENU</span>
-          </div>
+        <div class="key-hint">
+          <span><span class="key-badge">WASD / ARROWS</span> MOVE</span>
+          <span><span class="key-badge">SPACE</span> FIRE</span>
+          <span><span class="key-badge">P</span> PAUSE</span>
+          <span><span class="key-badge">M</span> MENU</span>
         </div>
       </div>
 

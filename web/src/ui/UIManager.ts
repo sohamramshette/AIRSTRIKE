@@ -978,11 +978,11 @@ export class UIManager {
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
         if (dot) dot.className = 'cloud-status-dot online';
-        if (text) text.textContent = `● STARFLEET CLOUD LINK ACTIVE (${latency}ms)`;
+        if (text) text.textContent = `STARFLEET CLOUD LINK ACTIVE (${latency}ms)`;
         return { online: true, latency, version: data.version || 'v2' };
       } else {
         if (dot) dot.className = 'cloud-status-dot offline';
-        if (text) text.textContent = '▲ CLOUD LINK OFFLINE • LOCAL MODE';
+        if (text) text.textContent = 'CLOUD LINK OFFLINE • LOCAL MODE';
         return { online: false, latency };
       }
     } catch {
@@ -990,7 +990,7 @@ export class UIManager {
       const latency = Math.max(1, Math.round(endTime - startTime));
       this.lastPingLatency = latency;
       if (dot) dot.className = 'cloud-status-dot offline';
-      if (text) text.textContent = '▲ CLOUD LINK OFFLINE • LOCAL MODE';
+      if (text) text.textContent = 'CLOUD LINK OFFLINE • LOCAL MODE';
       return { online: false, latency };
     }
   }

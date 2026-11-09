@@ -120,12 +120,12 @@ html, body {
   border: 1px solid var(--border-cyan);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(0, 229, 255, 0.05);
   border-radius: 14px;
-  padding: 24px 32px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 500px;
-  width: 90%;
+  max-width: 460px;
+  width: 92%;
   position: relative;
 }
 
@@ -139,26 +139,30 @@ html, body {
   background: linear-gradient(90deg, transparent, var(--cyan-primary), transparent);
 }
 
+.cyber-card.main-menu-card {
+  max-width: 430px;
+  padding: 16px 20px;
+  margin-top: -16px;
+}
+
 /* Title & Branding */
 .game-title {
-  font-size: 42px;
-  font-weight: 800;
-  letter-spacing: 6px;
-  color: var(--text-white);
-  text-transform: uppercase;
-  text-shadow: 0 0 15px var(--cyan-glow), 0 0 30px var(--cyan-glow);
-  margin-bottom: 4px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  white-space: nowrap;
+  margin-bottom: 2px;
 }
 
 .game-title-wings {
   display: inline-block;
-  width: 45px;
+  width: 32px;
   height: 2px;
   background: rgba(0, 229, 255, 0.6);
   position: relative;
+  flex-shrink: 0;
 }
 
 .game-title-wings::after {
@@ -173,14 +177,27 @@ html, body {
 .game-title-wings.left::after { right: 0; }
 .game-title-wings.right::after { left: 0; }
 
+.game-title-text {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: var(--text-white);
+  text-transform: uppercase;
+  text-shadow: 0 0 15px var(--cyan-glow), 0 0 30px var(--cyan-glow);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .game-subtitle {
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1.2px;
   color: var(--text-muted);
   text-transform: uppercase;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   text-align: center;
+  white-space: nowrap;
+  width: 100%;
 }
 
 /* Pilot Status Capsule */
@@ -189,21 +206,22 @@ html, body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 380px;
+  max-width: 100%;
   background: var(--bg-glass);
   border: 1px solid var(--border-cyan);
-  border-radius: 12px;
-  padding: 5px 12px;
-  margin-bottom: 10px;
+  border-radius: 8px;
+  padding: 4px 10px;
+  margin-bottom: 6px;
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .pilot-beacon {
   color: var(--blue-accent);
   margin-right: 6px;
-  font-size: 12px;
+  font-size: 10px;
+  line-height: 1;
 }
 
 .pilot-beacon.online {
@@ -214,6 +232,7 @@ html, body {
   color: var(--text-white);
   font-weight: bold;
   letter-spacing: 0.5px;
+  font-size: 12px;
 }
 
 .pilot-tag.authenticated {
@@ -228,18 +247,21 @@ html, body {
   gap: 8px;
   background: rgba(16, 24, 44, 0.85);
   border: 1px solid var(--border-cyan);
-  border-radius: 10px;
-  padding: 4px 12px;
-  margin-bottom: 14px;
+  border-radius: 8px;
+  padding: 4px 10px;
+  margin-bottom: 10px;
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 700;
   width: 100%;
-  max-width: 380px;
+  max-width: 100%;
 }
 
 .cloud-status-dot {
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
 }
 
 .cloud-status-dot.online {
@@ -259,18 +281,23 @@ html, body {
   flex: 1;
   text-align: left;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
 }
 
 .cloud-diag-btn {
   background: none;
   border: 1px solid var(--border-cyan);
   color: var(--cyan-primary);
-  font-size: 10px;
-  padding: 2px 6px;
+  font-size: 9px;
+  padding: 1px 6px;
   border-radius: 4px;
   cursor: pointer;
   letter-spacing: 0.5px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .cloud-diag-btn:hover {
@@ -286,13 +313,13 @@ html, body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 380px;
-  border-radius: 12px;
+  max-width: 100%;
+  border-radius: 8px;
   cursor: pointer;
   font-family: var(--font-display);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
   border: 1px solid transparent;
   transition: all 0.2s ease;
   position: relative;
@@ -302,33 +329,33 @@ html, body {
 
 /* 1. Hero Button */
 .cyber-btn.btn-hero {
-  height: 44px;
-  padding: 0 24px;
-  font-size: 14px;
+  height: 40px;
+  padding: 0 20px;
+  font-size: 13.5px;
   color: #FFFFFF;
   background: linear-gradient(90deg, #00D7FF 0%, #006EB4 100%);
   border: 1.2px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 25px rgba(0, 229, 255, 0.35);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.35);
   justify-content: center;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .cyber-btn.btn-hero:hover {
   background: linear-gradient(90deg, #00F5FF 0%, #009BE6 100%);
-  box-shadow: 0 0 35px rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.6);
   border-color: rgba(255, 255, 255, 0.8);
   transform: translateY(-1px);
 }
 
 /* 2. Tactical Button */
 .cyber-btn.btn-tactical {
-  height: 38px;
-  padding: 0 16px 0 24px;
-  font-size: 12px;
+  height: 34px;
+  padding: 0 14px 0 22px;
+  font-size: 11.5px;
   color: #E2E8F0;
   background: linear-gradient(90deg, rgba(15, 23, 42, 0.9) 0%, rgba(13, 19, 33, 0.95) 100%);
   border: 1px solid rgba(45, 60, 90, 0.7);
-  margin-bottom: 4px;
+  margin-bottom: 3.5px;
 }
 
 .cyber-btn.btn-tactical::before {
@@ -381,14 +408,14 @@ html, body {
 
 /* 3. Danger Button */
 .cyber-btn.btn-danger {
-  height: 38px;
-  padding: 0 16px 0 24px;
-  font-size: 12px;
+  height: 34px;
+  padding: 0 14px 0 22px;
+  font-size: 11.5px;
   color: #F8B4B4;
   background: linear-gradient(90deg, rgba(50, 18, 22, 0.8) 0%, rgba(17, 24, 39, 0.9) 100%);
   border: 1px solid rgba(90, 35, 45, 0.7);
-  margin-top: 4px;
-  margin-bottom: 8px;
+  margin-top: 2px;
+  margin-bottom: 0;
 }
 
 .cyber-btn.btn-danger::before {
@@ -422,11 +449,11 @@ html, body {
 
 /* 4. Pill Button */
 .cyber-btn.btn-pill, .pilot-pill-btn {
-  height: 24px;
-  padding: 0 10px;
-  font-size: 10px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 9.5px;
   font-weight: 700;
-  border-radius: 10px;
+  border-radius: 6px;
   color: #FFFFFF;
   background: rgba(14, 40, 70, 0.9);
   border: 1px solid var(--cyan-primary);
@@ -435,7 +462,7 @@ html, body {
   align-items: center;
   justify-content: center;
   width: auto;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   transition: all 0.2s;
 }
 
@@ -454,24 +481,32 @@ html, body {
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
 }
 
-/* Academic Footer Deck */
+/* Academic Footer Deck - Positioned across viewport bottom matching Java Swing */
 .academic-footer-bar {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  max-width: 720px;
-  margin-top: 10px;
-  padding: 6px 12px;
+  padding: 0 32px;
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 700;
   color: var(--text-dim);
-  border-top: 1px solid rgba(30, 41, 59, 0.6);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.academic-footer-modules {
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
 }
 
 .academic-record-tag {
   color: var(--gold-accent);
+  letter-spacing: 0.5px;
 }
 
 /* Modals */
@@ -903,12 +938,19 @@ html, body {
 }
 
 .key-hint {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 10px;
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
   display: flex;
-  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .key-badge {
