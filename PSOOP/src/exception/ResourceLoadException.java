@@ -4,6 +4,7 @@ package exception;
  * Thrown when an internal or procedural game resource fails to generate or load properly.
  */
 public class ResourceLoadException extends AirstrikeException {
+    private static final long serialVersionUID = 1L;
     
     private final String resourceName;
 

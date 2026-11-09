@@ -17,6 +17,7 @@ import javax.swing.JPanel;
  * Handles keyboard dispatching and antialiased rendering calls.
  */
 public class GameCanvas extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final GameEngine engine;
     private final MainWindow mainWindow;

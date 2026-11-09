@@ -3,14 +3,11 @@ package test;
 import announcer.AnnouncerManager;
 import announcer.DialogueCategory;
 import game.GameEngine;
-import game.GameState;
 import model.BossEnemy;
 import model.DroneEnemy;
 import model.FighterEnemy;
 import ui.ProfileSettingsDialog;
-import ui.Theme;
 
-import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;

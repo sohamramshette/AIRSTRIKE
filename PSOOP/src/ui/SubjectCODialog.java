@@ -3,15 +3,10 @@ package ui;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -33,6 +28,7 @@ import javax.swing.SwingConstants;
  * 4. CGL   — C++17 / OpenGL / GLUT Computer Graphics (CGL-CO1 to CGL-CO6)
  */
 public class SubjectCODialog extends JDialog {
+    private static final long serialVersionUID = 1L;
 
     private final MainWindow mainWindow;
     private final CardLayout cardLayout;

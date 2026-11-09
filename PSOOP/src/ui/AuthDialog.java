@@ -1,7 +1,6 @@
 package ui;
 
 import database.SessionManager;
-import service.AuthResult;
 import service.AuthService;
 
 import java.awt.BorderLayout;
@@ -17,7 +16,6 @@ import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -33,6 +31,7 @@ import javax.swing.SwingUtilities;
  * Implements Phase 9 dark glassmorphism, responsive status feedback, and guest entry.
  */
 public class AuthDialog extends JDialog {
+    private static final long serialVersionUID = 1L;
 
     private final AuthService authService;
     private final CardLayout cardLayout;

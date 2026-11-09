@@ -208,6 +208,10 @@ public class MorphingEnemy extends Enemy {
         return currentState;
     }
 
+    public double getStateTimer() {
+        return stateTimer;
+    }
+
     public void setCurrentState(DroneAIState state) {
         transitionTo(state);
     }

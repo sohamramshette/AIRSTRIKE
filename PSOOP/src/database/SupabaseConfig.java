@@ -125,7 +125,7 @@ public class SupabaseConfig {
             }
         }
 
-        int timeout = 8000;
+        int timeout = Integer.parseInt(DEFAULT_TIMEOUT_MS);
         if (timeoutStr != null) {
             try {
                 timeout = Integer.parseInt(timeoutStr.trim());

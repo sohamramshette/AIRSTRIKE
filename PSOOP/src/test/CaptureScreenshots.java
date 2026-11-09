@@ -8,11 +8,9 @@ import model.DroneEnemy;
 import model.FighterEnemy;
 import model.PowerUp;
 import model.PowerUpType;
-import model.Projectile;
 import ui.MainWindow;
 
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;

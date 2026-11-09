@@ -2,7 +2,6 @@ package ui;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -14,6 +13,7 @@ import javax.swing.JPanel;
  * Reusable glassmorphic card container with futuristic starfleet border styling.
  */
 public class CyberCard extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private final Color accentColor;
     private final int radius;

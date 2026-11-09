@@ -2,7 +2,6 @@ package service;
 
 import database.SessionManager;
 import database.SimpleJson;
-import database.SupabaseConfig;
 import database.SupabaseHttpClient;
 import database.UserSession;
 

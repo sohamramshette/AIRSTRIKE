@@ -1,12 +1,9 @@
 package ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -20,6 +17,7 @@ import javax.swing.SwingConstants;
  * Styled with the Phase 9 Design System.
  */
 public class InstructionsDialog extends JDialog {
+    private static final long serialVersionUID = 1L;
 
     public InstructionsDialog(JFrame parent) {
         super(parent, "STARFLEET COMMAND – PILOT FLIGHT MANUAL", true);

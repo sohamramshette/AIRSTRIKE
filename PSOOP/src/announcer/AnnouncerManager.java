@@ -4,7 +4,6 @@ import database.SimpleJson;
 import game.GameEngine;
 import model.Enemy;
 import model.Player;
-import service.ScoreCalculator;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -19,12 +18,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * AIRSTRIKE AI — THE DESI TOXIC ANNOUNCER
@@ -71,7 +68,6 @@ public class AnnouncerManager {
     /**
      * Loads dialogues from JSON file or resource stream with embedded fallback.
      */
-    @SuppressWarnings("unchecked")
     public void loadDialogues() {
         dialogues.clear();
         String jsonContent = null;

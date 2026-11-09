@@ -1,20 +1,14 @@
 package ui;
 
-import database.SessionManager;
-import database.UserSession;
 import model.LeaderboardEntry;
 import service.MatchService;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
-import java.util.List;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -32,6 +26,7 @@ import javax.swing.table.DefaultTableModel;
  * Styled with the Phase 9 Design System.
  */
 public class LeaderboardDialog extends JDialog {
+    private static final long serialVersionUID = 1L;
 
     private final MainWindow mainWindow;
     private final MatchService matchService;
@@ -40,6 +35,10 @@ public class LeaderboardDialog extends JDialog {
     private JTable leaderboardTable;
     private DefaultTableModel tableModel;
     private CyberButton refreshBtn;
+
+    public MainWindow getMainWindow() {
+        return mainWindow;
+    }
 
     public LeaderboardDialog(JFrame parent, MainWindow mainWindow, MatchService matchService) {
         super(parent, "STARFLEET GLOBAL LEADERBOARD – TOP PILOTS", true);
@@ -181,6 +180,7 @@ public class LeaderboardDialog extends JDialog {
     }
 
     private static class LeaderboardCellRenderer extends DefaultTableCellRenderer {
+        private static final long serialVersionUID = 1L;
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus,

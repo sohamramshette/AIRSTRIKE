@@ -187,7 +187,7 @@ public class GameEngine {
         this.enemyDemoMode = true;
         this.demoRespawnTimer = 0.0;
         scoreCalculator.resetGame();
-        player.resetFull((int)((screenWidth - player.getWidth()) / 2), screenHeight - 110);
+        player.resetFull((screenWidth - player.getWidth()) / 2, screenHeight - 110);
         player.setHealth(player.getMaxHealth());
         player.rechargeShield(player.getMaxShield());
 

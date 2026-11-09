@@ -19,6 +19,7 @@ import javax.swing.JButton;
  * Implements Hero, Tactical, Danger, and Pill variants matching the Phase 9 Design System.
  */
 public class CyberButton extends JButton {
+    private static final long serialVersionUID = 1L;
 
     public enum ButtonStyle {
         HERO,

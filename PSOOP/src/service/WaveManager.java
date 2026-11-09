@@ -36,7 +36,7 @@ public class WaveManager {
         resetToLevel(1);
     }
 
-    public void resetToLevel(int level) {
+    public final void resetToLevel(int level) {
         this.currentLevel = Math.max(1, level);
         this.spawnTimer = 0.0;
         this.spawnInterval = Math.max(0.7, 2.2 - (currentLevel * 0.2));

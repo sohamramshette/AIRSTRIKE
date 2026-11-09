@@ -3,7 +3,6 @@ package test;
 import game.GameCanvas;
 import game.GameEngine;
 import game.GameState;
-import model.BossEnemy;
 import model.DroneEnemy;
 import model.FighterEnemy;
 import model.PowerUp;
@@ -11,7 +10,6 @@ import model.PowerUpType;
 import ui.*;
 
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;

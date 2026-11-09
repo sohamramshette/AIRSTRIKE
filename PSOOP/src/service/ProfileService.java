@@ -3,7 +3,6 @@ package service;
 import database.SimpleJson;
 import database.SupabaseHttpClient;
 
-import java.net.http.HttpResponse;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;

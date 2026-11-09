@@ -7,10 +7,8 @@ import service.AuthService;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -31,6 +29,7 @@ import javax.swing.SwingConstants;
  * Combines authenticated pilot credentials, flight records, and tactical simulation parameters.
  */
 public class ProfileSettingsDialog extends JDialog {
+    private static final long serialVersionUID = 1L;
 
     private final MainWindow mainWindow;
     private final GameEngine engine;

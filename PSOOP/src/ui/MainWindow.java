@@ -18,6 +18,7 @@ import javax.swing.JPanel;
  * as well as Supabase Authentication and Pilot Profile management.
  */
 public class MainWindow extends JFrame {
+    private static final long serialVersionUID = 1L;
 
     private final CardLayout cardLayout;
     private final JPanel rootPanel;

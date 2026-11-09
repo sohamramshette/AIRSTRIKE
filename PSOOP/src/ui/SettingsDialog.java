@@ -21,6 +21,7 @@ import javax.swing.JPanel;
  * Settings configuration modal for mission difficulty and simulation parameters.
  */
 public class SettingsDialog extends JDialog {
+    private static final long serialVersionUID = 1L;
 
     private final JComboBox<String> difficultyBox;
     private final GameEngine engine;
