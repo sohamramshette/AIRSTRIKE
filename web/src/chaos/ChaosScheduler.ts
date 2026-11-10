@@ -1,6 +1,5 @@
 import { ChaosEventType, CHAOS_DEFINITIONS, isCompatibleChaosEvents } from './ChaosEventType';
 import { ActiveChaosEvent } from './ActiveChaosEvent';
-import { AnnouncerManager } from '../announcer/AnnouncerManager';
 import { Fighter } from '../game/Fighter';
 import { Armoured } from '../game/Armoured';
 import { Projectile } from '../game/Projectile';
@@ -63,23 +62,10 @@ export class ChaosScheduler {
       const wasWarning = event.isWarning();
 
       if (wasWarning && !event.warningAnnounced) {
+        event.warningAnnounced = true;
         if (event.dualPartnerType) {
           const partner = this.activeEvents.find(e => e.type === event.dualPartnerType);
-          const def1 = event.definition;
-          const def2 = CHAOS_DEFINITIONS[event.dualPartnerType];
-          const name2 = def2 ? def2.displayName : event.dualPartnerType;
-          AnnouncerManager.getInstance().triggerChaosLine(
-            `⚠️ DUAL ANOMALY ALERT! ${def1.displayName} + ${name2} ek saath shuru hone wale hain! Dono se bach ke rehna!`,
-            'GENERAL_ROAST'
-          );
-          event.warningAnnounced = true;
           if (partner) partner.warningAnnounced = true;
-        } else {
-          event.warningAnnounced = true;
-          AnnouncerManager.getInstance().triggerChaosLine(
-            event.definition.warningLine,
-            event.definition.category
-          );
         }
       }
 
@@ -88,22 +74,10 @@ export class ChaosScheduler {
       if (justActivated) {
         if (event.dualPartnerType) {
           if (!event.activationAnnounced) {
-            const partner = this.activeEvents.find(e => e.type === event.dualPartnerType);
-            const def1 = event.definition;
-            const def2 = CHAOS_DEFINITIONS[event.dualPartnerType];
-            const name2 = def2 ? def2.displayName : event.dualPartnerType;
-            AnnouncerManager.getInstance().triggerChaosLine(
-              `⚡ DUAL CHAOS CONVERGENCE! ${def1.displayName} aur ${name2} dono active! Ab survive karke dikha!`,
-              'BOLLYWOOD'
-            );
             event.activationAnnounced = true;
+            const partner = this.activeEvents.find(e => e.type === event.dualPartnerType);
             if (partner) partner.activationAnnounced = true;
           }
-        } else {
-          AnnouncerManager.getInstance().triggerChaosLine(
-            event.definition.activateLine,
-            event.definition.category
-          );
         }
         this.applyInitialActivationEffect(event, engine);
       }

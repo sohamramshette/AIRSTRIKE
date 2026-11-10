@@ -239,20 +239,19 @@ public class AnnouncerManager {
     }
 
     public void triggerChaosLine(String line, DialogueCategory category) {
-        AnnouncerSettings settings = AnnouncerSettings.getInstance();
-        if (!settings.isEnabled() || line == null || line.isBlank()) return;
-        showBanner(line, category != null ? category : DialogueCategory.GENERAL_ROAST, true);
-        cooldownTimer = Math.max(cooldownTimer, this.bannerDuration + 1.0);
+        // Fleet Announcer is strictly reserved for funny memes, Hinglish banter, and roasts.
+        // Chaos Protocol telemetry is rendered exclusively via the top Cyber HUD badges.
     }
 
     public void showBanner(String text, DialogueCategory category, boolean highPriority) {
         this.activeText = text;
         this.activeCategory = category != null ? category : DialogueCategory.GENERAL_ROAST;
 
-        // Dynamic display duration between 5.0 and 7.0 seconds depending on letters
+        // Extended display duration between 8.0 and 12.0 seconds based on letters
+        // ensuring players have ample time to read the funny dialogues and memes
         int letters = text != null ? text.length() : 0;
-        double dynamicDuration = Math.min(7.0, Math.max(5.0, 5.0 + (letters - 30) * 0.04));
-        this.bannerDuration = highPriority ? Math.max(dynamicDuration, 5.5) : dynamicDuration;
+        double dynamicDuration = Math.min(12.0, Math.max(8.0, 8.0 + (letters - 30) * 0.06));
+        this.bannerDuration = highPriority ? Math.max(dynamicDuration, 9.0) : dynamicDuration;
         this.bannerTimer = this.bannerDuration;
         this.bannerAlpha = 0.0f;
     }

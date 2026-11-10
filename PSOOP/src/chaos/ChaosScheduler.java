@@ -104,21 +104,12 @@ public class ChaosScheduler {
             ActiveChaosEvent event = it.next();
             boolean wasWarning = event.isWarning();
 
-            // Announce warning when warning countdown begins
+            // Progress warning state
             if (wasWarning && !event.isWarningAnnounced()) {
+                event.setWarningAnnounced(true);
                 if (event.getDualPartnerType() != null) {
                     ActiveChaosEvent partner = findActiveEvent(event.getDualPartnerType());
-                    String line = String.format("⚠️ DUAL ANOMALY ALERT! %s + %s ek saath shuru hone wale hain! Dono se bach ke rehna!",
-                            event.getType().getDisplayName(), event.getDualPartnerType().getDisplayName());
-                    AnnouncerManager.getInstance().triggerChaosLine(line, announcer.DialogueCategory.GENERAL_ROAST);
-                    event.setWarningAnnounced(true);
                     if (partner != null) partner.setWarningAnnounced(true);
-                } else {
-                    event.setWarningAnnounced(true);
-                    AnnouncerManager.getInstance().triggerChaosLine(
-                            event.getType().getWarningLine(),
-                            event.getType().getCategory()
-                    );
                 }
             }
 
@@ -128,18 +119,10 @@ public class ChaosScheduler {
             if (justActivated) {
                 if (event.getDualPartnerType() != null) {
                     if (!event.isActivationAnnounced()) {
-                        ActiveChaosEvent partner = findActiveEvent(event.getDualPartnerType());
-                        String line = String.format("⚡ DUAL CHAOS CONVERGENCE! %s aur %s dono active! Ab survive karke dikha!",
-                                event.getType().getDisplayName(), event.getDualPartnerType().getDisplayName());
-                        AnnouncerManager.getInstance().triggerChaosLine(line, announcer.DialogueCategory.BOLLYWOOD);
                         event.setActivationAnnounced(true);
+                        ActiveChaosEvent partner = findActiveEvent(event.getDualPartnerType());
                         if (partner != null) partner.setActivationAnnounced(true);
                     }
-                } else {
-                    AnnouncerManager.getInstance().triggerChaosLine(
-                            event.getType().getActivateLine(),
-                            event.getType().getCategory()
-                    );
                 }
                 applyInitialActivationEffect(event, engine);
             }

@@ -68,7 +68,7 @@ public class WaveManager {
             if (!bossSpawned && enemyList.isEmpty()) {
                 // Spawn the sector Boss flagship
                 double bossX = (screenWidth - 116) / 2.0;
-                enemyList.add(new BossEnemy(bossX, -80, "Leviathan MK-" + (currentLevel / 3)));
+                enemyList.add(new BossEnemy(bossX, -80, "Leviathan MK-" + (currentLevel / 3), currentLevel));
                 bossSpawned = true;
             } else if (bossSpawned && enemyList.isEmpty()) {
                 // Boss was defeated! Trigger wave completion

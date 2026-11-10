@@ -622,10 +622,13 @@ export class GameEngine {
       const by = w < 600 ? 80 : 48;
       const bHealthPct = Math.max(0, boss.health / boss.maxHealth);
 
-      ctx.fillStyle = '#FF5A28';
+      ctx.fillStyle = (boss as any).isEnraged ? '#FF0055' : '#FF5A28';
       ctx.font = 'bold 11px Rajdhani, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('FLAGSHIP: LEVIATHAN', w / 2, by);
+      const label = (boss as any).bossName 
+        ? `${(boss as any).bossName}${(boss as any).isEnraged ? ' [ENRAGED OVERDRIVE]' : ''}`
+        : 'FLAGSHIP: LEVIATHAN';
+      ctx.fillText(label, w / 2, by);
 
       ctx.fillStyle = '#161F38';
       ctx.fillRect(bx, by + 6, bw, 8);

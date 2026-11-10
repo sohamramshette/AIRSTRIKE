@@ -105,24 +105,20 @@ export class AnnouncerManager {
     return true;
   }
 
-  public triggerChaosLine(text: string, category: DialogueCategory): void {
-    const settings = AnnouncerSettingsManager.getInstance().getSettings();
-    if (!settings.enabled || !text) return;
-    this.showBanner(text, category || 'GENERAL_ROAST', true);
-    this.cooldownTimer = Math.max(this.cooldownTimer, this.bannerDuration + 1.0);
-    if (settings.voiceEnabled) {
-      this.speak(text);
-    }
+  public triggerChaosLine(_text: string, _category: DialogueCategory): void {
+    // Fleet Announcer is strictly reserved for funny memes, Hinglish banter, and roasts.
+    // Chaos Protocol telemetry is rendered exclusively via the top Cyber HUD badges.
   }
 
   public showBanner(text: string, category: DialogueCategory, highPriority: boolean): void {
     this.activeText = text;
     this.activeCategory = category;
 
-    // Dynamic display duration between 5.0 and 7.0 seconds depending on letters
+    // Extended display duration between 8.0 and 12.0 seconds based on letters
+    // ensuring players have ample time to read the funny dialogues and memes
     const letters = text ? text.length : 0;
-    const dynamicDuration = Math.min(7.0, Math.max(5.0, 5.0 + (letters - 30) * 0.04));
-    this.bannerDuration = highPriority ? Math.max(dynamicDuration, 5.5) : dynamicDuration;
+    const dynamicDuration = Math.min(12.0, Math.max(8.0, 8.0 + (letters - 30) * 0.06));
+    this.bannerDuration = highPriority ? Math.max(dynamicDuration, 9.0) : dynamicDuration;
     this.bannerTimer = this.bannerDuration;
     this.bannerAlpha = 0;
   }
