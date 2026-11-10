@@ -643,24 +643,55 @@ export class GameEngine {
     ctx.restore();
   }
 
-  private renderBanner(ctx: CanvasRenderingContext2D, w: number, h: number, text: string): void {
+  private renderBanner(ctx: CanvasRenderingContext2D, w: number, _h: number, text: string): void {
     ctx.save();
-    const bannerH = 68;
-    const bannerY = (h - bannerH) / 2;
-    ctx.fillStyle = 'rgba(7, 10, 20, 0.88)';
-    ctx.fillRect(0, bannerY, w, bannerH);
-    ctx.strokeStyle = '#00E5FF';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(0, bannerY, w, bannerH);
 
-    const fontSize = w < 500 ? 18 : 24;
-    ctx.font = `bold ${fontSize}px monospace`;
+    // Smooth alpha fade based on waveManager timers
+    const timer = this.waveManager.bannerTimer > 0 
+      ? this.waveManager.bannerTimer 
+      : this.waveManager.waveClearTimer;
+    const fadeAlpha = Math.max(0.1, Math.min(1, timer * 2.5));
+
+    const bannerW = Math.min(360, Math.max(260, w - 40));
+    const bannerH = 40;
+    const bannerX = (w - bannerW) / 2;
+    // Position below HUD pods & announcer with clean breathing room
+    const bannerY = w < 600 ? 148 : Math.round(_h * 0.25);
+
+    // Sleek cyber glass capsule
+    ctx.fillStyle = `rgba(8, 14, 28, ${0.82 * fadeAlpha})`;
+    this.roundRect(ctx, bannerX, bannerY, bannerW, bannerH, 10);
+    ctx.fill();
+
+    const isVictory = text.includes('SECURED');
+    const isBoss = text.includes('FLAGSHIP');
+    const accentColor = isVictory 
+      ? `rgba(52, 211, 153, ${0.95 * fadeAlpha})` 
+      : isBoss 
+        ? `rgba(239, 68, 68, ${0.95 * fadeAlpha})` 
+        : `rgba(0, 229, 255, ${0.95 * fadeAlpha})`;
+
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 1.5;
+    this.roundRect(ctx, bannerX, bannerY, bannerW, bannerH, 10);
+    ctx.stroke();
+
+    // Subtle top highlight line
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(bannerX + 16, bannerY);
+    ctx.lineTo(bannerX + bannerW - 16, bannerY);
+    ctx.stroke();
+
+    const fontSize = w < 500 ? 14 : 16;
+    ctx.font = `bold ${fontSize}px Rajdhani, monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#00E5FF';
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = '#00E5FF';
-    ctx.fillText(text, w / 2, h / 2);
+    ctx.fillStyle = accentColor;
+    ctx.shadowBlur = 10 * fadeAlpha;
+    ctx.shadowColor = accentColor;
+    ctx.fillText(text, w / 2, bannerY + bannerH / 2);
     ctx.restore();
   }
 

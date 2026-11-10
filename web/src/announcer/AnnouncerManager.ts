@@ -350,8 +350,7 @@ export class AnnouncerManager {
     ctx.stroke();
 
     // Announcer Tag Badge
-    const categoryTag = this.activeCategory ? this.activeCategory.replace('_', ' ') : 'AIRSTRIKE AI';
-    const badge = `⚡ AIRSTRIKE AI • ${categoryTag}`;
+    const badge = '⚡ FLEET ANNOUNCER';
     ctx.font = 'bold 10px Rajdhani, sans-serif';
     ctx.fillStyle = `rgba(0, 240, 255, ${0.95 * this.bannerAlpha})`;
     ctx.textAlign = 'left';

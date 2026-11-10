@@ -346,14 +346,14 @@ export class ChaosScheduler {
   public renderHUD(ctx: CanvasRenderingContext2D, screenWidth: number): void {
     if (!this.enabled || this.activeEvents.length === 0) return;
 
-    let hudY = 16;
+    let hudY = screenWidth < 600 ? 196 : 16;
     for (const event of this.activeEvents) {
       const def = event.definition;
       const isWarn = event.isWarning();
 
       const badgeText = isWarn
-        ? `WARNING: ${def.displayName} [${def.courseOutcome}] IN ${event.warningTimer.toFixed(1)}s`
-        : `CHAOS: ${def.displayName} [${def.courseOutcome}] - ${event.durationRemaining.toFixed(1)}s`;
+        ? `ALERT: ${def.displayName.toUpperCase()} IN ${event.warningTimer.toFixed(1)}s`
+        : `EVENT: ${def.displayName.toUpperCase()} (${event.durationRemaining.toFixed(1)}s)`;
 
       const primaryCol = isWarn ? '#FBBF24' : '#00E5FF';
       const bgCol = isWarn ? 'rgba(30, 24, 12, 0.88)' : 'rgba(13, 25, 48, 0.88)';

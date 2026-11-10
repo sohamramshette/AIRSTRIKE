@@ -20,13 +20,13 @@ async function capture() {
   // Capture Main Menu
   await page.screenshot({ path: path.join(ARTIFACT_DIR, 'mobile_portrait_menu.png') });
 
-  // Open Course Outcomes Modal
-  await page.click('#btn-open-subjects');
+  // Open Settings Modal
+  await page.click('#btn-open-profile');
   await new Promise(r => setTimeout(r, 400));
   await page.screenshot({ path: path.join(ARTIFACT_DIR, 'mobile_portrait_modal.png') });
 
   // Close modal
-  await page.click('#subject-co-modal-close');
+  await page.click('#profile-settings-modal-close');
   await new Promise(r => setTimeout(r, 400));
 
   // Directly Launch Mission

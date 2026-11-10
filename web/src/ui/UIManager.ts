@@ -343,6 +343,7 @@ export class UIManager {
   // ---------------------------------------------------------------------------
   private initSubjectCOModal(): void {
     document.getElementById('btn-open-subjects')?.addEventListener('click', () => {
+      this.closeModal('profile-settings-modal');
       this.openModal('subject-co-modal');
       this.renderCOTab('PSOOP');
     });
@@ -996,6 +997,10 @@ export class UIManager {
   // ---------------------------------------------------------------------------
   private initCloudTelemetry(): void {
     document.getElementById('btn-cloud-diag')?.addEventListener('click', () => {
+      this.openCloudDiagnostics();
+    });
+
+    document.getElementById('btn-cloud-diag-settings')?.addEventListener('click', () => {
       this.openCloudDiagnostics();
     });
 

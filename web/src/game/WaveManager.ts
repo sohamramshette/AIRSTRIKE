@@ -39,7 +39,7 @@ export class WaveManager {
     this.bossActive = false;
     this.waveClearTimer = 0;
     this.bannerText = `SECTOR ${this.currentLevel}: ${this.isBossWave ? 'FLAGSHIP INCOMING' : 'INVASION FLEET'}`;
-    this.bannerTimer = 2.0; // Display sector banner for only 2.0 seconds then auto-dismiss!
+    this.bannerTimer = 1.6; // Crisp, auto-clears after 1.6s
 
     if (this.isBossWave) {
       this.waveEnemiesRemaining = 1; // The boss
@@ -88,7 +88,7 @@ export class WaveManager {
         // Boss defeated!
         this.bossActive = false;
         this.bannerText = `SECTOR ${this.currentLevel} SECURED!`;
-        this.waveClearTimer = 2.5;
+        this.waveClearTimer = 1.8;
       }
     } else {
       // Standard wave
@@ -158,7 +158,7 @@ export class WaveManager {
       } else if (activeEnemiesCount === 0 && this.waveClearTimer <= 0) {
         // All wave enemies destroyed!
         this.bannerText = `SECTOR ${this.currentLevel} SECURED!`;
-        this.waveClearTimer = 2.5;
+        this.waveClearTimer = 1.8;
       }
     }
   }

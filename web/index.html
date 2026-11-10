@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>AIRSTRIKE – Tactical Combat Simulator & Academic Demonstration System</title>
+  <title>AIRSTRIKE – Retro Arcade Space Combat</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,10 90,85 50,70 10,85' fill='%2300E5FF'/></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,7 +23,7 @@
             <span class="game-title-text">A I R S T R I K E</span>
             <span class="game-title-wings right"></span>
           </h1>
-          <p class="game-subtitle">TACTICAL COMBAT SIMULATOR & ACADEMIC DEMONSTRATION SYSTEM</p>
+          <p class="game-subtitle">RETRO ARCADE SPACE COMBAT</p>
 
           <!-- Pilot Status Capsule -->
           <div class="pilot-status-capsule" id="pilot-capsule">
@@ -37,27 +37,18 @@
             </div>
           </div>
 
-          <!-- Cloud Telemetry Link Pill -->
-          <div class="cloud-status-pill" id="cloud-status-badge">
-            <span class="cloud-status-dot online" id="cloud-status-dot">●</span>
-            <span id="cloud-status-text" class="cloud-status-label">STARFLEET CLOUD LINK ACTIVE  •  SUPABASE POSTGREST 2.2</span>
-            <button id="btn-cloud-diag" class="cloud-diag-btn" title="Inspect Cloud Connection & Telemetry">DIAGNOSTICS</button>
-          </div>
-
-          <!-- Tactical Command Button Stack (Matching Java Swing MainWindow) -->
+          <!-- Tactical Command Button Stack -->
           <button id="btn-start-game" class="cyber-btn btn-hero">▶   LAUNCH MISSION</button>
-          <button id="btn-open-subjects" class="cyber-btn btn-tactical purple">✦   COURSE OUTCOMES & SUBJECTS (19 COs)</button>
           <button id="btn-open-leaderboard" class="cyber-btn btn-tactical gold">★   GLOBAL LEADERBOARD (HALL OF FAME)</button>
           <button id="btn-open-profile" class="cyber-btn btn-tactical blue">◈   PILOT PROFILE & SYSTEM SETTINGS</button>
           <button id="btn-open-history" class="cyber-btn btn-tactical">⟡   MATCH HISTORY (FLIGHT LOGS)</button>
           <button id="btn-open-instructions" class="cyber-btn btn-tactical emerald">❖   PILOT MANUAL (FLIGHT CONTROLS)</button>
-          <button id="btn-abort-game" class="cyber-btn btn-danger">✕   ABORT TO HEADQUARTERS</button>
         </div>
 
-        <!-- Academic Suite Footer Bar (Full width across viewport bottom, matching Java Swing) -->
-        <div class="academic-footer-bar">
-          <span class="academic-footer-modules">ACADEMIC SUITE:  [PSOOP Java]  •  [PL C++17]  •  [COA 80386]  •  [CGL OpenGL]</span>
-          <span id="menu-record-display" class="academic-record-tag">RECORD: 0 PTS</span>
+        <!-- Game Status Footer Bar -->
+        <div class="academic-footer-bar game-footer-bar">
+          <span class="academic-footer-modules game-version-tag">SYSTEM ONLINE • DEFENSE OPERATIONAL</span>
+          <span id="menu-record-display" class="academic-record-tag high-score-tag">RECORD: 0 PTS</span>
         </div>
 
         <div class="key-hint">
@@ -251,6 +242,21 @@
                   <input type="checkbox" id="settings-announcer-voice" /> Voiceover (TTS)
                 </label>
                 <button type="button" id="btn-test-announcer" class="cyber-btn btn-tactical cyan" style="width: auto; padding: 0 10px; height: 26px; font-size: 10px; margin: 0;">TEST BANTER</button>
+              </div>
+            </div>
+
+            <!-- Technical Architecture & Curriculum Specifications (Preserved for Academic Audit) -->
+            <div style="border-top: 1px solid rgba(50, 65, 95, 0.8); margin-top: 14px; padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+              <span style="font-size: 11px; color: var(--text-muted); font-weight: bold; letter-spacing: 0.5px;">SYSTEM & ARCHITECTURE SPECIFICATIONS:</span>
+              <div class="cloud-status-pill" id="cloud-status-badge" style="width: 100%; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span class="cloud-status-dot online" id="cloud-status-dot">●</span>
+                  <span id="cloud-status-text" class="cloud-status-label">STARFLEET CLOUD LINK ACTIVE</span>
+                </div>
+                <button type="button" id="btn-cloud-diag" class="cloud-diag-btn" title="Inspect Cloud Connection & Telemetry">DIAGNOSTICS</button>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btn-open-subjects" class="cyber-btn btn-tactical purple" style="flex: 1; min-width: 140px; height: 32px; font-size: 11px; margin: 0;">✦   COURSE OUTCOMES & SUBJECTS (19 COs)</button>
               </div>
             </div>
           </div>
