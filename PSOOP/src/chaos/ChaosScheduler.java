@@ -133,6 +133,23 @@ public class ChaosScheduler {
     }
 
     /**
+     * Triggered when the player clears a sector wave.
+     * Schedules an advance warning identifying the upcoming anomaly for the next sector,
+     * announces it via the Announcer, and applies the anomaly as the new sector starts!
+     */
+    public ActiveChaosEvent onSectorCleared(int clearedSector, GameEngine engine) {
+        if (!enabled || engine == null) return null;
+        int nextSector = clearedSector + 1;
+        ChaosEventType selected = pickEligibleEvent(nextSector);
+        if (selected == null) return null;
+
+        double warningDuration = 4.0;
+        ActiveChaosEvent event = triggerEvent(selected, engine, warningDuration);
+        nextEventTimer = minInterval + random.nextDouble() * (maxInterval - minInterval);
+        return event;
+    }
+
+    /**
      * Stochastically selects a compatible, non-repeated event fitting current progression.
      */
     public ChaosEventType pickEligibleEvent(int currentLevel) {

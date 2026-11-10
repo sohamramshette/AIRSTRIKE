@@ -68,9 +68,10 @@ export class WaveManager {
     if (this.waveClearTimer > 0) {
       this.waveClearTimer -= dt;
       if (this.waveClearTimer <= 0) {
+        const clearedLevel = this.currentLevel;
         this.bannerText = null;
-        this.startLevel(this.currentLevel + 1);
-        onWaveCleared(this.currentLevel);
+        this.startLevel(clearedLevel + 1);
+        onWaveCleared(clearedLevel);
       }
       return;
     }

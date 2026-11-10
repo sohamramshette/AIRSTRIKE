@@ -212,5 +212,27 @@ describe('AIRSTRIKE Phase 11: Chaos Protocol Web Unit Tests', () => {
     assert.strictEqual(mockPlayer.controlsInverted, false, 'Controls inverted flag must reset');
     assert.strictEqual(mockPlayer.damageMultiplier, 1.0, 'Damage multiplier must reset');
   });
+
+  it('triggers an advance warning on sector clear and applies anomaly for next sector', () => {
+    const scheduler = new ChaosScheduler(45.0, 30.0, 60.0);
+    const mockPlayer = new Player();
+    const mockEngine = {
+      player: mockPlayer,
+      enemies: [],
+      projectiles: [],
+      waveManager: { currentLevel: 1 }
+    };
+
+    // Clearing Sector 1 schedules an anomaly for Sector 2 with a 4s advance warning
+    const event = scheduler.onSectorCleared(1, mockEngine);
+    assert.ok(event, 'An anomaly must be scheduled for Sector 2');
+    assert.strictEqual(event.isWarning(), true, 'Event must start in WARNING state');
+    assert.strictEqual(event.warningTimer, 4.0, 'Warning timer must be 4.0 seconds');
+    assert.strictEqual(scheduler.activeEvents.length, 1);
+
+    // After 4.0s of combat transition, anomaly activates
+    scheduler.update(4.1, mockEngine);
+    assert.strictEqual(event.isActive(), true, 'Anomaly must activate after warning countdown finishes');
+  });
 });
 

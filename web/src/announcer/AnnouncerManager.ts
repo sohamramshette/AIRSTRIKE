@@ -95,7 +95,7 @@ export class AnnouncerManager {
       this.recentHistory.shift();
     }
 
-    this.cooldownTimer = minCooldown;
+    this.cooldownTimer = Math.max(minCooldown, this.bannerDuration + 0.5);
     this.randomInterruptTimer = this.getRandomInterval() + (Math.random() * 6 - 3);
 
     if (settings.voiceEnabled) {
@@ -109,7 +109,7 @@ export class AnnouncerManager {
     const settings = AnnouncerSettingsManager.getInstance().getSettings();
     if (!settings.enabled || !text) return;
     this.showBanner(text, category || 'GENERAL_ROAST', true);
-    this.cooldownTimer = Math.max(this.cooldownTimer, 5.0);
+    this.cooldownTimer = Math.max(this.cooldownTimer, this.bannerDuration + 1.0);
     if (settings.voiceEnabled) {
       this.speak(text);
     }
@@ -118,7 +118,11 @@ export class AnnouncerManager {
   public showBanner(text: string, category: DialogueCategory, highPriority: boolean): void {
     this.activeText = text;
     this.activeCategory = category;
-    this.bannerDuration = highPriority ? 3.4 : 2.8;
+
+    // Dynamic display duration between 5.0 and 7.0 seconds depending on letters
+    const letters = text ? text.length : 0;
+    const dynamicDuration = Math.min(7.0, Math.max(5.0, 5.0 + (letters - 30) * 0.04));
+    this.bannerDuration = highPriority ? Math.max(dynamicDuration, 5.5) : dynamicDuration;
     this.bannerTimer = this.bannerDuration;
     this.bannerAlpha = 0;
   }

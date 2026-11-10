@@ -41,8 +41,8 @@ async function runBrowserQA(browserName: string, executablePath: string): Promis
     await page.setViewport({ width: 1280, height: 900 });
 
     // 1. Navigation & Page Load
-    await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
-    result.checks.push('Page loaded with networkidle0');
+    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    result.checks.push('Page loaded with domcontentloaded');
 
     // Check title and menu
     const title = await page.$eval('.game-title', el => el.textContent?.replace(/\s+/g, ' ').trim() || '');

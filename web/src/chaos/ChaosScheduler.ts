@@ -86,6 +86,27 @@ export class ChaosScheduler {
     }
   }
 
+  /**
+   * Triggered when the player clears a sector.
+   * Schedules an advance warning identifying the upcoming anomaly for the next sector,
+   * announces it via the Announcer, and applies the anomaly as the new sector starts!
+   */
+  public onSectorCleared(clearedSector: number, engine: any): ActiveChaosEvent | null {
+    if (!this.enabled || !engine) return null;
+    const nextSector = clearedSector + 1;
+
+    const selected = this.pickEligibleEvent(nextSector);
+    if (!selected) return null;
+
+    // 4.0-second advance warning covering wave transition
+    const warningDuration = 4.0;
+    const event = this.triggerEvent(selected, engine, warningDuration);
+
+    // Push next interval so periodic timer does not collide
+    this.nextEventTimer = this.minInterval + Math.random() * (this.maxInterval - this.minInterval);
+    return event;
+  }
+
   public pickEligibleEvent(currentLevel: number): ChaosEventType | null {
     const allTypes = Object.values(ChaosEventType);
     let candidates = allTypes.filter(t => {
@@ -352,39 +373,38 @@ export class ChaosScheduler {
       const isWarn = event.isWarning();
 
       const badgeText = isWarn
-        ? `ALERT: ${def.displayName.toUpperCase()} IN ${event.warningTimer.toFixed(1)}s`
-        : `EVENT: ${def.displayName.toUpperCase()} (${event.durationRemaining.toFixed(1)}s)`;
+        ? `⚠️ INCOMING ANOMALY: ${def.displayName.toUpperCase()} (${event.warningTimer.toFixed(1)}s)`
+        : `⚡ ACTIVE ANOMALY: ${def.displayName.toUpperCase()} (${event.durationRemaining.toFixed(1)}s)`;
 
       const primaryCol = isWarn ? '#FBBF24' : '#00E5FF';
-      const bgCol = isWarn ? 'rgba(30, 24, 12, 0.88)' : 'rgba(13, 25, 48, 0.88)';
+      const bgCol = isWarn ? 'rgba(30, 24, 12, 0.92)' : 'rgba(13, 25, 48, 0.92)';
 
       ctx.save();
       ctx.font = 'bold 11px sans-serif';
       const txtW = ctx.measureText(badgeText).width;
       const boxW = txtW + 36;
-      const boxH = 24;
+      const boxH = 26;
       const boxX = (screenWidth - boxW) / 2;
 
       // Container
       ctx.fillStyle = bgCol;
       ctx.strokeStyle = primaryCol;
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.3;
 
       ctx.beginPath();
-      ctx.roundRect(boxX, hudY, boxW, boxH, 12);
+      ctx.roundRect(boxX, hudY, boxW, boxH, 13);
       ctx.fill();
       ctx.stroke();
 
       // Progress line
       if (event.isActive()) {
-        const fillW = boxW * event.getProgress();
+        const fillW = (boxW - 16) * event.getProgress();
         ctx.strokeStyle = primaryCol;
-        ctx.globalAlpha = 0.6;
+        ctx.lineWidth = 2.0;
         ctx.beginPath();
-        ctx.moveTo(boxX + 6, hudY + boxH - 2);
-        ctx.lineTo(boxX + 6 + fillW, hudY + boxH - 2);
+        ctx.moveTo(boxX + 8, hudY + boxH - 2);
+        ctx.lineTo(boxX + 8 + fillW, hudY + boxH - 2);
         ctx.stroke();
-        ctx.globalAlpha = 1.0;
       }
 
       ctx.fillStyle = primaryCol;
@@ -393,6 +413,7 @@ export class ChaosScheduler {
       ctx.fillText(badgeText, screenWidth / 2, hudY + boxH / 2);
 
       ctx.restore();
+      hudY += 32;
       hudY += boxH + 6;
     }
   }

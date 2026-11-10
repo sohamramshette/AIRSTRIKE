@@ -299,6 +299,9 @@ public class GameEngine {
             waveManager.update(delta, enemies, screenWidth);
             if (!wasNotice && waveManager.isWaveClearNotice()) {
                 announcer.AnnouncerManager.getInstance().trigger(announcer.AnnouncerEvent.WAVE_CLEARED, true);
+                if (chaosScheduler != null) {
+                    chaosScheduler.onSectorCleared(waveManager.getCurrentLevel(), this);
+                }
             }
         } else {
             updateDemoFleet(delta);
