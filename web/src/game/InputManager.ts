@@ -12,6 +12,36 @@ export class InputManager {
   private virtualMoveX: number = 0;
   private virtualMoveY: number = 0;
   private touchFireActive: boolean = false;
+  private gyroscopeEnabled: boolean = false;
+  private gyroBaseline: { x: number; y: number; angle: number } | null = null;
+  private readonly handleDeviceOrientation = (event: DeviceOrientationEvent): void => {
+    if (event.beta === null || event.gamma === null) return;
+
+    const angle = ((screen.orientation?.angle ?? 0) + 360) % 360;
+    let tiltX = event.gamma;
+    let tiltY = event.beta;
+
+    if (angle === 90) {
+      tiltX = event.beta;
+      tiltY = -event.gamma;
+    } else if (angle === 180) {
+      tiltX = -event.gamma;
+      tiltY = -event.beta;
+    } else if (angle === 270) {
+      tiltX = -event.beta;
+      tiltY = event.gamma;
+    }
+
+    if (!this.gyroBaseline || this.gyroBaseline.angle !== angle) {
+      this.gyroBaseline = { x: tiltX, y: tiltY, angle };
+      this.virtualMoveX = 0;
+      this.virtualMoveY = 0;
+      return;
+    }
+
+    this.virtualMoveX = this.normalizeTilt(tiltX - this.gyroBaseline.x);
+    this.virtualMoveY = this.normalizeTilt(tiltY - this.gyroBaseline.y);
+  };
 
   private canvas: HTMLCanvasElement | null = null;
 
@@ -104,10 +134,29 @@ export class InputManager {
       this.firePressed = false;
     });
 
+    canvas.addEventListener('pointerdown', (e: PointerEvent) => {
+      if (e.pointerType === 'touch') {
+        this.firePressed = true;
+      }
+    });
+
+    window.addEventListener('pointerup', (e: PointerEvent) => {
+      if (e.pointerType === 'touch') {
+        this.firePressed = false;
+      }
+    });
+
+    window.addEventListener('pointercancel', (e: PointerEvent) => {
+      if (e.pointerType === 'touch') {
+        this.firePressed = false;
+      }
+    });
+
     // Touch events for mobile/tablet gameplay
     canvas.addEventListener('touchstart', (e: TouchEvent) => {
       e.preventDefault();
       const touch = e.touches[0];
+      if (!touch) return;
       const rect = canvas.getBoundingClientRect();
       this.touchX = touch.clientX - rect.left;
       this.touchY = touch.clientY - rect.top;
@@ -117,8 +166,9 @@ export class InputManager {
 
     canvas.addEventListener('touchmove', (e: TouchEvent) => {
       e.preventDefault();
-      if (!this.isTouching) return;
+      if (!this.isTouching || this.gyroscopeEnabled) return;
       const touch = e.touches[0];
+      if (!touch) return;
       const rect = canvas.getBoundingClientRect();
       const currentX = touch.clientX - rect.left;
       const currentY = touch.clientY - rect.top;
@@ -136,10 +186,14 @@ export class InputManager {
 
     const endTouch = (e: TouchEvent) => {
       e.preventDefault();
-      this.isTouching = false;
-      this.virtualMoveX = 0;
-      this.virtualMoveY = 0;
-      this.firePressed = false;
+      if (e.touches.length === 0) {
+        this.isTouching = false;
+        if (!this.gyroscopeEnabled) {
+          this.virtualMoveX = 0;
+          this.virtualMoveY = 0;
+        }
+        this.firePressed = false;
+      }
     };
 
     canvas.addEventListener('touchend', endTouch, { passive: false });
@@ -153,6 +207,29 @@ export class InputManager {
 
   public setTouchFire(active: boolean): void {
     this.touchFireActive = active;
+  }
+
+  public setGyroscopeEnabled(enabled: boolean): void {
+    if (this.gyroscopeEnabled === enabled) return;
+
+    this.gyroscopeEnabled = enabled;
+    this.gyroBaseline = null;
+    this.virtualMoveX = 0;
+    this.virtualMoveY = 0;
+
+    if (typeof window === 'undefined') return;
+    if (enabled) {
+      window.addEventListener('deviceorientation', this.handleDeviceOrientation);
+    } else {
+      window.removeEventListener('deviceorientation', this.handleDeviceOrientation);
+    }
+  }
+
+  private normalizeTilt(angle: number): number {
+    const deadZone = 2.5;
+    const fullTilt = 22;
+    if (Math.abs(angle) <= deadZone) return 0;
+    return Math.max(-1, Math.min(1, (angle - Math.sign(angle) * deadZone) / (fullTilt - deadZone)));
   }
 
   public getMovementVector(): { x: number; y: number } {

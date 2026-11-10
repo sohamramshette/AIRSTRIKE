@@ -70,6 +70,8 @@ On touch screens, responsive on-screen virtual touch controls automatically acti
 - **Power-Ups**: $22\%$ drop rate on enemy destruction offering Hull Repairs ($+40\text{ HP}$), Shield Overcharge ($+50\text{ Shield}$), Weapon Upgrades (Single $\rightarrow$ Dual $\rightarrow$ Triple Spread), and Thruster Boosts ($+25\text{ px/s}$).
 - **Synthesized Audio**: Web Audio API oscillator synthesizer delivering arcade laser pews, shield deflections, explosion rumbles, power-up arpeggios, and boss klaxons with zero external audio assets.
 - **Cloud Backend**: Supabase authentication (`/auth/v1/`), profile management (`/rest/v1/profiles`), match debrief logging (`/rest/v1/matches`), and global leaderboard ranking (`/rest/v1/leaderboard`).
+- **Responsive Layout**: The game preserves its playfield aspect ratio, scales to the available viewport, accommodates safe areas, and keeps menus and dialogs scrollable on compact screens.
+- **Mobile Orientation & Controls**: Before a mobile mission, pilots can choose portrait or landscape and gyro steering or touch controls. Gyro mode hides the joystick and fire button; touch anywhere on the playfield to fire. Supported browsers request motion permission and orientation lock, and fall back to touch controls when motion access is unavailable.
 
 ---
 
@@ -82,3 +84,6 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_45YsUzEdi6crovilqrubwg_Z6QgVVsM
 ```
 *(Only the publishable anon key is ever used; service-role and secret keys are never exposed on the web client).*
 
+Before cloud leaderboard reads and authenticated profile or match operations can work, review and run [`supabase/migrations/20261107_phase7_forward.sql`](../supabase/migrations/20261107_phase7_forward.sql) in the Supabase Dashboard's SQL Editor. The migration checks the expected database baseline and grants only the required role permissions; do not bypass a failed preflight.
+
+If the app reports that the anon role cannot read `public.leaderboard`, Supabase is reachable but this database migration has not been applied (or its access policy was changed).

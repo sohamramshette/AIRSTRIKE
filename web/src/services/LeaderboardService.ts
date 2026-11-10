@@ -46,14 +46,18 @@ export class LeaderboardService {
 
       if (error) {
         console.warn(`Supabase leaderboard returned status ${status}:`, error.message);
-        const isPermissionDenied = status === 401 || (error as { code?: string }).code === '42501';
+        const errorCode = (error as { code?: string }).code;
+        const isPermissionDenied = errorCode === '42501';
+        const isAuthenticationError = (status === 401 || status === 403) && !isPermissionDenied;
         return {
           entries: [],
           source: 'cloud',
           error: true,
           message: isPermissionDenied
-            ? 'Global Leaderboard awaiting Supabase public access grant (Phase 7.2A Option B migration pending). Authenticated pilots can view scores upon login.'
-            : `Supabase notice: ${error.message}`
+            ? 'Supabase is reachable, but the anon role cannot read public.leaderboard. Review and apply supabase/migrations/20261107_phase7_forward.sql in the Supabase SQL Editor.'
+            : isAuthenticationError
+              ? `Supabase rejected the API key or session (HTTP ${status}): ${error.message}`
+              : `Supabase notice: ${error.message}`
         };
       }
 

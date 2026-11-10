@@ -57,6 +57,115 @@ async function runBrowserQA(browserName: string, executablePath: string): Promis
     assert.ok(pilotStatus.includes('GUEST') || pilotStatus.includes('CADET'), `Pilot status should indicate guest/cadet, got: ${pilotStatus}`);
     result.checks.push(`Pilot Status verified: ${pilotStatus}`);
 
+    for (const viewport of [{ width: 390, height: 844 }, { width: 320, height: 568 }]) {
+      await page.setViewport(viewport);
+      const mobileMenu = await page.evaluate(() => {
+        const stage = document.querySelector('#viewport-container')!.getBoundingClientRect();
+        const buttons = [...document.querySelectorAll('#main-menu-overlay button')];
+        const footer = document.querySelector('.academic-footer-bar')!.getBoundingClientRect();
+        const hints = document.querySelector('.key-hint')!.getBoundingClientRect();
+        return {
+          stageHeight: stage.height,
+          viewportHeight: window.innerHeight,
+          buttonCount: buttons.length,
+          buttonsInView: buttons.every(button => {
+            const rect = button.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.bottom <= window.innerHeight;
+          }),
+          footerVisible: footer.width > 0 && footer.height > 0 && footer.bottom <= window.innerHeight,
+          hintsVisible: hints.width > 0 && hints.height > 0 && hints.bottom <= window.innerHeight,
+          horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth
+        };
+      });
+
+      assert.ok(Math.abs(mobileMenu.stageHeight - mobileMenu.viewportHeight) < 1, 'Mobile landing page should fill the portrait viewport');
+      assert.strictEqual(mobileMenu.buttonCount, 10, 'All landing-page buttons should remain visible');
+      assert.ok(mobileMenu.buttonsInView, 'Every landing-page button should fit within the mobile viewport');
+      assert.ok(mobileMenu.footerVisible, 'Academic suite and record footer should remain visible');
+      assert.ok(mobileMenu.hintsVisible, 'Control hints should remain visible');
+      assert.strictEqual(mobileMenu.horizontalOverflow, false, 'Mobile landing page should not overflow horizontally');
+      result.checks.push(`Mobile landing page verified at ${viewport.width}x${viewport.height}: all actions, footer, and hints visible`);
+    }
+
+    await page.setViewport({ width: 1920, height: 1080 });
+    const fullScreenMenu = await page.evaluate(() => {
+      const stage = document.querySelector('#viewport-container')!.getBoundingClientRect();
+      const card = document.querySelector('.main-menu-card')!.getBoundingClientRect();
+      const textElements = [
+        ...document.querySelectorAll<HTMLElement>(
+          '#main-menu-overlay .game-title, #main-menu-overlay .game-title-text, ' +
+          '#main-menu-overlay .game-subtitle, #main-menu-overlay .cyber-btn, ' +
+          '.academic-footer-bar, .key-hint'
+        )
+      ];
+      return {
+        stageFitsScreen: stage.width <= window.innerWidth && stage.height <= window.innerHeight,
+        cardWidth: card.width,
+        cardCentered: Math.abs((card.left + card.right) / 2 - (stage.left + stage.right) / 2) < 1,
+        cardFitsStage: card.left >= stage.left && card.right <= stage.right &&
+          card.top >= stage.top && card.bottom <= stage.bottom,
+        textOverflows: textElements
+          .filter(element => element.scrollWidth > element.clientWidth + 1)
+          .map(element => element.className || element.tagName),
+        lineHeightsDefined: textElements.every(element => getComputedStyle(element).lineHeight !== 'normal')
+      };
+    });
+    assert.ok(fullScreenMenu.stageFitsScreen, 'Full-screen game stage should remain within the display');
+    assert.ok(fullScreenMenu.cardWidth > 430, 'Main menu should scale up for a full-screen display');
+    assert.ok(fullScreenMenu.cardCentered, 'Full-screen menu should remain centered in the game stage');
+    assert.ok(fullScreenMenu.cardFitsStage, 'Full-screen menu should fit inside the game stage');
+    assert.deepStrictEqual(fullScreenMenu.textOverflows, [], 'Full-screen labels should not overflow their text containers');
+    assert.ok(fullScreenMenu.lineHeightsDefined, 'Full-screen labels should use consistent line spacing');
+    result.checks.push('Full-screen 1920x1080 layout verified: scaled, centered menu with aligned text and no overflow');
+
+    // Mobile Portrait Launch & Aspect Ratio Integrity
+    await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+    await page.click('#btn-start-game');
+    await page.waitForFunction(() => (window as any).__airstrikeEngine?.state === 'PLAYING', { timeout: 3000 });
+    result.checks.push('Mobile direct launch verified: game starts without intrusive modal');
+
+    // Verify Portrait Canvas Aspect Ratio (800 / 650 = 1.230769)
+    const portraitCanvas = await page.evaluate(() => {
+      const canvas = document.querySelector('#game-canvas')!.getBoundingClientRect();
+      const touchControls = document.querySelector('#touch-controls')!;
+      const dpad = document.querySelector('.touch-dpad')!.getBoundingClientRect();
+      const fire = document.querySelector('#touch-fire')!.getBoundingClientRect();
+      return {
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+        aspectRatio: canvas.width / canvas.height,
+        touchVisible: getComputedStyle(touchControls).display !== 'none',
+        dpadRendered: dpad.width > 0 && dpad.height > 0,
+        fireRendered: fire.width > 0 && fire.height > 0
+      };
+    });
+
+    const expectedRatio = 800 / 650;
+    assert.ok(Math.abs(portraitCanvas.aspectRatio - expectedRatio) < 0.05,
+      `Portrait canvas aspect ratio should be ~1.23, got ${portraitCanvas.aspectRatio}`);
+    assert.ok(portraitCanvas.touchVisible, 'Touch controls must be visible during mobile gameplay');
+    assert.ok(portraitCanvas.dpadRendered, 'D-pad must be rendered on mobile');
+    assert.ok(portraitCanvas.fireRendered, 'Virtual FIRE button must be rendered on mobile');
+    result.checks.push('Portrait mobile gameplay verified: exact 800:650 aspect ratio and active touch deck');
+
+    // Test Touch Fire Interaction
+    const fireBtn = await page.$('#touch-fire');
+    assert.ok(fireBtn, 'Virtual FIRE button must exist');
+    await fireBtn!.evaluate(el => el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true })));
+    assert.strictEqual(
+      await page.evaluate(() => (window as any).__airstrikeEngine.inputManager.isFiring()),
+      true,
+      'Pressing virtual FIRE button should trigger weapon discharge'
+    );
+    await fireBtn!.evaluate(el => el.dispatchEvent(new TouchEvent('touchend', { bubbles: true })));
+
+    // Return to menu
+    await page.evaluate(() => (window as any).__airstrikeEngine.returnToMenu());
+    await page.waitForFunction(() => (window as any).__airstrikeEngine?.state === 'MENU', { timeout: 2000 });
+    result.checks.push('Mobile return to menu verified');
+
+    await page.setViewport({ width: 1280, height: 900 });
+
     // Phase 9 Modals: Subject & Course Outcomes Modal
     await page.click('#btn-open-subjects');
     await page.waitForSelector('#subject-co-modal:not(.hidden)', { timeout: 2000 });

@@ -196,6 +196,10 @@ export class UIManager {
 
   constructor(engine: GameEngine) {
     this.engine = engine;
+    document.getElementById('viewport-container')?.classList.toggle(
+      'is-menu-state',
+      engine.state === GameState.MENU
+    );
     this.authService = AuthService.getInstance();
     this.matchService = MatchService.getInstance();
     this.leaderboardService = LeaderboardService.getInstance();
@@ -804,10 +808,13 @@ export class UIManager {
   // State Change & Game Over
   // ---------------------------------------------------------------------------
   private handleStateChange(state: GameState): void {
+    const viewport = document.getElementById('viewport-container');
     const menuOverlay = document.getElementById('main-menu-overlay');
     const pauseOverlay = document.getElementById('pause-overlay');
     const gameoverOverlay = document.getElementById('gameover-overlay');
 
+    viewport?.classList.toggle('is-playing', state === GameState.PLAYING);
+    viewport?.classList.toggle('is-menu-state', state === GameState.MENU);
     menuOverlay?.classList.add('hidden');
     pauseOverlay?.classList.add('hidden');
     gameoverOverlay?.classList.add('hidden');
