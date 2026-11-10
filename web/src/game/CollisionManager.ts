@@ -23,7 +23,8 @@ export class CollisionManager {
     powerUps: PowerUp[],
     particles: ParticleSystem,
     scoreCalc: ScoreCalculator,
-    sounds: SoundService
+    sounds: SoundService,
+    player?: Player
   ): void {
     for (const bullet of bullets) {
       if (!bullet.active || !bullet.isPlayerBullet) continue;
@@ -43,6 +44,18 @@ export class CollisionManager {
             if (isBoss) {
               sounds.playBossExplosion();
               particles.spawnExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, true, '#FF144B');
+
+              // Titan Core Salvage: Player Vitality & Deflector Shield Restoration (PSOOP-CO1)
+              if (player && player.active) {
+                player.health = Math.min(player.maxHealth, player.health + 65);
+                player.shield = player.maxShield;
+                particles.spawnFloatingText(
+                  player.x + player.width / 2,
+                  player.y - 20,
+                  'TITAN CORE SALVAGE: +65 HULL REPAIRED!',
+                  '#10B981'
+                );
+              }
             } else {
               sounds.playExplosion();
               particles.spawnExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, false, '#FF7814');

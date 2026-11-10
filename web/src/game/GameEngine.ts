@@ -268,7 +268,8 @@ export class GameEngine {
         this.powerUps,
         this.particles,
         this.scoreCalc,
-        this.soundService
+        this.soundService,
+        this.player
       );
 
       CollisionManager.handleEnemyProjectiles(
@@ -444,8 +445,13 @@ export class GameEngine {
       ctx.fillText(`VESSELS: ${this.player.lives}`, leftX + 6, topY + 53);
 
       const wpnTier = this.player.weaponLevel === 2 ? 'T2' : this.player.weaponLevel >= 3 ? 'T3' : 'T1';
-      ctx.fillStyle = '#38BDF8';
-      ctx.fillText(`GUN: ${wpnTier}`, leftX + podW - 46, topY + 53);
+      if (this.player.isOverheated) {
+        ctx.fillStyle = '#EF4444';
+        ctx.fillText(`🔥 HOT`, leftX + podW - 46, topY + 53);
+      } else {
+        ctx.fillStyle = this.player.weaponHeat > 50 ? '#F59E0B' : '#38BDF8';
+        ctx.fillText(`GUN: ${wpnTier}`, leftX + podW - 46, topY + 53);
+      }
 
       // 2. Mobile Right Pod: Score & Mission
       ctx.fillStyle = 'rgba(13, 19, 33, 0.92)';
@@ -546,9 +552,24 @@ export class GameEngine {
       ctx.font = 'bold 11px Rajdhani, sans-serif';
       ctx.fillText(`VESSELS: ${this.player.lives}`, leftX + 14, leftY + 62);
 
-      ctx.fillStyle = '#38BDF8';
       const wpnTier = this.player.weaponLevel === 2 ? 'DUAL CANNONS' : this.player.weaponLevel >= 3 ? 'TRIPLE SPREAD' : 'SINGLE CANNON';
-      ctx.fillText(`ORDNANCE: ${wpnTier}`, leftX + 115, leftY + 62);
+      if (this.player.isOverheated) {
+        ctx.fillStyle = '#EF4444';
+        ctx.fillText(`🔥 OVERHEATED (${Math.ceil(this.player.weaponHeat)}%)`, leftX + 115, leftY + 62);
+      } else if (this.player.weaponHeat > 45) {
+        ctx.fillStyle = '#F59E0B';
+        ctx.fillText(`ORDNANCE: ${wpnTier} [HEAT ${Math.ceil(this.player.weaponHeat)}%]`, leftX + 115, leftY + 62);
+      } else {
+        ctx.fillStyle = '#38BDF8';
+        ctx.fillText(`ORDNANCE: ${wpnTier}`, leftX + 115, leftY + 62);
+      }
+
+      // Engine degradation alert when hull <= 35%
+      if (this.player.health <= this.player.maxHealth * 0.35) {
+        ctx.fillStyle = '#EF4444';
+        ctx.font = 'bold 10px Rajdhani, sans-serif';
+        ctx.fillText(`⚠️ THRUSTERS CRITICAL (-30% SPD)`, leftX + 14, leftY + 76);
+      }
 
       // --- 2. Top-Right Mission Pod ---
       const rightW = 230;

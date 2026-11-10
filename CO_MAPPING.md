@@ -618,3 +618,24 @@ All 19 Course Outcomes across the 4 core subjects are mapped with complete acade
 
 Phases 1 through 5 are fully implemented, verified, and audited with 100% test pass rates across Java Swing/AWT, C++17 Programming Laboratory, 32-bit 80386 Assembly, and C++17 OpenGL/GLUT Graphics.
 
+---
+
+## 6. Advanced Combat Mechanics & CO Integration (Phase 11 Refinements)
+
+To further synthesize course outcomes with realistic gameplay systems, five foundational mechanics were added and verified across both desktop Java and browser runtimes:
+
+1. **Weapon Overheat & Thermal Throttling (`COA-CO4`, `PSOOP-CO3`)**:
+   - **COA-CO4**: CPU pipeline hazard modeling where firing saturates thermal capacity ($11\%/\text{shot}$), inserting mandatory pipeline stall bubbles until heat reaches $0\%$.
+   - **PSOOP-CO3**: Defensive programming with strict state invariant clamping ($[0, 100]$) and invalid-state prevention.
+2. **Damage-Induced Engine Degradation (`PSOOP-CO4`, `PSOOP-CO2`)**:
+   - **PSOOP-CO4**: Kinematics and non-uniform velocity modulation ($\vec{v} = \vec{v}_{\text{base}} \times 0.70$) when hull integrity falls below $35\%$.
+   - **PSOOP-CO2**: State machine transition between `NOMINAL_THRUST` and `CRITICAL_DEGRADATION` with smoke emitter and restorative healing recovery.
+3. **Hardcore 2-Vessel Life Limit (`PSOOP-CO3`)**:
+   - **PSOOP-CO3**: Boundary enforcement and resource invariant clamping capping maximum lives/revives at 2 vessels total.
+4. **Boss Agility, Scaled Durability & Enraged Overdrive (`PL-CO3`, `PSOOP-CO1`)**:
+   - **PL-CO3**: Echelon wave scheduling and circular queue progression.
+   - **PSOOP-CO1**: Polymorphic sub-class attribute scaling up to $1,800\text{ HP}$, $750\text{ Shield}$, $135-182\text{ px/s}$ strafe, and dynamic enraged attack patterns.
+5. **Titan Core Salvage / Boss Health Recovery (`PSOOP-CO1`)**:
+   - **PSOOP-CO1**: Encapsulated entity mutation, rewarding $+65\text{ HP}$ and full deflector shield recharge upon boss destruction.
+
+

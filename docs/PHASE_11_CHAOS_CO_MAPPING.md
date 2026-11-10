@@ -234,3 +234,52 @@ In strict adherence to project integrity guidelines:
 - [x] State save and restoration protocols specified for every event.
 - [x] Announcer lines in natural Hinglish matching AIRSTRIKE AI persona.
 - [x] Native subject integrity verified across C++17, 80386 ASM, OpenGL, and Java/Web.
+
+---
+
+## 7. Advanced Tactical Combat Systems & Course Outcome Mappings
+
+In addition to dynamic Chaos Protocol events, AIRSTRIKE integrates five foundational combat mechanics directly grounded in syllabus Course Outcomes:
+
+### 7.1 Weapon Overheat & Thermal Throttling
+* **Primary CO**: `COA-CO4` (Instruction Pipelining, Hazard Stalls, and Dispatch Throttling) & `PSOOP-CO3` (Defensive Programming & Invariant Enforcement)
+* **Mathematical & Architectural Model**: Continuous projectile firing accumulates thermal energy:
+  $$\text{Heat}_{t} = \min\left(100, \text{Heat}_{t-1} + \Delta\text{Heat}_{\text{shot}}\right), \quad \Delta\text{Heat}_{\text{shot}} = 11\%$$
+  Upon reaching capacity ($100\%$), the weapon enters `isOverheated = true`, triggering an instruction dispatch hazard stall (analogous to a CPU pipeline bubble). Firing is hardware-locked until heat dissipates to $0\%$.
+* **Implementation Anchors**:
+  - Web: [`Player.ts`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/web/src/game/Player.ts) (`weaponHeat`, `isOverheated`, `heatCoolRate = 32`, `overheatCoolRate = 25`).
+  - Java: [`Player.java`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/PSOOP/src/model/Player.java) (`getWeaponHeat()`, `isOverheated()`).
+
+### 7.2 Damage-Induced Engine Degradation (Kinematic Slowdown)
+* **Primary CO**: `PSOOP-CO4` (Kinematics, Physics & Dynamic Velocity Modulation) & `PSOOP-CO2` (State Machine & Critical Threshold Management)
+* **Mathematical & Physical Model**: Sustained battle damage alters spacecraft thrust physics:
+  $$\vec{v}_{\text{actual}} = \begin{cases} \vec{v}_{\text{base}} \times 0.70 & \text{if } \text{Hull} \le 0.35 \times \text{Hull}_{\max} \\ \vec{v}_{\text{base}} & \text{otherwise} \end{cases}$$
+  When hull integrity drops below $35\%$, thrusters suffer a $-30\%$ velocity penalty accompanied by trailing smoke particles. Healing restores nominal velocity without stat leakage.
+* **Implementation Anchors**:
+  - Web: [`Player.ts`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/web/src/game/Player.ts) (`updateMovement()`, damaged smoke emitter).
+  - Java: [`Player.java`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/PSOOP/src/model/Player.java) (`move()`, `isCriticalDamage()`).
+
+### 7.3 Hardcore 2-Vessel Tactical Life Limit
+* **Primary CO**: `PSOOP-CO3` (Defensive Programming & Resource Invariant Clamping)
+* **Model**: Vessels/revives are capped strictly at $2$ across all game sessions, enforcing disciplined evasion, shield conservation, and risk assessment under extreme combat stress.
+* **Implementation Anchors**:
+  - Web: [`Player.ts`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/web/src/game/Player.ts) (`lives = 2`).
+  - Java: [`Player.java`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/PSOOP/src/model/Player.java) (`lives = 2`).
+
+### 7.4 Leviathan Prime & Flagship Scaling (Boss Vitality & Fast Strafe)
+* **Primary CO**: `PL-CO3` (Circular Queue Scheduling & Echelon Progression) & `PSOOP-CO1` (Polymorphic Attribute & Behavioral Scaling)
+* **Model**: Flagships dynamically scale across sectors:
+  - Sector 3 (`MK-1`): $550\text{ HP}$, $150\text{ Shield}$, $90\text{ px/s}$ strafe.
+  - Sector 6 (`MK-2`): $1,100\text{ HP}$, $450\text{ Shield}$, $110\text{ px/s}$ strafe.
+  - Sector 9+ (`LEVIATHAN PRIME`): $1,800\text{ HP}$, $750\text{ Shield}$, $135\text{ px/s}$ strafe ($182\text{ px/s}$ when Enraged $<45\%$ HP) with 7-way spread fans, tracking salvos, and quad plasma batteries.
+* **Implementation Anchors**:
+  - Web: [`Boss.ts`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/web/src/game/Boss.ts).
+  - Java: [`BossEnemy.java`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/PSOOP/src/model/BossEnemy.java).
+
+### 7.5 Titan Core Salvage (Boss Defeat Recovery)
+* **Primary CO**: `PSOOP-CO1` (Encapsulation & Event-Driven Entity Mutation)
+* **Model**: Upon boss vessel destruction, the collapse of its quantum reactor releases high-density energy cores, awarding the player $+65\text{ Hull HP}$ and full Deflector Shield recharge with floating HUD telemetry (`TITAN CORE SALVAGE: +65 HULL REPAIRED!`).
+* **Implementation Anchors**:
+  - Web: [`CollisionManager.ts`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/web/src/game/CollisionManager.ts).
+  - Java: [`CollisionManager.java`](file:///c:/Users/lenovo/OneDrive/Desktop/Projects/AirStrike11/PSOOP/src/game/CollisionManager.java).
+

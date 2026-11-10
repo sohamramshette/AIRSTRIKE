@@ -350,7 +350,7 @@ public class GameEngine {
         int pActiveBefore = 0;
         for (Projectile p : projectiles) if (p.isActive() && p.isPlayerBullet()) pActiveBefore++;
 
-        collisionManager.checkPlayerBulletsVsEnemies(projectiles, enemies, particles, powerUps, scoreCalculator, waveManager);
+        collisionManager.checkPlayerBulletsVsEnemies(projectiles, enemies, particles, powerUps, scoreCalculator, waveManager, player);
         collisionManager.checkEnemyBulletsVsPlayer(projectiles, player, particles, scoreCalculator);
         collisionManager.checkPlayerVsEnemies(player, enemies, particles, scoreCalculator, waveManager, powerUps);
         collisionManager.checkPlayerVsPowerUps(player, powerUps, particles, scoreCalculator);

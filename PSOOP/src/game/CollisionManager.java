@@ -34,6 +34,17 @@ public class CollisionManager {
             List<PowerUp> powerUps,
             ScoreCalculator scoreCalculator,
             WaveManager waveManager) {
+        checkPlayerBulletsVsEnemies(projectiles, enemies, particles, powerUps, scoreCalculator, waveManager, null);
+    }
+
+    public void checkPlayerBulletsVsEnemies(
+            List<Projectile> projectiles,
+            List<Enemy> enemies,
+            List<Particle> particles,
+            List<PowerUp> powerUps,
+            ScoreCalculator scoreCalculator,
+            WaveManager waveManager,
+            Player player) {
 
         for (Projectile p : projectiles) {
             if (!p.isActive() || !p.isPlayerBullet()) continue;
@@ -52,6 +63,12 @@ public class CollisionManager {
                         scoreCalculator.addScore(e.getScoreValue());
                         spawnExplosion(e.getCenterX(), e.getCenterY(), new Color(255, 140, 30), 20, particles);
                         waveManager.evaluatePowerUpDrop(e.getCenterX(), e.getCenterY(), powerUps);
+
+                        // Titan Core Salvage: Player Vitality & Shield Recovery (PSOOP-CO1)
+                        if (e instanceof model.BossEnemy && player != null && player.isActive()) {
+                            player.heal(65);
+                            player.setShield(player.getMaxShield());
+                        }
                     }
                     break;
                 }

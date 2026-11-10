@@ -11,7 +11,7 @@ describe('Player Spacecraft Unit Tests', () => {
     assert.strictEqual(player.height, 56);
     assert.strictEqual(player.health, 100);
     assert.strictEqual(player.shield, 100);
-    assert.strictEqual(player.lives, 3);
+    assert.strictEqual(player.lives, 2); // Hardcore 2-vessel limit
     assert.strictEqual(player.speed, 320.0);
     assert.strictEqual(player.weaponLevel, 1);
     assert.strictEqual(player.active, true);
@@ -127,10 +127,10 @@ describe('Player Spacecraft Unit Tests', () => {
     player.invulnerableTimer = 0;
     player.shield = 0;
     player.health = 30;
-    player.lives = 3;
+    player.lives = 2;
 
     player.takeDamage(50);
-    assert.strictEqual(player.lives, 2);
+    assert.strictEqual(player.lives, 1);
     assert.strictEqual(player.health, 100);
     assert.strictEqual(player.shield, 100);
     assert.strictEqual(player.x, 376.0);
@@ -156,5 +156,64 @@ describe('Player Spacecraft Unit Tests', () => {
     const initialSpeed = player.speed;
     player.boostSpeed(25);
     assert.strictEqual(player.speed, initialSpeed + 25);
+  });
+
+  test('Weapon Overheat system enforces thermal cooldown and recovers (COA-CO4 / PSOOP-CO3)', () => {
+    const player = new Player();
+    assert.strictEqual(player.weaponHeat, 0);
+    assert.strictEqual(player.isOverheated, false);
+
+    // Fire 8 consecutive volleys -> accumulates heat
+    for (let i = 0; i < 8; i++) {
+      player.shootTimer = 0;
+      const bullets = player.fire();
+      assert.strictEqual(bullets.length > 0, true);
+    }
+    assert.strictEqual(player.weaponHeat, 88);
+    assert.strictEqual(player.isOverheated, false);
+
+    // Fire 9th and 10th volleys -> hits 100 maxHeat and triggers overheat lock
+    player.shootTimer = 0;
+    player.fire();
+    player.shootTimer = 0;
+    player.fire();
+    assert.strictEqual(player.weaponHeat, 100);
+    assert.strictEqual(player.isOverheated, true);
+
+    // Cannot fire while overheated
+    player.shootTimer = 0;
+    const lockedBullets = player.fire();
+    assert.strictEqual(lockedBullets.length, 0);
+
+    // Cool down for 2.0s: 100 - (25 * 2) = 50
+    player.update(2.0);
+    assert.strictEqual(player.weaponHeat, 50);
+    assert.strictEqual(player.isOverheated, true);
+
+    // Cool down remaining 2.1s -> completely cool (heat reaches 0), overheat unlocked!
+    player.update(2.1);
+    assert.strictEqual(player.weaponHeat, 0);
+    assert.strictEqual(player.isOverheated, false);
+
+    // Can fire again
+    player.shootTimer = 0;
+    const restoredBullets = player.fire();
+    assert.strictEqual(restoredBullets.length > 0, true);
+  });
+
+  test('Critical damage degrades thrusters by 30% and healing restores nominal velocity (PSOOP-CO4)', () => {
+    const player = new Player();
+    player.updateMovement(1, 0);
+    assert.strictEqual(player.vx, 320.0);
+
+    // Health drops to 30% (<= 35% threshold)
+    player.health = 30;
+    player.updateMovement(1, 0);
+    assert.strictEqual(player.vx, 320.0 * 0.70); // 224 px/s
+
+    // Healing above 35% restores nominal thruster speed
+    player.heal(20); // 30 + 20 = 50 > 35
+    player.updateMovement(1, 0);
+    assert.strictEqual(player.vx, 320.0);
   });
 });

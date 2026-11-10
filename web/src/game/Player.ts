@@ -6,10 +6,18 @@ export class Player extends Entity {
   public health: number = 100;
   public maxShield: number = 100;
   public shield: number = 100;
-  public lives: number = 3;
+  public lives: number = 2; // Hardcore 2-vessel tactical limit
   public baseSpeed: number = 320.0;
   public speed: number = 320.0;
   public weaponLevel: number = 1;
+
+  // Weapon Overheat & Thermal Throttling System (COA-CO4 / PSOOP-CO3)
+  public weaponHeat: number = 0;
+  public readonly maxHeat: number = 100;
+  public isOverheated: boolean = false;
+  public heatPerShot: number = 11; // ~9 rapid consecutive rounds saturate thermal capacity
+  public heatCoolRate: number = 32; // Normal dissipation per second
+  public overheatCoolRate: number = 25; // Penalty recovery rate when weapon is fully overheated
 
   public shootCooldown: number = 0.18; // 180ms
   public shootTimer: number = 0;
@@ -47,7 +55,9 @@ export class Player extends Entity {
     this.vy = 0;
     this.health = this.maxHealth;
     this.shield = this.maxShield;
-    this.lives = 3;
+    this.lives = 2; // Hardcore 2-vessel tactical limit
+    this.weaponHeat = 0;
+    this.isOverheated = false;
     this.speed = this.baseSpeed;
     this.weaponLevel = 1;
     this.shootTimer = 0;
@@ -66,6 +76,8 @@ export class Player extends Entity {
     this.vy = 0;
     this.health = this.maxHealth;
     this.shield = this.maxShield;
+    this.weaponHeat = 0;
+    this.isOverheated = false;
     this.invulnerableTimer = 2.5;
     this.blinkTimer = 0;
     this.isVisible = true;
@@ -86,8 +98,15 @@ export class Player extends Entity {
       dy *= norm;
     }
 
-    this.vx = dx * this.speed;
-    this.vy = dy * this.speed;
+    // Damage-Induced Engine Degradation (PSOOP-CO4 Kinematic Modulation)
+    // When hull integrity falls to <= 35%, thrusters suffer 30% speed penalty
+    let currentSpeed = this.speed;
+    if (this.health <= this.maxHealth * 0.35) {
+      currentSpeed *= 0.70;
+    }
+
+    this.vx = dx * currentSpeed;
+    this.vy = dy * currentSpeed;
   }
 
   public update(dt: number): void {
@@ -100,6 +119,17 @@ export class Player extends Entity {
     if (this.x > this.playfieldWidth - this.width) this.x = this.playfieldWidth - this.width;
     if (this.y < 0) this.y = 0;
     if (this.y > this.playfieldHeight - this.height) this.y = this.playfieldHeight - this.height;
+
+    // Weapon Heat Dissipation & Thermal Recovery (COA-CO4 / PSOOP-CO3)
+    if (this.isOverheated) {
+      this.weaponHeat -= this.overheatCoolRate * dt;
+      if (this.weaponHeat <= 0) {
+        this.weaponHeat = 0;
+        this.isOverheated = false;
+      }
+    } else if (this.weaponHeat > 0) {
+      this.weaponHeat = Math.max(0, this.weaponHeat - this.heatCoolRate * dt);
+    }
 
     // Cooldown & invulnerability
     if (this.shootTimer > 0) {
@@ -119,11 +149,18 @@ export class Player extends Entity {
   }
 
   public fire(): Projectile[] {
-    if (this.shootTimer > 0 || !this.active) {
+    if (this.shootTimer > 0 || !this.active || this.isOverheated) {
       return [];
     }
 
     this.shootTimer = this.shootCooldown;
+
+    // Accumulate heat per fired ordnance volley
+    this.weaponHeat = Math.min(this.maxHeat, this.weaponHeat + this.heatPerShot);
+    if (this.weaponHeat >= this.maxHeat) {
+      this.isOverheated = true;
+    }
+
     const bullets: Projectile[] = [];
     const dmgMul = this.damageMultiplier || 1.0;
 
@@ -349,6 +386,25 @@ export class Player extends Entity {
       ctx.shadowColor = '#00E5FF';
       ctx.beginPath();
       ctx.ellipse(px + 24, py + 28, 28, 34, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Engine Damage Smoke Trail (when hull <= 35%)
+    if (this.health <= this.maxHealth * 0.35) {
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+      ctx.beginPath();
+      ctx.arc(px + 24 + Math.sin(this.animTime * 14.0) * 8, py + 58 + flameLen * 0.5, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Weapon Overheat Thermal Glow (when overheated)
+    if (this.isOverheated) {
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.85)';
+      ctx.lineWidth = 2.0;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#EF4444';
+      ctx.beginPath();
+      ctx.arc(px + 24, py + 12, 10, 0, Math.PI * 2);
       ctx.stroke();
     }
 

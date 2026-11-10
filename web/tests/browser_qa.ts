@@ -283,7 +283,7 @@ async function runBrowserQA(browserName: string, executablePath: string): Promis
     assert.strictEqual(initPos.y, 540);
     assert.strictEqual(initPos.health, 100);
     assert.strictEqual(initPos.shield, 100);
-    assert.strictEqual(initPos.lives, 3);
+    assert.strictEqual(initPos.lives, 2);
     result.checks.push(`Player initial vitals verified: Pos(${initPos.x}, ${initPos.y}), Hull=${initPos.health}, Shield=${initPos.shield}, Lives=${initPos.lives}`);
 
     // 6. Player Movement Verification

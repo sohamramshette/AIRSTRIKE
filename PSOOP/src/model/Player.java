@@ -25,10 +25,18 @@ public class Player extends Ship {
     private boolean controlsInverted;
     private double damageMultiplier;
 
+    // Weapon Overheat & Thermal Throttling System (COA-CO4 / PSOOP-CO3)
+    private double weaponHeat = 0.0;
+    private final double maxHeat = 100.0;
+    private boolean isOverheated = false;
+    private final double heatPerShot = 11.0;
+    private final double heatCoolRate = 32.0;
+    private final double overheatCoolRate = 25.0;
+
     public Player(double x, double y) {
         // Player stats: width 48, height 56, maxHealth 100, maxShield 100, speed 320, cooldown 180ms
         super(x, y, 48, 56, 100, 100, 320.0, 180);
-        this.lives = 3;
+        this.lives = 2; // Hardcore 2-vessel tactical limit
         this.weaponLevel = 1;
         this.moveLeft = false;
         this.moveRight = false;
@@ -44,13 +52,19 @@ public class Player extends Ship {
     @Override
     public void update(double delta) {
         // Kinematic vector calculation based on active inputs
+        // Damage-Induced Engine Degradation (PSOOP-CO4): speed slowed down by 30% when health <= 35%
+        double currentSpeed = speed;
+        if (health <= maxHealth * 0.35) {
+            currentSpeed *= 0.70;
+        }
+
         vx = 0.0;
         vy = 0.0;
 
-        if (moveLeft && !moveRight) vx = -speed;
-        if (moveRight && !moveLeft) vx = speed;
-        if (moveUp && !moveDown) vy = -speed;
-        if (moveDown && !moveUp) vy = speed;
+        if (moveLeft && !moveRight) vx = -currentSpeed;
+        if (moveRight && !moveLeft) vx = currentSpeed;
+        if (moveUp && !moveDown) vy = -currentSpeed;
+        if (moveDown && !moveUp) vy = currentSpeed;
 
         if (controlsInverted) {
             vx = -vx;
@@ -66,6 +80,17 @@ public class Player extends Ship {
 
         x += vx * delta;
         y += vy * delta;
+
+        // Weapon Heat Dissipation & Thermal Recovery (COA-CO4 / PSOOP-CO3)
+        if (isOverheated) {
+            weaponHeat -= overheatCoolRate * delta;
+            if (weaponHeat <= 0.0) {
+                weaponHeat = 0.0;
+                isOverheated = false;
+            }
+        } else if (weaponHeat > 0.0) {
+            weaponHeat = Math.max(0.0, weaponHeat - heatCoolRate * delta);
+        }
 
         // Invulnerability timer expiration
         if (invulnerable && System.currentTimeMillis() >= invulnerableEndTime) {
@@ -87,9 +112,16 @@ public class Player extends Ship {
 
     @Override
     public void shoot(List<Projectile> projectileList) {
-        if (!canShoot() || !active) return;
+        if (!canShoot() || !active || isOverheated) return;
 
         recordShot();
+
+        // Weapon Heat Accumulation
+        weaponHeat = Math.min(maxHeat, weaponHeat + heatPerShot);
+        if (weaponHeat >= maxHeat) {
+            isOverheated = true;
+        }
+
         double bulletSpeed = -560.0; // Moving upwards
         int damage = (int) Math.round((25 + (weaponLevel * 5)) * damageMultiplier);
 
@@ -140,6 +172,8 @@ public class Player extends Ship {
             this.y = respawnY;
             this.health = maxHealth;
             this.shield = maxShield;
+            this.weaponHeat = 0.0;
+            this.isOverheated = false;
             this.active = true;
             triggerInvulnerability(2500); // 2.5 seconds safe respawn
             return true;
@@ -157,7 +191,9 @@ public class Player extends Ship {
     public void resetFull(int startX, int startY) {
         this.x = startX;
         this.y = startY;
-        this.lives = 3;
+        this.lives = 2; // Hardcore 2-vessel tactical limit
+        this.weaponHeat = 0.0;
+        this.isOverheated = false;
         this.health = maxHealth;
         this.shield = maxShield;
         this.weaponLevel = 1;
@@ -249,4 +285,9 @@ public class Player extends Ship {
     public void setControlsInverted(boolean inverted) { this.controlsInverted = inverted; }
     public double getDamageMultiplier() { return damageMultiplier; }
     public void setDamageMultiplier(double multiplier) { this.damageMultiplier = Math.max(0.1, multiplier); }
+
+    public double getWeaponHeat() { return weaponHeat; }
+    public void setWeaponHeat(double heat) { this.weaponHeat = Math.max(0.0, Math.min(maxHeat, heat)); }
+    public boolean isOverheated() { return isOverheated; }
+    public void setOverheated(boolean overheated) { this.isOverheated = overheated; }
 }
