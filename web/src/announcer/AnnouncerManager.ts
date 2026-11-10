@@ -313,11 +313,11 @@ export class AnnouncerManager {
 
     let bannerW = Math.min(500, Math.max(340, screenWidth - 480));
     if (screenWidth < 980) {
-      bannerW = Math.min(520, screenWidth - 40);
+      bannerW = Math.min(520, screenWidth - 20);
     }
     const bannerH = 56;
     const x = (screenWidth - bannerW) / 2;
-    const y = screenWidth >= 980 ? 44 : 114;
+    const y = screenWidth >= 980 ? 44 : (screenWidth < 600 ? 80 : 114);
 
     const bgAlpha = Math.min(1, 0.92 * this.bannerAlpha);
     const borderAlpha = Math.min(1, 0.8 * this.bannerAlpha);

@@ -104,7 +104,7 @@ export class FailSafe extends Enemy {
       }
     }
 
-    if (this.y > 680) {
+    if (this.y > this.playfieldHeight + 30) {
       this.active = false;
     }
   }

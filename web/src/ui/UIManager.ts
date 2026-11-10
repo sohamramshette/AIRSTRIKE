@@ -815,6 +815,7 @@ export class UIManager {
 
     viewport?.classList.toggle('is-playing', state === GameState.PLAYING);
     viewport?.classList.toggle('is-menu-state', state === GameState.MENU);
+    (window as any).__updateDimensions?.();
     menuOverlay?.classList.add('hidden');
     pauseOverlay?.classList.add('hidden');
     gameoverOverlay?.classList.add('hidden');

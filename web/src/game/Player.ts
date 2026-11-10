@@ -19,6 +19,8 @@ export class Player extends Entity {
   public isVisible: boolean = true;
   public controlsInverted: boolean = false;
   public damageMultiplier: number = 1.0;
+  public playfieldWidth: number = 800;
+  public playfieldHeight: number = 650;
 
   private animTime: number = 0;
 
@@ -27,9 +29,20 @@ export class Player extends Entity {
     this.reset();
   }
 
+  public setPlayfieldBounds(w: number, h: number): void {
+    this.playfieldWidth = w;
+    this.playfieldHeight = h;
+    if (this.x > this.playfieldWidth - this.width) {
+      this.x = Math.max(0, (this.playfieldWidth - this.width) / 2);
+    }
+    if (this.y > this.playfieldHeight - this.height) {
+      this.y = Math.max(0, this.playfieldHeight - 110);
+    }
+  }
+
   public reset(): void {
-    this.x = 376.0;
-    this.y = 540.0;
+    this.x = (this.playfieldWidth - this.width) / 2;
+    this.y = this.playfieldHeight - 110;
     this.vx = 0;
     this.vy = 0;
     this.health = this.maxHealth;
@@ -47,8 +60,8 @@ export class Player extends Entity {
   }
 
   public respawn(): void {
-    this.x = 376.0;
-    this.y = 540.0;
+    this.x = (this.playfieldWidth - this.width) / 2;
+    this.y = this.playfieldHeight - 110;
     this.vx = 0;
     this.vy = 0;
     this.health = this.maxHealth;
@@ -84,9 +97,9 @@ export class Player extends Entity {
 
     // Strict boundary clamping
     if (this.x < 0) this.x = 0;
-    if (this.x > 800 - this.width) this.x = 800 - this.width;
+    if (this.x > this.playfieldWidth - this.width) this.x = this.playfieldWidth - this.width;
     if (this.y < 0) this.y = 0;
-    if (this.y > 650 - this.height) this.y = 650 - this.height;
+    if (this.y > this.playfieldHeight - this.height) this.y = this.playfieldHeight - this.height;
 
     // Cooldown & invulnerability
     if (this.shootTimer > 0) {

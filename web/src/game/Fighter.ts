@@ -20,7 +20,7 @@ export class Fighter extends Enemy {
 
     // Keep within playfield lateral bounds
     if (this.x < 10) this.x = 10;
-    if (this.x > 800 - this.width - 10) this.x = 800 - this.width - 10;
+    if (this.x > this.playfieldWidth - this.width - 10) this.x = this.playfieldWidth - this.width - 10;
 
     if (this.shootTimer > 0) {
       this.shootTimer -= dt;
@@ -31,7 +31,7 @@ export class Fighter extends Enemy {
     }
 
     // Despawn off bottom
-    if (this.y > 680) {
+    if (this.y > this.playfieldHeight + 30) {
       this.active = false;
     }
   }

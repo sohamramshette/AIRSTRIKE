@@ -22,7 +22,7 @@ export class Drone extends Enemy {
     }
 
     // Despawn off bottom
-    if (this.y > 680) {
+    if (this.y > this.playfieldHeight + 30) {
       this.active = false;
     }
   }

@@ -52,7 +52,7 @@ export class Interceptor extends Enemy {
       this.hitFlashTimer -= dt;
     }
 
-    if (this.y > 680) {
+    if (this.y > this.playfieldHeight + 30) {
       this.active = false;
     }
   }

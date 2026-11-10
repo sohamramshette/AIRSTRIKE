@@ -54,6 +54,15 @@ export class Starfield {
     }
   }
 
+  public resize(width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+    for (const star of this.stars) {
+      if (star.x > width) star.x = Math.random() * width;
+      if (star.y > height) star.y = Math.random() * height;
+    }
+  }
+
   public update(dt: number): void {
     this.animTime += dt;
     for (const star of this.stars) {

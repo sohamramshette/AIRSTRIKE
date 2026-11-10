@@ -18,6 +18,8 @@ export class GameEngine {
   private ctx: CanvasRenderingContext2D;
 
   public state: GameState = GameState.MENU;
+  public width: number = 800;
+  public height: number = 650;
   public player: Player;
   public enemies: Enemy[] = [];
   public projectiles: Projectile[] = [];
@@ -48,16 +50,38 @@ export class GameEngine {
     }
     this.ctx = context;
 
+    this.width = canvas.width || 800;
+    this.height = canvas.height || 650;
+
     this.player = new Player();
     this.particles = new ParticleSystem();
     this.scoreCalc = new ScoreCalculator();
     this.waveManager = new WaveManager();
     this.inputManager = new InputManager();
     this.soundService = SoundService.getInstance();
-    this.starfield = new Starfield(canvas.width, canvas.height);
+    this.starfield = new Starfield(this.width, this.height);
     this.chaosScheduler = new ChaosScheduler();
 
+    this.player.setPlayfieldBounds(this.width, this.height);
+    this.waveManager.setPlayfieldBounds(this.width, this.height);
+
     this.inputManager.attachCanvas(canvas);
+  }
+
+  public resize(width: number, height: number): void {
+    if (width <= 0 || height <= 0) return;
+    this.width = width;
+    this.height = height;
+    this.canvas.width = width;
+    this.canvas.height = height;
+
+    this.starfield.resize(width, height);
+    this.player.setPlayfieldBounds(width, height);
+    this.waveManager.setPlayfieldBounds(width, height);
+
+    for (const enemy of this.enemies) {
+      enemy.setPlayfieldBounds(width, height);
+    }
   }
 
   public setGameOverCallback(cb: (summary: MatchSummary) => void): void {
@@ -183,6 +207,7 @@ export class GameEngine {
         dt,
         this.enemies.length,
         (enemy: Enemy) => {
+          enemy.setPlayfieldBounds(this.width, this.height);
           this.enemies.push(enemy);
           if (enemy.enemyType === 'BOSS') {
             this.soundService.playBossWarning();
@@ -360,159 +385,253 @@ export class GameEngine {
   private renderHUD(ctx: CanvasRenderingContext2D, w: number, _h: number): void {
     ctx.save();
 
-    // --- 1. Top-Left Vitals Pod (Matching Java Swing Theme) ---
-    const leftW = 280;
-    const leftH = 76;
-    const leftX = 20;
-    const leftY = 20;
+    if (w < 600) {
+      // --- MOBILE COMPACT DUAL POD HUD (Fits any phone width cleanly) ---
+      const topY = 10;
+      const podW = Math.floor((w - 24) / 2);
+      const podH = 64;
+      const leftX = 8;
+      const rightX = w - podW - 8;
 
-    ctx.fillStyle = 'rgba(13, 19, 33, 0.88)';
-    this.roundRect(ctx, leftX, leftY, leftW, leftH, 12);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
-    ctx.lineWidth = 1;
-    this.roundRect(ctx, leftX, leftY, leftW, leftH, 12);
-    ctx.stroke();
-
-    ctx.strokeStyle = '#00E5FF';
-    ctx.beginPath();
-    ctx.moveTo(leftX + 20, leftY);
-    ctx.lineTo(leftX + leftW - 20, leftY);
-    ctx.stroke();
-
-    const barW = 150;
-    const barH = 10;
-    const barX = leftX + 115;
-
-    // Health Bar
-    ctx.font = 'bold 10px Rajdhani, sans-serif';
-    ctx.fillStyle = '#94A3B8';
-    ctx.textAlign = 'left';
-    ctx.fillText('HULL INTEGRITY', leftX + 14, leftY + 20);
-
-    const healthPct = Math.max(0, Math.min(1, this.player.health / this.player.maxHealth));
-    ctx.fillStyle = '#161F38';
-    this.roundRect(ctx, barX, leftY + 11, barW, barH, 4);
-    ctx.fill();
-
-    const hCol = healthPct > 0.35 ? '#34D399' : '#EF4444';
-    ctx.fillStyle = hCol;
-    if (healthPct > 0) {
-      this.roundRect(ctx, barX, leftY + 11, barW * healthPct, barH, 4);
+      // 1. Mobile Left Pod: Vitals
+      ctx.fillStyle = 'rgba(13, 19, 33, 0.92)';
+      this.roundRect(ctx, leftX, topY, podW, podH, 8);
       ctx.fill();
-    }
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    this.roundRect(ctx, barX, leftY + 11, barW, barH, 4);
-    ctx.stroke();
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+      ctx.lineWidth = 1;
+      this.roundRect(ctx, leftX, topY, podW, podH, 8);
+      ctx.stroke();
 
-    // Shield Bar
-    ctx.fillStyle = '#94A3B8';
-    ctx.fillText('SHIELD CAPACITOR', leftX + 14, leftY + 40);
+      const labelW = 38;
+      const barW = Math.max(30, podW - labelW - 14);
+      const barH = 6;
+      const barX = leftX + labelW + 6;
 
-    const shieldPct = Math.max(0, Math.min(1, this.player.shield / this.player.maxShield));
-    ctx.fillStyle = '#161F38';
-    this.roundRect(ctx, barX, leftY + 31, barW, barH, 4);
-    ctx.fill();
+      // Hull Bar
+      ctx.font = 'bold 9px Rajdhani, sans-serif';
+      ctx.fillStyle = '#94A3B8';
+      ctx.textAlign = 'left';
+      ctx.fillText('HULL', leftX + 6, topY + 16);
 
-    ctx.fillStyle = '#00E5FF';
-    if (shieldPct > 0) {
-      this.roundRect(ctx, barX, leftY + 31, barW * shieldPct, barH, 4);
+      const healthPct = Math.max(0, Math.min(1, this.player.health / this.player.maxHealth));
+      ctx.fillStyle = '#161F38';
+      this.roundRect(ctx, barX, topY + 10, barW, barH, 2);
       ctx.fill();
+      ctx.fillStyle = healthPct > 0.35 ? '#34D399' : '#EF4444';
+      if (healthPct > 0) {
+        this.roundRect(ctx, barX, topY + 10, barW * healthPct, barH, 2);
+        ctx.fill();
+      }
+
+      // Shield Bar
+      ctx.fillStyle = '#94A3B8';
+      ctx.fillText('SHIELD', leftX + 6, topY + 33);
+
+      const shieldPct = Math.max(0, Math.min(1, this.player.shield / this.player.maxShield));
+      ctx.fillStyle = '#161F38';
+      this.roundRect(ctx, barX, topY + 27, barW, barH, 2);
+      ctx.fill();
+      ctx.fillStyle = '#00E5FF';
+      if (shieldPct > 0) {
+        this.roundRect(ctx, barX, topY + 27, barW * shieldPct, barH, 2);
+        ctx.fill();
+      }
+
+      // Vessels & Ordnance
+      ctx.fillStyle = '#FBBF24';
+      ctx.font = 'bold 10px Rajdhani, sans-serif';
+      ctx.fillText(`VESSELS: ${this.player.lives}`, leftX + 6, topY + 53);
+
+      const wpnTier = this.player.weaponLevel === 2 ? 'T2' : this.player.weaponLevel >= 3 ? 'T3' : 'T1';
+      ctx.fillStyle = '#38BDF8';
+      ctx.fillText(`GUN: ${wpnTier}`, leftX + podW - 46, topY + 53);
+
+      // 2. Mobile Right Pod: Score & Mission
+      ctx.fillStyle = 'rgba(13, 19, 33, 0.92)';
+      this.roundRect(ctx, rightX, topY, podW, podH, 8);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+      ctx.lineWidth = 1;
+      this.roundRect(ctx, rightX, topY, podW, podH, 8);
+      ctx.stroke();
+
+      // Pilot Tag
+      ctx.font = 'bold 10px Rajdhani, sans-serif';
+      ctx.fillStyle = '#34D399';
+      const pilotName = (typeof window !== 'undefined' && (window as any).__PILOT_CALLSIGN__) || 'CADET';
+      ctx.fillText(`● ${String(pilotName).toUpperCase()}`, rightX + 8, topY + 16);
+
+      // Score
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 13px Rajdhani, sans-serif';
+      ctx.fillText(`SCORE: ${this.scoreCalc.getScore().toLocaleString()}`, rightX + 8, topY + 34);
+
+      // Sector & Multiplier
+      ctx.fillStyle = '#FBBF24';
+      ctx.font = 'bold 10px Rajdhani, sans-serif';
+      ctx.fillText(`SEC ${this.waveManager.currentLevel}`, rightX + 8, topY + 53);
+
+      const mult = this.scoreCalc.getMultiplier();
+      if (mult > 1) {
+        ctx.fillStyle = '#EF4444';
+        ctx.fillText(`${mult}x STREAK`, rightX + podW - 54, topY + 53);
+      }
+    } else {
+      // --- 1. Top-Left Vitals Pod (Matching Java Swing Theme) ---
+      const leftW = 280;
+      const leftH = 76;
+      const leftX = 20;
+      const leftY = 20;
+
+      ctx.fillStyle = 'rgba(13, 19, 33, 0.88)';
+      this.roundRect(ctx, leftX, leftY, leftW, leftH, 12);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+      ctx.lineWidth = 1;
+      this.roundRect(ctx, leftX, leftY, leftW, leftH, 12);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#00E5FF';
+      ctx.beginPath();
+      ctx.moveTo(leftX + 20, leftY);
+      ctx.lineTo(leftX + leftW - 20, leftY);
+      ctx.stroke();
+
+      const barW = 150;
+      const barH = 10;
+      const barX = leftX + 115;
+
+      // Health Bar
+      ctx.font = 'bold 10px Rajdhani, sans-serif';
+      ctx.fillStyle = '#94A3B8';
+      ctx.textAlign = 'left';
+      ctx.fillText('HULL INTEGRITY', leftX + 14, leftY + 20);
+
+      const healthPct = Math.max(0, Math.min(1, this.player.health / this.player.maxHealth));
+      ctx.fillStyle = '#161F38';
+      this.roundRect(ctx, barX, leftY + 11, barW, barH, 4);
+      ctx.fill();
+
+      const hCol = healthPct > 0.35 ? '#34D399' : '#EF4444';
+      ctx.fillStyle = hCol;
+      if (healthPct > 0) {
+        this.roundRect(ctx, barX, leftY + 11, barW * healthPct, barH, 4);
+        ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      this.roundRect(ctx, barX, leftY + 11, barW, barH, 4);
+      ctx.stroke();
+
+      // Shield Bar
+      ctx.fillStyle = '#94A3B8';
+      ctx.fillText('SHIELD CAPACITOR', leftX + 14, leftY + 40);
+
+      const shieldPct = Math.max(0, Math.min(1, this.player.shield / this.player.maxShield));
+      ctx.fillStyle = '#161F38';
+      this.roundRect(ctx, barX, leftY + 31, barW, barH, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#00E5FF';
+      if (shieldPct > 0) {
+        this.roundRect(ctx, barX, leftY + 31, barW * shieldPct, barH, 4);
+        ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+      this.roundRect(ctx, barX, leftY + 31, barW, barH, 4);
+      ctx.stroke();
+
+      // Vessels & Weapon Tier
+      ctx.fillStyle = '#FBBF24';
+      ctx.font = 'bold 11px Rajdhani, sans-serif';
+      ctx.fillText(`VESSELS: ${this.player.lives}`, leftX + 14, leftY + 62);
+
+      ctx.fillStyle = '#38BDF8';
+      const wpnTier = this.player.weaponLevel === 2 ? 'DUAL CANNONS' : this.player.weaponLevel >= 3 ? 'TRIPLE SPREAD' : 'SINGLE CANNON';
+      ctx.fillText(`ORDNANCE: ${wpnTier}`, leftX + 115, leftY + 62);
+
+      // --- 2. Top-Right Mission Pod ---
+      const rightW = 230;
+      const rightH = 92;
+      const rightX = w - rightW - 20;
+      const rightY = 20;
+
+      ctx.fillStyle = 'rgba(13, 19, 33, 0.88)';
+      this.roundRect(ctx, rightX, rightY, rightW, rightH, 12);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+      ctx.lineWidth = 1;
+      this.roundRect(ctx, rightX, rightY, rightW, rightH, 12);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#00E5FF';
+      ctx.beginPath();
+      ctx.moveTo(rightX + 20, rightY);
+      ctx.lineTo(rightX + rightW - 20, rightY);
+      ctx.stroke();
+
+      // Pilot Tag
+      ctx.font = 'bold 11px Rajdhani, sans-serif';
+      ctx.fillStyle = '#34D399';
+      const pilotName = (typeof window !== 'undefined' && (window as any).__PILOT_CALLSIGN__) || 'CADET';
+      ctx.fillText(`● PILOT: ${String(pilotName).toUpperCase()}`, rightX + 14, rightY + 20);
+
+      // Score
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 16px Rajdhani, sans-serif';
+      ctx.fillText(`SCORE: ${this.scoreCalc.getScore().toLocaleString()}`, rightX + 14, rightY + 42);
+
+      // High Score
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '12px Rajdhani, sans-serif';
+      ctx.fillText(`RECORD: ${this.scoreCalc.getHighScore().toLocaleString()}`, rightX + 14, rightY + 60);
+
+      // Sector & Multiplier
+      ctx.fillStyle = '#FBBF24';
+      ctx.font = 'bold 12px Rajdhani, sans-serif';
+      ctx.fillText(`SECTOR: ${this.waveManager.currentLevel}`, rightX + 14, rightY + 80);
+
+      const mult = this.scoreCalc.getMultiplier();
+      if (mult > 1) {
+        ctx.fillStyle = '#EF4444';
+        ctx.fillText(`${mult}x STREAK!`, rightX + 120, rightY + 80);
+      }
+
+      // --- 3. Center Pause Hint Pill ---
+      const pillW = 86;
+      const pillH = 22;
+      const pillX = (w - pillW) / 2;
+      const pillY = 16;
+      ctx.fillStyle = 'rgba(13, 19, 33, 0.8)';
+      this.roundRect(ctx, pillX, pillY, pillW, pillH, 10);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(30, 41, 59, 0.8)';
+      this.roundRect(ctx, pillX, pillY, pillW, pillH, 10);
+      ctx.stroke();
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 10px Rajdhani, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('[P] PAUSE', w / 2, pillY + 15);
     }
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
-    this.roundRect(ctx, barX, leftY + 31, barW, barH, 4);
-    ctx.stroke();
-
-    // Vessels & Weapon Tier
-    ctx.fillStyle = '#FBBF24';
-    ctx.font = 'bold 11px Rajdhani, sans-serif';
-    ctx.fillText(`VESSELS: ${this.player.lives}`, leftX + 14, leftY + 62);
-
-    ctx.fillStyle = '#38BDF8';
-    const wpnTier = this.player.weaponLevel === 2 ? 'DUAL CANNONS' : this.player.weaponLevel >= 3 ? 'TRIPLE SPREAD' : 'SINGLE CANNON';
-    ctx.fillText(`ORDNANCE: ${wpnTier}`, leftX + 115, leftY + 62);
-
-    // --- 2. Top-Right Mission Pod ---
-    const rightW = 230;
-    const rightH = 92;
-    const rightX = w - rightW - 20;
-    const rightY = 20;
-
-    ctx.fillStyle = 'rgba(13, 19, 33, 0.88)';
-    this.roundRect(ctx, rightX, rightY, rightW, rightH, 12);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
-    ctx.lineWidth = 1;
-    this.roundRect(ctx, rightX, rightY, rightW, rightH, 12);
-    ctx.stroke();
-
-    ctx.strokeStyle = '#00E5FF';
-    ctx.beginPath();
-    ctx.moveTo(rightX + 20, rightY);
-    ctx.lineTo(rightX + rightW - 20, rightY);
-    ctx.stroke();
-
-    // Pilot Tag
-    ctx.font = 'bold 11px Rajdhani, sans-serif';
-    ctx.fillStyle = '#34D399';
-    const pilotName = (typeof window !== 'undefined' && (window as any).__PILOT_CALLSIGN__) || 'CADET';
-    ctx.fillText(`● PILOT: ${String(pilotName).toUpperCase()}`, rightX + 14, rightY + 20);
-
-    // Score
-    ctx.fillStyle = '#F8FAFC';
-    ctx.font = 'bold 16px Rajdhani, sans-serif';
-    ctx.fillText(`SCORE: ${this.scoreCalc.getScore().toLocaleString()}`, rightX + 14, rightY + 42);
-
-    // High Score
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '12px Rajdhani, sans-serif';
-    ctx.fillText(`RECORD: ${this.scoreCalc.getHighScore().toLocaleString()}`, rightX + 14, rightY + 60);
-
-    // Sector & Multiplier
-    ctx.fillStyle = '#FBBF24';
-    ctx.font = 'bold 12px Rajdhani, sans-serif';
-    ctx.fillText(`SECTOR: ${this.waveManager.currentLevel}`, rightX + 14, rightY + 80);
-
-    const mult = this.scoreCalc.getMultiplier();
-    if (mult > 1) {
-      ctx.fillStyle = '#EF4444';
-      ctx.fillText(`${mult}x STREAK!`, rightX + 120, rightY + 80);
-    }
-
-    // --- 3. Center Pause Hint Pill ---
-    const pillW = 86;
-    const pillH = 22;
-    const pillX = (w - pillW) / 2;
-    const pillY = 16;
-    ctx.fillStyle = 'rgba(13, 19, 33, 0.8)';
-    this.roundRect(ctx, pillX, pillY, pillW, pillH, 10);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.8)';
-    this.roundRect(ctx, pillX, pillY, pillW, pillH, 10);
-    ctx.stroke();
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = 'bold 10px Rajdhani, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('[P] PAUSE', w / 2, pillY + 15);
 
     // --- 4. Boss Health Bar (if active) ---
     const boss = this.enemies.find(e => e.enemyType === 'BOSS') as Enemy | undefined;
     if (boss && boss.active) {
-      const bw = 280;
+      const bw = Math.min(280, w - 40);
       const bx = (w - bw) / 2;
+      const by = w < 600 ? 80 : 48;
       const bHealthPct = Math.max(0, boss.health / boss.maxHealth);
 
       ctx.fillStyle = '#FF5A28';
       ctx.font = 'bold 11px Rajdhani, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('FLAGSHIP: LEVIATHAN', w / 2, 48);
+      ctx.fillText('FLAGSHIP: LEVIATHAN', w / 2, by);
 
       ctx.fillStyle = '#161F38';
-      ctx.fillRect(bx, 54, bw, 10);
+      ctx.fillRect(bx, by + 6, bw, 8);
       ctx.fillStyle = '#DC2626';
-      ctx.fillRect(bx, 54, bw * bHealthPct, 10);
+      ctx.fillRect(bx, by + 6, bw * bHealthPct, 8);
       ctx.strokeStyle = '#FF5A28';
-      ctx.strokeRect(bx, 54, bw, 10);
+      ctx.strokeRect(bx, by + 6, bw, 8);
     }
 
     // --- 5. Center Tactical Desi Announcer Banner ---
@@ -526,13 +645,16 @@ export class GameEngine {
 
   private renderBanner(ctx: CanvasRenderingContext2D, w: number, h: number, text: string): void {
     ctx.save();
-    ctx.fillStyle = 'rgba(7, 10, 20, 0.85)';
-    ctx.fillRect(0, h / 2 - 40, w, 80);
+    const bannerH = 68;
+    const bannerY = (h - bannerH) / 2;
+    ctx.fillStyle = 'rgba(7, 10, 20, 0.88)';
+    ctx.fillRect(0, bannerY, w, bannerH);
     ctx.strokeStyle = '#00E5FF';
     ctx.lineWidth = 2;
-    ctx.strokeRect(0, h / 2 - 40, w, 80);
+    ctx.strokeRect(0, bannerY, w, bannerH);
 
-    ctx.font = 'bold 24px monospace';
+    const fontSize = w < 500 ? 18 : 24;
+    ctx.font = `bold ${fontSize}px monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#00E5FF';

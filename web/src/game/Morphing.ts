@@ -76,7 +76,7 @@ export class Morphing extends Enemy {
     // Evaluate transitions
     this.evaluateTransitions(dist);
 
-    if (this.y > 680) {
+    if (this.y > this.playfieldHeight + 30) {
       this.active = false;
     }
   }

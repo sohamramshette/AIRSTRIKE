@@ -124,29 +124,34 @@ async function runBrowserQA(browserName: string, executablePath: string): Promis
     await page.waitForFunction(() => (window as any).__airstrikeEngine?.state === 'PLAYING', { timeout: 3000 });
     result.checks.push('Mobile direct launch verified: game starts without intrusive modal');
 
-    // Verify Portrait Canvas Aspect Ratio (800 / 650 = 1.230769)
+    // Verify Mobile Fullscreen Canvas without Distortion
     const portraitCanvas = await page.evaluate(() => {
-      const canvas = document.querySelector('#game-canvas')!.getBoundingClientRect();
+      const canvasEl = document.querySelector('#game-canvas') as HTMLCanvasElement;
+      const rect = canvasEl.getBoundingClientRect();
       const touchControls = document.querySelector('#touch-controls')!;
       const dpad = document.querySelector('.touch-dpad')!.getBoundingClientRect();
       const fire = document.querySelector('#touch-fire')!.getBoundingClientRect();
       return {
-        canvasWidth: canvas.width,
-        canvasHeight: canvas.height,
-        aspectRatio: canvas.width / canvas.height,
+        canvasCssWidth: rect.width,
+        canvasCssHeight: rect.height,
+        bufferWidth: canvasEl.width,
+        bufferHeight: canvasEl.height,
+        pixelRatioX: canvasEl.width / rect.width,
+        pixelRatioY: canvasEl.height / rect.height,
+        fillsScreen: Math.abs(rect.width - window.innerWidth) < 2 && Math.abs(rect.height - window.innerHeight) < 2,
         touchVisible: getComputedStyle(touchControls).display !== 'none',
         dpadRendered: dpad.width > 0 && dpad.height > 0,
         fireRendered: fire.width > 0 && fire.height > 0
       };
     });
 
-    const expectedRatio = 800 / 650;
-    assert.ok(Math.abs(portraitCanvas.aspectRatio - expectedRatio) < 0.05,
-      `Portrait canvas aspect ratio should be ~1.23, got ${portraitCanvas.aspectRatio}`);
+    assert.ok(portraitCanvas.fillsScreen, 'Mobile portrait canvas should fill the entire screen (no wasted space)');
+    assert.ok(Math.abs(portraitCanvas.pixelRatioX - portraitCanvas.pixelRatioY) < 0.01,
+      'Canvas pixel aspect ratio must be 1:1 to guarantee zero stretching or distortion');
     assert.ok(portraitCanvas.touchVisible, 'Touch controls must be visible during mobile gameplay');
     assert.ok(portraitCanvas.dpadRendered, 'D-pad must be rendered on mobile');
     assert.ok(portraitCanvas.fireRendered, 'Virtual FIRE button must be rendered on mobile');
-    result.checks.push('Portrait mobile gameplay verified: exact 800:650 aspect ratio and active touch deck');
+    result.checks.push('Portrait mobile gameplay verified: full-screen immersion, 1:1 pixel fidelity, and active touch deck');
 
     // Test Touch Fire Interaction
     const fireBtn = await page.$('#touch-fire');

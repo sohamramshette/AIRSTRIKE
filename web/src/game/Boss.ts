@@ -29,11 +29,12 @@ export class Boss extends Enemy {
     } else {
       // Horizontal patrol
       this.x += this.vx * dt;
+      const maxPatrol = Math.min(650, Math.max(30, this.playfieldWidth - this.width - 20));
       if (this.x <= 30) {
         this.x = 30;
         this.vx = Math.abs(this.vx);
-      } else if (this.x >= 650) {
-        this.x = 650;
+      } else if (this.x >= maxPatrol) {
+        this.x = maxPatrol;
         this.vx = -Math.abs(this.vx);
       }
 

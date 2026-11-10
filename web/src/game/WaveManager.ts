@@ -17,6 +17,13 @@ export class WaveManager {
   public bossActive: boolean = false;
   public bannerText: string | null = null;
   public bannerTimer: number = 0;
+  public playfieldWidth: number = 800;
+  public playfieldHeight: number = 650;
+
+  public setPlayfieldBounds(w: number, h: number): void {
+    this.playfieldWidth = w;
+    this.playfieldHeight = h;
+  }
 
   constructor() {
     this.startLevel(1);
@@ -91,7 +98,9 @@ export class WaveManager {
           const interval = Math.max(0.7, 2.2 - this.currentLevel * 0.2);
           this.spawnTimer = interval;
 
-          const spawnX = 50 + Math.random() * 680;
+          const margin = 40;
+          const usableW = Math.max(120, this.playfieldWidth - margin * 2);
+          const spawnX = margin + Math.random() * usableW;
           const roll = Math.random() * 100;
 
           if (this.currentLevel === 1) {

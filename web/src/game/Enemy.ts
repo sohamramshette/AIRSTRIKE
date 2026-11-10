@@ -10,6 +10,13 @@ export abstract class Enemy extends Entity {
   public scoreValue: number;
   public enemyType: EnemyType;
   public hitFlashTimer: number = 0;
+  public playfieldWidth: number = 800;
+  public playfieldHeight: number = 650;
+
+  public setPlayfieldBounds(w: number, h: number): void {
+    this.playfieldWidth = w;
+    this.playfieldHeight = h;
+  }
 
   constructor(
     x: number,
