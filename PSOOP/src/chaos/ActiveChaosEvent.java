@@ -13,6 +13,8 @@ public class ActiveChaosEvent {
     private double durationRemaining;
     private boolean warningAnnounced;
     private boolean activated;
+    private boolean activationAnnounced;
+    private ChaosEventType dualPartnerType;
 
     // Encapsulated restore cache to guarantee state safety
     private double cachedPlayerSpeed = -1.0;
@@ -76,6 +78,12 @@ public class ActiveChaosEvent {
 
     public boolean isActivated() { return activated; }
     public void setActivated(boolean activated) { this.activated = activated; }
+
+    public boolean isActivationAnnounced() { return activationAnnounced; }
+    public void setActivationAnnounced(boolean announced) { this.activationAnnounced = announced; }
+
+    public ChaosEventType getDualPartnerType() { return dualPartnerType; }
+    public void setDualPartnerType(ChaosEventType partner) { this.dualPartnerType = partner; }
 
     // State restoration accessors
     public double getCachedPlayerSpeed() { return cachedPlayerSpeed; }

@@ -41,7 +41,7 @@ public class ChaosScheduler {
     private final Random random;
 
     public ChaosScheduler() {
-        this(45.0, 30.0, 60.0);
+        this(45.0, 18.0, 35.0);
     }
 
     public ChaosScheduler(double firstDelay, double minInt, double maxInt) {
@@ -50,7 +50,7 @@ public class ChaosScheduler {
         this.minInterval = Math.max(5.0, minInt);
         this.maxInterval = Math.max(minInterval, maxInt);
         this.nextEventTimer = this.firstEventDelay;
-        this.maxActiveEvents = 2;
+        this.maxActiveEvents = 4;
         this.activeEvents = new ArrayList<>();
         this.history = new LinkedList<>();
         this.lastTriggered = null;
@@ -84,9 +84,14 @@ public class ChaosScheduler {
         if (nextEventTimer > 0.0) {
             nextEventTimer -= delta;
             if (nextEventTimer <= 0.0 && activeEvents.size() < maxActiveEvents) {
-                ChaosEventType selected = pickEligibleEvent(currentLevel);
-                if (selected != null) {
-                    triggerEvent(selected, engine);
+                ChaosEventType primary = pickEligibleEvent(currentLevel);
+                if (primary != null) {
+                    ChaosEventType secondary = pickCompatibleSecondary(primary, currentLevel);
+                    if (secondary != null && (activeEvents.size() + 2 <= maxActiveEvents)) {
+                        triggerDualChaos(primary, secondary, engine, 3.0);
+                    } else {
+                        triggerEvent(primary, engine);
+                    }
                 }
                 // Schedule next interval
                 nextEventTimer = minInterval + random.nextDouble() * (maxInterval - minInterval);
@@ -101,21 +106,41 @@ public class ChaosScheduler {
 
             // Announce warning when warning countdown begins
             if (wasWarning && !event.isWarningAnnounced()) {
-                event.setWarningAnnounced(true);
-                AnnouncerManager.getInstance().triggerChaosLine(
-                        event.getType().getWarningLine(),
-                        event.getType().getCategory()
-                );
+                if (event.getDualPartnerType() != null) {
+                    ActiveChaosEvent partner = findActiveEvent(event.getDualPartnerType());
+                    String line = String.format("⚠️ DUAL ANOMALY ALERT! %s + %s ek saath shuru hone wale hain! Dono se bach ke rehna!",
+                            event.getType().getDisplayName(), event.getDualPartnerType().getDisplayName());
+                    AnnouncerManager.getInstance().triggerChaosLine(line, announcer.DialogueCategory.GENERAL_ROAST);
+                    event.setWarningAnnounced(true);
+                    if (partner != null) partner.setWarningAnnounced(true);
+                } else {
+                    event.setWarningAnnounced(true);
+                    AnnouncerManager.getInstance().triggerChaosLine(
+                            event.getType().getWarningLine(),
+                            event.getType().getCategory()
+                    );
+                }
             }
 
             boolean justActivated = event.update(delta);
 
             // On transition from warning to active
             if (justActivated) {
-                AnnouncerManager.getInstance().triggerChaosLine(
-                        event.getType().getActivateLine(),
-                        event.getType().getCategory()
-                );
+                if (event.getDualPartnerType() != null) {
+                    if (!event.isActivationAnnounced()) {
+                        ActiveChaosEvent partner = findActiveEvent(event.getDualPartnerType());
+                        String line = String.format("⚡ DUAL CHAOS CONVERGENCE! %s aur %s dono active! Ab survive karke dikha!",
+                                event.getType().getDisplayName(), event.getDualPartnerType().getDisplayName());
+                        AnnouncerManager.getInstance().triggerChaosLine(line, announcer.DialogueCategory.BOLLYWOOD);
+                        event.setActivationAnnounced(true);
+                        if (partner != null) partner.setActivationAnnounced(true);
+                    }
+                } else {
+                    AnnouncerManager.getInstance().triggerChaosLine(
+                            event.getType().getActivateLine(),
+                            event.getType().getCategory()
+                    );
+                }
                 applyInitialActivationEffect(event, engine);
             }
 
@@ -134,19 +159,78 @@ public class ChaosScheduler {
 
     /**
      * Triggered when the player clears a sector wave.
-     * Schedules an advance warning identifying the upcoming anomaly for the next sector,
-     * announces it via the Announcer, and applies the anomaly as the new sector starts!
+     * Schedules an advance warning identifying a DUAL CHAOS CONVERGENCE for the next sector,
+     * announces it via the Announcer, and applies both anomalies simultaneously!
      */
     public ActiveChaosEvent onSectorCleared(int clearedSector, GameEngine engine) {
         if (!enabled || engine == null) return null;
         int nextSector = clearedSector + 1;
-        ChaosEventType selected = pickEligibleEvent(nextSector);
-        if (selected == null) return null;
+        ChaosEventType primary = pickEligibleEvent(nextSector);
+        if (primary == null) return null;
 
+        ChaosEventType secondary = pickCompatibleSecondary(primary, nextSector);
         double warningDuration = 4.0;
-        ActiveChaosEvent event = triggerEvent(selected, engine, warningDuration);
+        ActiveChaosEvent event;
+        if (secondary != null) {
+            event = triggerDualChaos(primary, secondary, engine, warningDuration);
+        } else {
+            event = triggerEvent(primary, engine, warningDuration);
+        }
+
         nextEventTimer = minInterval + random.nextDouble() * (maxInterval - minInterval);
         return event;
+    }
+
+    /**
+     * Finds an active event of the given type among currently tracked active events.
+     */
+    private ActiveChaosEvent findActiveEvent(ChaosEventType type) {
+        for (ActiveChaosEvent ev : activeEvents) {
+            if (ev.getType() == type) return ev;
+        }
+        return null;
+    }
+
+    /**
+     * Picks a compatible, non-conflicting secondary event for Dual Chaos Convergence.
+     */
+    public ChaosEventType pickCompatibleSecondary(ChaosEventType primary, int currentLevel) {
+        List<ChaosEventType> candidates = new ArrayList<>();
+        for (ChaosEventType type : ChaosEventType.values()) {
+            if (type == primary) continue;
+            if (type == lastTriggered) continue;
+            if (currentLevel < type.getMinDifficulty()) continue;
+            if (!primary.isCompatibleWith(type)) continue;
+
+            boolean compatible = true;
+            for (ActiveChaosEvent active : activeEvents) {
+                if (!type.isCompatibleWith(active.getType())) {
+                    compatible = false;
+                    break;
+                }
+            }
+            if (compatible) {
+                candidates.add(type);
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            for (ChaosEventType type : ChaosEventType.values()) {
+                if (type == primary) continue;
+                if (!primary.isCompatibleWith(type)) continue;
+                boolean compatible = true;
+                for (ActiveChaosEvent active : activeEvents) {
+                    if (!type.isCompatibleWith(active.getType())) {
+                        compatible = false;
+                        break;
+                    }
+                }
+                if (compatible) candidates.add(type);
+            }
+        }
+
+        if (candidates.isEmpty()) return null;
+        return candidates.get(random.nextInt(candidates.size()));
     }
 
     /**
@@ -187,6 +271,30 @@ public class ChaosScheduler {
 
         if (candidates.isEmpty()) return null;
         return candidates.get(random.nextInt(candidates.size()));
+    }
+
+    public ActiveChaosEvent triggerDualChaos(ChaosEventType primary, ChaosEventType secondary, GameEngine engine) {
+        return triggerDualChaos(primary, secondary, engine, 4.0);
+    }
+
+    public ActiveChaosEvent triggerDualChaos(ChaosEventType primary, ChaosEventType secondary, GameEngine engine, double warningDuration) {
+        if (primary == null || secondary == null) return null;
+
+        ActiveChaosEvent event1 = new ActiveChaosEvent(primary, primary.getDefaultDuration(), warningDuration);
+        ActiveChaosEvent event2 = new ActiveChaosEvent(secondary, secondary.getDefaultDuration(), warningDuration);
+
+        event1.setDualPartnerType(secondary);
+        event2.setDualPartnerType(primary);
+
+        activeEvents.add(event1);
+        activeEvents.add(event2);
+
+        lastTriggered = secondary;
+        history.add(primary);
+        history.add(secondary);
+        while (history.size() > 20) history.removeFirst();
+
+        return event1;
     }
 
     /**
@@ -254,7 +362,7 @@ public class ChaosScheduler {
             case SPEED_DEMON -> {
                 if (player != null) {
                     event.setCachedPlayerSpeed(player.getSpeed());
-                    player.setSpeed(player.getSpeed() * 1.6);
+                    player.setSpeed(player.getSpeed() * 1.7);
                 }
             }
             case RAPID_FIRE -> {
@@ -266,7 +374,7 @@ public class ChaosScheduler {
             case WEAPON_JAM -> {
                 if (player != null) {
                     event.setCachedShootCooldown(player.getShootCooldownMs());
-                    player.setShootCooldownMs(player.getShootCooldownMs() * 3); // Pipeline stall
+                    player.setShootCooldownMs((long) (player.getShootCooldownMs() * 3.5)); // Pipeline stall
                 }
             }
             case CRITICAL_OVERDRIVE -> {
@@ -291,11 +399,11 @@ public class ChaosScheduler {
                 }
             }
             case DOUBLE_TROUBLE -> {
-                // Clone up to 3 non-boss active enemies
+                // Clone up to 4 non-boss active enemies
                 List<Enemy> clones = new ArrayList<>();
                 int cloneCount = 0;
                 for (Enemy e : enemies) {
-                    if (e.isActive() && !(e instanceof model.BossEnemy) && cloneCount < 3) {
+                    if (e.isActive() && !(e instanceof model.BossEnemy) && cloneCount < 4) {
                         double nx = Math.max(40, Math.min(engine.getScreenWidth() - 60, e.getX() + 45));
                         clones.add(new FighterEnemy(nx, e.getY()));
                         cloneCount++;
@@ -318,22 +426,22 @@ public class ChaosScheduler {
                 }
             }
             case GEOMETRIC_BARRAGE -> {
-                // Spawn an 8-way regular octagonal projectile ring from center top
+                // Spawn a 12-way regular dodecagonal projectile starburst from center top
                 double cx = engine.getScreenWidth() / 2.0;
                 double cy = 90.0;
-                double speed = 190.0;
-                for (int i = 0; i < 8; i++) {
-                    double angle = (i * Math.PI / 4.0);
+                double speed = 220.0;
+                for (int i = 0; i < 12; i++) {
+                    double angle = (i * 2.0 * Math.PI / 12.0);
                     double vx = Math.cos(angle) * speed;
                     double vy = Math.sin(angle) * speed;
                     projectiles.add(new Projectile(cx, cy, 6, 6, vx, vy, false, 12));
                 }
             }
             case BULLET_RAIN -> {
-                // Spawn a grid of 6 downward Bresenham-spaced plasma bolts
-                double step = engine.getScreenWidth() / 7.0;
-                for (int i = 1; i <= 6; i++) {
-                    projectiles.add(new Projectile(step * i, 20, 5, 14, 0, 240.0, false, 10));
+                // Spawn a grid of 8 downward Bresenham-spaced plasma bolts
+                double step = engine.getScreenWidth() / 9.0;
+                for (int i = 1; i <= 8; i++) {
+                    projectiles.add(new Projectile(step * i, 20, 5, 14, 0, 260.0, false, 10));
                 }
             }
             default -> {}
@@ -353,7 +461,7 @@ public class ChaosScheduler {
                 // Micro-singularity located at center of screen
                 double cx = engine.getScreenWidth() / 2.0;
                 double cy = engine.getScreenHeight() / 2.0;
-                double pullStrength = 95.0 * delta;
+                double pullStrength = 130.0 * delta;
 
                 if (player != null && player.isActive()) {
                     double dx = cx - player.getCenterX();
@@ -367,6 +475,13 @@ public class ChaosScheduler {
                     if (e.isActive() && !(e instanceof model.BossEnemy)) {
                         double dx = cx - (e.getX() + e.getWidth() / 2.0);
                         e.setX(e.getX() + Math.signum(dx) * Math.min(Math.abs(dx), pullStrength * 0.7));
+                    }
+                }
+            }
+            case SPEED_DEMON -> {
+                for (Enemy e : enemies) {
+                    if (e.isActive()) {
+                        e.setY(e.getY() + (e.getSpeed() * 0.35 * delta));
                     }
                 }
             }

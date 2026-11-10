@@ -25,6 +25,7 @@ public class ChaosProtocolTest {
         testStateRestoration();
         testSchedulerLifecycleAndAntiRepetition();
         testGameRestartReset();
+        testDualChaosConvergence();
 
         System.out.println("========================================================");
         System.out.printf("TEST RESULTS: %d / %d PASSED (%.1f%%)%n", passed, (passed + failed), (passed * 100.0) / (passed + failed));
@@ -214,5 +215,47 @@ public class ChaosProtocolTest {
         assertTrue("Reset restores 45s first event delay", Math.abs(scheduler.getNextEventTimer() - 45.0) < 0.001);
         assertTrue("Reset restores controlsInverted to false", !player.isControlsInverted());
         assertTrue("Reset restores damageMultiplier to 1.0", Math.abs(player.getDamageMultiplier() - 1.0) < 0.001);
+    }
+
+    private static void testDualChaosConvergence() {
+        GameEngine engine = new GameEngine(800, 650);
+        engine.startNewGame();
+        ChaosScheduler scheduler = engine.getChaosScheduler();
+        Player player = engine.getPlayer();
+        double baseSpeed = player.getSpeed();
+
+        // 1. Test triggerDualChaos with compatible pair
+        ActiveChaosEvent ev1 = scheduler.triggerDualChaos(
+                ChaosEventType.REVERSE_CONTROLS,
+                ChaosEventType.SPEED_DEMON,
+                engine,
+                1.0
+        );
+        assertTrue("triggerDualChaos instantiates primary event", ev1 != null);
+        assertTrue("activeEvents contains both mixed events simultaneously", scheduler.getActiveEvents().size() == 2);
+        assertTrue("Primary event has secondary as dual partner", ev1.getDualPartnerType() == ChaosEventType.SPEED_DEMON);
+        assertTrue("Secondary event has primary as dual partner",
+                scheduler.getActiveEvents().get(1).getDualPartnerType() == ChaosEventType.REVERSE_CONTROLS);
+
+        // Warning state check
+        assertTrue("Controls unaffected during warning", !player.isControlsInverted());
+        assertTrue("Speed unaffected during warning", Math.abs(player.getSpeed() - baseSpeed) < 0.001);
+
+        // Transition to active
+        scheduler.update(1.2, engine);
+        assertTrue("Controls inverted upon dual activation", player.isControlsInverted());
+        assertTrue("Player speed overclocked upon dual activation", player.getSpeed() > baseSpeed);
+
+        // Expiration and clean recovery without drift
+        scheduler.update(20.0, engine);
+        assertTrue("Both dual events expired cleanly", scheduler.getActiveEvents().isEmpty());
+        assertTrue("Controls restored cleanly after dual chaos", !player.isControlsInverted());
+        assertTrue("Speed cleanly restored without drift", Math.abs(player.getSpeed() - baseSpeed) < 0.001);
+
+        // 2. Test onSectorCleared triggers advance dual warning
+        ActiveChaosEvent sectorEv = scheduler.onSectorCleared(1, engine);
+        assertTrue("onSectorCleared triggers dual event", sectorEv != null);
+        assertTrue("onSectorCleared schedules exactly 2 simultaneous anomalies", scheduler.getActiveEvents().size() == 2);
+        assertTrue("Sector clear anomaly starts with 4s advance warning", Math.abs(sectorEv.getWarningTimer() - 4.0) < 0.001);
     }
 }

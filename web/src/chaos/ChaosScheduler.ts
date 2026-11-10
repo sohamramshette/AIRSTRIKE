@@ -11,13 +11,13 @@ export class ChaosScheduler {
   public minInterval: number;
   public maxInterval: number;
   public nextEventTimer: number;
-  public maxActiveEvents: number = 2;
+  public maxActiveEvents: number = 4;
 
   public activeEvents: ActiveChaosEvent[] = [];
   public lastTriggered: ChaosEventType | null = null;
   public history: ChaosEventType[] = [];
 
-  constructor(firstDelay: number = 45.0, minInt: number = 30.0, maxInt: number = 60.0) {
+  constructor(firstDelay: number = 45.0, minInt: number = 18.0, maxInt: number = 35.0) {
     this.firstEventDelay = Math.max(1.0, firstDelay);
     this.minInterval = Math.max(5.0, minInt);
     this.maxInterval = Math.max(this.minInterval, maxInt);
@@ -44,9 +44,14 @@ export class ChaosScheduler {
     if (this.nextEventTimer > 0) {
       this.nextEventTimer -= dt;
       if (this.nextEventTimer <= 0 && this.activeEvents.length < this.maxActiveEvents) {
-        const selected = this.pickEligibleEvent(currentLevel);
-        if (selected) {
-          this.triggerEvent(selected, engine);
+        const primary = this.pickEligibleEvent(currentLevel);
+        if (primary) {
+          const secondary = this.pickCompatibleSecondary(primary, currentLevel);
+          if (secondary && (this.activeEvents.length + 2 <= this.maxActiveEvents)) {
+            this.triggerDualChaos(primary, secondary, engine, 3.0);
+          } else {
+            this.triggerEvent(primary, engine, 3.0);
+          }
         }
         this.nextEventTimer = this.minInterval + Math.random() * (this.maxInterval - this.minInterval);
       }
@@ -58,20 +63,48 @@ export class ChaosScheduler {
       const wasWarning = event.isWarning();
 
       if (wasWarning && !event.warningAnnounced) {
-        event.warningAnnounced = true;
-        AnnouncerManager.getInstance().triggerChaosLine(
-          event.definition.warningLine,
-          event.definition.category
-        );
+        if (event.dualPartnerType) {
+          const partner = this.activeEvents.find(e => e.type === event.dualPartnerType);
+          const def1 = event.definition;
+          const def2 = CHAOS_DEFINITIONS[event.dualPartnerType];
+          const name2 = def2 ? def2.displayName : event.dualPartnerType;
+          AnnouncerManager.getInstance().triggerChaosLine(
+            `⚠️ DUAL ANOMALY ALERT! ${def1.displayName} + ${name2} ek saath shuru hone wale hain! Dono se bach ke rehna!`,
+            'GENERAL_ROAST'
+          );
+          event.warningAnnounced = true;
+          if (partner) partner.warningAnnounced = true;
+        } else {
+          event.warningAnnounced = true;
+          AnnouncerManager.getInstance().triggerChaosLine(
+            event.definition.warningLine,
+            event.definition.category
+          );
+        }
       }
 
       const justActivated = event.update(dt);
 
       if (justActivated) {
-        AnnouncerManager.getInstance().triggerChaosLine(
-          event.definition.activateLine,
-          event.definition.category
-        );
+        if (event.dualPartnerType) {
+          if (!event.activationAnnounced) {
+            const partner = this.activeEvents.find(e => e.type === event.dualPartnerType);
+            const def1 = event.definition;
+            const def2 = CHAOS_DEFINITIONS[event.dualPartnerType];
+            const name2 = def2 ? def2.displayName : event.dualPartnerType;
+            AnnouncerManager.getInstance().triggerChaosLine(
+              `⚡ DUAL CHAOS CONVERGENCE! ${def1.displayName} aur ${name2} dono active! Ab survive karke dikha!`,
+              'BOLLYWOOD'
+            );
+            event.activationAnnounced = true;
+            if (partner) partner.activationAnnounced = true;
+          }
+        } else {
+          AnnouncerManager.getInstance().triggerChaosLine(
+            event.definition.activateLine,
+            event.definition.category
+          );
+        }
         this.applyInitialActivationEffect(event, engine);
       }
 
@@ -88,23 +121,62 @@ export class ChaosScheduler {
 
   /**
    * Triggered when the player clears a sector.
-   * Schedules an advance warning identifying the upcoming anomaly for the next sector,
-   * announces it via the Announcer, and applies the anomaly as the new sector starts!
+   * Schedules an advance warning identifying a DUAL CHAOS CONVERGENCE for the next sector,
+   * announces it via the Announcer, and applies both anomalies simultaneously!
    */
   public onSectorCleared(clearedSector: number, engine: any): ActiveChaosEvent | null {
     if (!this.enabled || !engine) return null;
     const nextSector = clearedSector + 1;
 
-    const selected = this.pickEligibleEvent(nextSector);
-    if (!selected) return null;
+    const primary = this.pickEligibleEvent(nextSector);
+    if (!primary) return null;
 
-    // 4.0-second advance warning covering wave transition
+    const secondary = this.pickCompatibleSecondary(primary, nextSector);
     const warningDuration = 4.0;
-    const event = this.triggerEvent(selected, engine, warningDuration);
+
+    let event: ActiveChaosEvent;
+    if (secondary) {
+      event = this.triggerDualChaos(primary, secondary, engine, warningDuration);
+    } else {
+      event = this.triggerEvent(primary, engine, warningDuration)!;
+    }
 
     // Push next interval so periodic timer does not collide
     this.nextEventTimer = this.minInterval + Math.random() * (this.maxInterval - this.minInterval);
     return event;
+  }
+
+  /**
+   * Picks a compatible, non-conflicting secondary chaos event for Dual Chaos Convergence.
+   */
+  public pickCompatibleSecondary(primary: ChaosEventType, currentLevel: number): ChaosEventType | null {
+    const allTypes = Object.values(ChaosEventType);
+    let candidates = allTypes.filter(t => {
+      if (t === primary) return false;
+      if (t === this.lastTriggered) return false;
+      const def = CHAOS_DEFINITIONS[t];
+      if (!def || currentLevel < def.minDifficulty) return false;
+      if (!isCompatibleChaosEvents(primary, t)) return false;
+
+      for (const active of this.activeEvents) {
+        if (!isCompatibleChaosEvents(t, active.type)) return false;
+      }
+      return true;
+    });
+
+    if (candidates.length === 0) {
+      candidates = allTypes.filter(t => {
+        if (t === primary) return false;
+        if (!isCompatibleChaosEvents(primary, t)) return false;
+        for (const active of this.activeEvents) {
+          if (!isCompatibleChaosEvents(t, active.type)) return false;
+        }
+        return true;
+      });
+    }
+
+    if (candidates.length === 0) return null;
+    return candidates[Math.floor(Math.random() * candidates.length)];
   }
 
   public pickEligibleEvent(currentLevel: number): ChaosEventType | null {
@@ -131,6 +203,32 @@ export class ChaosScheduler {
 
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  public triggerDualChaos(
+    primary: ChaosEventType,
+    secondary: ChaosEventType,
+    _engine?: any,
+    warningDuration: number = 4.0
+  ): ActiveChaosEvent {
+    const def1 = CHAOS_DEFINITIONS[primary];
+    const def2 = CHAOS_DEFINITIONS[secondary];
+
+    const event1 = new ActiveChaosEvent(primary, def1?.defaultDuration ?? 10.0, warningDuration);
+    const event2 = new ActiveChaosEvent(secondary, def2?.defaultDuration ?? 10.0, warningDuration);
+
+    event1.dualPartnerType = secondary;
+    event2.dualPartnerType = primary;
+
+    this.activeEvents.push(event1);
+    this.activeEvents.push(event2);
+
+    this.lastTriggered = secondary;
+    this.history.push(primary);
+    this.history.push(secondary);
+    while (this.history.length > 20) this.history.shift();
+
+    return event1;
   }
 
   public triggerEvent(type: ChaosEventType, _engine?: any, warningDuration: number = 3.0): ActiveChaosEvent | null {
@@ -177,7 +275,7 @@ export class ChaosScheduler {
       case ChaosEventType.SPEED_DEMON:
         if (player) {
           event.cachedPlayerSpeed = player.speed;
-          player.speed *= 1.6;
+          player.speed *= 1.7;
         }
         break;
 
@@ -191,7 +289,7 @@ export class ChaosScheduler {
       case ChaosEventType.WEAPON_JAM:
         if (player) {
           event.cachedShootCooldown = player.shootCooldown;
-          player.shootCooldown = player.shootCooldown * 3.0; // Pipeline stall
+          player.shootCooldown = player.shootCooldown * 3.5; // Pipeline stall
         }
         break;
 
@@ -222,7 +320,7 @@ export class ChaosScheduler {
         let clones = 0;
         const toAdd: any[] = [];
         for (const e of enemies) {
-          if (e.active && e.type !== 'boss' && clones < 3) {
+          if (e.active && e.type !== 'boss' && clones < 4) {
             const nx = Math.max(40, Math.min(740, e.x + 45));
             toAdd.push(new Fighter(nx, e.y));
             clones++;
@@ -238,9 +336,9 @@ export class ChaosScheduler {
       case ChaosEventType.GEOMETRIC_BARRAGE:
         const cx = 400;
         const cy = 90;
-        const spd = 190.0;
-        for (let i = 0; i < 8; i++) {
-          const angle = (i * Math.PI) / 4.0;
+        const spd = 220.0;
+        for (let i = 0; i < 12; i++) {
+          const angle = (i * 2.0 * Math.PI) / 12.0;
           const vx = Math.cos(angle) * spd;
           const vy = Math.sin(angle) * spd;
           projectiles.push(new Projectile(cx, cy, vx, vy, 12, false, 6, 6, '#FF5588', 'rgba(255, 40, 100, 0.7)'));
@@ -248,9 +346,9 @@ export class ChaosScheduler {
         break;
 
       case ChaosEventType.BULLET_RAIN:
-        for (let i = 1; i <= 6; i++) {
-          const sx = (800 / 7) * i;
-          projectiles.push(new Projectile(sx, 20, 0, 240.0, 10, false, 5, 14, '#FFAA00', 'rgba(255, 170, 0, 0.7)'));
+        for (let i = 1; i <= 8; i++) {
+          const sx = (800 / 9) * i;
+          projectiles.push(new Projectile(sx, 20, 0, 260.0, 10, false, 5, 14, '#FFAA00', 'rgba(255, 170, 0, 0.7)'));
         }
         break;
 
@@ -268,7 +366,7 @@ export class ChaosScheduler {
       case ChaosEventType.GRAVITY_WELL:
         const cx = 400;
         const cy = 325;
-        const pull = 95.0 * dt;
+        const pull = 130.0 * dt;
 
         if (player && player.active) {
           const dx = cx - (player.x + player.width / 2);
@@ -282,6 +380,14 @@ export class ChaosScheduler {
           if (e.active && e.type !== 'boss') {
             const dx = cx - (e.x + e.width / 2);
             e.x += Math.sign(dx) * Math.min(Math.abs(dx), pull * 0.7);
+          }
+        }
+        break;
+
+      case ChaosEventType.SPEED_DEMON:
+        for (const e of enemies) {
+          if (e.active) {
+            e.y += (e.speed || 100) * 0.35 * dt;
           }
         }
         break;
@@ -413,7 +519,6 @@ export class ChaosScheduler {
       ctx.fillText(badgeText, screenWidth / 2, hudY + boxH / 2);
 
       ctx.restore();
-      hudY += 32;
       hudY += boxH + 6;
     }
   }

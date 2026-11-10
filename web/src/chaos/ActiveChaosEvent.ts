@@ -7,6 +7,8 @@ export class ActiveChaosEvent {
   public durationRemaining: number;
   public warningAnnounced: boolean = false;
   public activated: boolean = false;
+  public activationAnnounced: boolean = false;
+  public dualPartnerType: ChaosEventType | null = null;
 
   // Cached state for guaranteed restoration
   public cachedPlayerSpeed: number = -1;

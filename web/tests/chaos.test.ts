@@ -213,7 +213,7 @@ describe('AIRSTRIKE Phase 11: Chaos Protocol Web Unit Tests', () => {
     assert.strictEqual(mockPlayer.damageMultiplier, 1.0, 'Damage multiplier must reset');
   });
 
-  it('triggers an advance warning on sector clear and applies anomaly for next sector', () => {
+  it('triggers advance warning on sector clear and applies Dual Chaos Convergence for next sector', () => {
     const scheduler = new ChaosScheduler(45.0, 30.0, 60.0);
     const mockPlayer = new Player();
     const mockEngine = {
@@ -223,16 +223,58 @@ describe('AIRSTRIKE Phase 11: Chaos Protocol Web Unit Tests', () => {
       waveManager: { currentLevel: 1 }
     };
 
-    // Clearing Sector 1 schedules an anomaly for Sector 2 with a 4s advance warning
+    // Clearing Sector 1 schedules a Dual Chaos Convergence for Sector 2 with a 4s advance warning
     const event = scheduler.onSectorCleared(1, mockEngine);
     assert.ok(event, 'An anomaly must be scheduled for Sector 2');
     assert.strictEqual(event.isWarning(), true, 'Event must start in WARNING state');
     assert.strictEqual(event.warningTimer, 4.0, 'Warning timer must be 4.0 seconds');
-    assert.strictEqual(scheduler.activeEvents.length, 1);
+    assert.strictEqual(scheduler.activeEvents.length, 2, 'Must schedule 2 mixed chaos events simultaneously');
+    assert.ok(scheduler.activeEvents[0].dualPartnerType !== null, 'Primary event must be linked to partner');
+    assert.ok(scheduler.activeEvents[1].dualPartnerType !== null, 'Secondary event must be linked to primary');
 
-    // After 4.0s of combat transition, anomaly activates
+    // After 4.0s of combat transition, both anomalies activate
     scheduler.update(4.1, mockEngine);
-    assert.strictEqual(event.isActive(), true, 'Anomaly must activate after warning countdown finishes');
+    assert.strictEqual(event.isActive(), true, 'Primary anomaly must activate after warning countdown finishes');
+    assert.strictEqual(scheduler.activeEvents[1].isActive(), true, 'Secondary anomaly must activate simultaneously');
+  });
+
+  it('mixes two compatible chaos events into a Dual Chaos Convergence without state drift', () => {
+    const scheduler = new ChaosScheduler(45.0, 30.0, 60.0);
+    const mockPlayer = new Player();
+    const baseSpeed = mockPlayer.speed;
+    const baseCooldown = mockPlayer.shootCooldown;
+
+    const mockEngine = {
+      player: mockPlayer,
+      enemies: [],
+      projectiles: [],
+      waveManager: { currentLevel: 3 }
+    };
+
+    // Trigger dual compatible events: REVERSE_CONTROLS + SPEED_DEMON
+    const ev1 = scheduler.triggerDualChaos(
+      ChaosEventType.REVERSE_CONTROLS,
+      ChaosEventType.SPEED_DEMON,
+      mockEngine,
+      1.0
+    );
+    assert.ok(ev1, 'Dual chaos must instantiate primary event');
+    assert.strictEqual(scheduler.activeEvents.length, 2, 'Both events must be in activeEvents');
+
+    // In warning phase
+    assert.strictEqual(mockPlayer.controlsInverted, false);
+    assert.strictEqual(mockPlayer.speed, baseSpeed);
+
+    // Transition to active
+    scheduler.update(1.2, mockEngine);
+    assert.strictEqual(mockPlayer.controlsInverted, true, 'Controls inverted should activate');
+    assert.ok(mockPlayer.speed > baseSpeed, 'Speed demon should boost speed');
+
+    // Fast-forward until both expire
+    scheduler.update(20.0, mockEngine);
+    assert.strictEqual(scheduler.activeEvents.length, 0, 'Both events must expire cleanly');
+    assert.strictEqual(mockPlayer.controlsInverted, false, 'Controls must be restored to normal');
+    assert.strictEqual(mockPlayer.speed, baseSpeed, 'Speed must be cleanly restored to base without drift');
   });
 });
 
