@@ -310,3 +310,4 @@ With the database schema and secure stored procedures audited and verified, **Pa
 3. **Supabase Realtime Channel Wiring**:
    - Initialize ephemeral WebSocket channel (`room:<room_code>`).
    - Wire Supabase Realtime Presence to show connected pilots and mutual ready check toggles.
+

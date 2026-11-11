@@ -725,3 +725,4 @@ REVOKE ALL ON FUNCTION public.finalize_multiplayer_match(uuid, int, int) FROM pu
 GRANT EXECUTE ON FUNCTION public.finalize_multiplayer_match(uuid, int, int) TO authenticated;
 
 COMMIT;
+

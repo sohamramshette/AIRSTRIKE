@@ -8,6 +8,10 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, supabase } from '../services/SupabaseC
 import { AnnouncerManager } from '../announcer/AnnouncerManager';
 import { AnnouncerSettingsManager } from '../announcer/AnnouncerSettingsManager';
 import { DialogueCategory, CommentaryFrequency } from '../announcer/types';
+import { MultiplayerRoomService } from '../services/multiplayer/MultiplayerRoomService';
+import { MultiplayerPresenceService } from '../services/multiplayer/MultiplayerPresenceService';
+import { MultiplayerValidation } from '../services/multiplayer/MultiplayerValidation';
+import { MultiplayerRoomState, PilotPresenceState } from '../services/multiplayer/MultiplayerTypes';
 
 interface CourseOutcomeItem {
   code: string;
@@ -24,6 +28,8 @@ export class UIManager {
   private matchService: MatchService;
   private leaderboardService: LeaderboardService;
   private soundService: SoundService;
+  private mpRoomService: MultiplayerRoomService;
+  private mpPresenceService: MultiplayerPresenceService;
 
   private isRegisterMode: boolean = false;
   private isAuthSubmitting: boolean = false;
@@ -204,6 +210,8 @@ export class UIManager {
     this.matchService = MatchService.getInstance();
     this.leaderboardService = LeaderboardService.getInstance();
     this.soundService = SoundService.getInstance();
+    this.mpRoomService = MultiplayerRoomService.getInstance();
+    this.mpPresenceService = MultiplayerPresenceService.getInstance();
 
     this.loadPersonalRecord();
     this.bindEvents();
@@ -211,6 +219,7 @@ export class UIManager {
     this.initSubjectCOModal();
     this.initProfileSettingsModal();
     this.initInstructionsModal();
+    this.initMultiplayerLobby();
     this.bindTouchControls();
     this.initCloudTelemetry();
     this.updatePilotDossier();
@@ -1177,5 +1186,294 @@ export class UIManager {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 12: Online 1v1 Multiplayer Lobby UI
+  // ---------------------------------------------------------------------------
+  private initMultiplayerLobby(): void {
+    // 1. Open Multiplayer Modal from Main Menu
+    document.getElementById('btn-open-multiplayer')?.addEventListener('click', () => {
+      const session = this.authService.getSession();
+      if (!session) {
+        this.showToast('Authentication required for competitive 1v1 multiplayer! Please log in.');
+        this.openModal('auth-modal');
+        return;
+      }
+
+      const callsignElem = document.getElementById('mp-menu-pilot-callsign');
+      if (callsignElem) {
+        callsignElem.textContent = session.callsign;
+      }
+
+      this.switchMultiplayerView('mp-view-menu');
+      this.openModal('multiplayer-modal');
+    });
+
+    // 2. Close Modal Buttons
+    const handleClose = async () => {
+      const currentRoom = this.mpRoomService.getCurrentRoom();
+      if (currentRoom) {
+        await this.mpRoomService.leaveRoom(currentRoom.roomId);
+      }
+      this.closeModal('multiplayer-modal');
+    };
+
+    document.getElementById('multiplayer-modal-close')?.addEventListener('click', handleClose);
+    document.getElementById('btn-mp-menu-close')?.addEventListener('click', handleClose);
+
+    // 3. Create Room Button
+    document.getElementById('btn-mp-create-room')?.addEventListener('click', async () => {
+      const createBtn = document.getElementById('btn-mp-create-room') as HTMLButtonElement;
+      if (createBtn) createBtn.disabled = true;
+
+      const res = await this.mpRoomService.createRoom();
+      if (createBtn) createBtn.disabled = false;
+
+      if (!res.success || !res.data) {
+        this.showToast(res.error || 'Failed to create room.');
+        return;
+      }
+
+      this.switchMultiplayerView('mp-view-lobby');
+      this.renderMultiplayerLobbyState(res.data);
+      this.showToast(`Combat room initialized! Share Code: ${res.data.roomCode}`);
+    });
+
+    // 4. Show Join Screen Button
+    document.getElementById('btn-mp-show-join')?.addEventListener('click', () => {
+      this.switchMultiplayerView('mp-view-join');
+      const input = document.getElementById('mp-join-code-input') as HTMLInputElement;
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      const err = document.getElementById('mp-join-error');
+      if (err) err.style.display = 'none';
+    });
+
+    // 5. Back Button on Join Screen
+    document.getElementById('btn-mp-back-to-menu')?.addEventListener('click', () => {
+      this.switchMultiplayerView('mp-view-menu');
+    });
+
+    // 6. Submit Join Room
+    document.getElementById('btn-mp-submit-join')?.addEventListener('click', async () => {
+      const input = document.getElementById('mp-join-code-input') as HTMLInputElement;
+      const code = input?.value || '';
+      const err = document.getElementById('mp-join-error');
+      const submitBtn = document.getElementById('btn-mp-submit-join') as HTMLButtonElement;
+
+      if (!MultiplayerValidation.isValidRoomCode(code)) {
+        if (err) {
+          err.textContent = 'Please enter a valid 6-character room code.';
+          err.style.display = 'block';
+        }
+        return;
+      }
+
+      if (submitBtn) submitBtn.disabled = true;
+      if (err) err.style.display = 'none';
+
+      const res = await this.mpRoomService.joinRoom(code);
+      if (submitBtn) submitBtn.disabled = false;
+
+      if (!res.success || !res.data) {
+        if (err) {
+          err.textContent = res.error || 'Failed to join room.';
+          err.style.display = 'block';
+        }
+        this.showToast(res.error || 'Join failed.');
+        return;
+      }
+
+      this.switchMultiplayerView('mp-view-lobby');
+      this.renderMultiplayerLobbyState(res.data);
+      this.showToast('Joined sector combat room! Waiting for ready check.');
+    });
+
+    // Enter key submits join
+    document.getElementById('mp-join-code-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('btn-mp-submit-join')?.click();
+      }
+    });
+
+    // 7. Copy Room Code Button
+    document.getElementById('btn-mp-copy-code')?.addEventListener('click', () => {
+      const room = this.mpRoomService.getCurrentRoom();
+      const code = room?.roomCode || '';
+      if (code && navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(() => {
+          this.showToast(`Room code ${code} copied to clipboard!`);
+        }).catch(() => {
+          this.showToast(`Room Code: ${code}`);
+        });
+      }
+    });
+
+    // 8. Toggle Ready Button
+    document.getElementById('btn-mp-toggle-ready')?.addEventListener('click', async () => {
+      const room = this.mpRoomService.getCurrentRoom();
+      if (!room) return;
+
+      const readyBtn = document.getElementById('btn-mp-toggle-ready') as HTMLButtonElement;
+      if (readyBtn) readyBtn.disabled = true;
+
+      const res = await this.mpRoomService.setReady(room.roomId);
+      if (readyBtn) readyBtn.disabled = false;
+
+      if (!res.success || !res.data) {
+        this.showToast(res.error || 'Failed to mark ready.');
+        return;
+      }
+
+      this.renderMultiplayerLobbyState(res.data);
+      this.showToast('Ready status confirmed!');
+    });
+
+    // 9. Leave Room Button in Lobby
+    document.getElementById('btn-mp-leave-lobby')?.addEventListener('click', async () => {
+      const room = this.mpRoomService.getCurrentRoom();
+      if (room) {
+        await this.mpRoomService.leaveRoom(room.roomId);
+      }
+      this.switchMultiplayerView('mp-view-menu');
+      this.showToast('Left combat room.');
+    });
+
+    // 10. Subscribe to Realtime state updates
+    this.mpRoomService.addRoomListener((room) => {
+      this.renderMultiplayerLobbyState(room);
+    });
+
+    this.mpPresenceService.onPresenceChange((presences) => {
+      this.renderMultiplayerPresence(presences);
+    });
+  }
+
+  private switchMultiplayerView(viewId: 'mp-view-menu' | 'mp-view-join' | 'mp-view-lobby'): void {
+    const views = ['mp-view-menu', 'mp-view-join', 'mp-view-lobby'];
+    for (const v of views) {
+      const elem = document.getElementById(v);
+      if (elem) {
+        elem.classList.toggle('hidden', v !== viewId);
+      }
+    }
+  }
+
+  private renderMultiplayerLobbyState(room: MultiplayerRoomState | null): void {
+    if (!room) return;
+
+    const codeDisplay = document.getElementById('mp-lobby-code-display');
+    if (codeDisplay) codeDisplay.textContent = room.roomCode;
+
+    const hostNameElem = document.getElementById('mp-slot-host-name');
+    if (hostNameElem) hostNameElem.textContent = room.hostUsername || 'Host Pilot';
+
+    const hostReadyBadge = document.getElementById('mp-slot-host-ready');
+    if (hostReadyBadge) {
+      hostReadyBadge.className = room.hostReady ? 'mp-badge-ready' : 'mp-badge-not-ready';
+      hostReadyBadge.textContent = room.hostReady ? 'READY' : 'NOT READY';
+    }
+
+    const guestNameElem = document.getElementById('mp-slot-guest-name');
+    const guestReadyBadge = document.getElementById('mp-slot-guest-ready');
+    const guestPresenceElem = document.getElementById('mp-slot-guest-presence');
+
+    if (room.guestId) {
+      if (guestNameElem) {
+        guestNameElem.textContent = room.guestUsername || 'Guest Pilot';
+        guestNameElem.style.color = '#FFFFFF';
+      }
+      if (guestReadyBadge) {
+        guestReadyBadge.className = room.guestReady ? 'mp-badge-ready' : 'mp-badge-not-ready';
+        guestReadyBadge.textContent = room.guestReady ? 'READY' : 'NOT READY';
+      }
+      if (guestPresenceElem && !guestPresenceElem.textContent?.includes('ONLINE')) {
+        guestPresenceElem.textContent = '● ONLINE';
+        guestPresenceElem.style.color = '#22C55E';
+      }
+    } else {
+      if (guestNameElem) {
+        guestNameElem.textContent = 'Waiting for challenger to join...';
+        guestNameElem.style.color = 'var(--text-muted)';
+      }
+      if (guestReadyBadge) {
+        guestReadyBadge.className = 'mp-badge-not-ready';
+        guestReadyBadge.textContent = 'WAITING';
+      }
+      if (guestPresenceElem) {
+        guestPresenceElem.textContent = '○ DISCONNECTED';
+        guestPresenceElem.style.color = 'var(--text-muted)';
+      }
+    }
+
+    // Status Banner Text
+    const statusText = document.getElementById('mp-lobby-status-text');
+    const readyBtn = document.getElementById('btn-mp-toggle-ready') as HTMLButtonElement;
+
+    if (statusText) {
+      if (room.status === 'WAITING') {
+        statusText.textContent = `📡 Comms beacon active. Share room code [${room.roomCode}] with your opponent!`;
+        statusText.style.color = 'var(--cyan-primary)';
+      } else if (room.status === 'READY') {
+        statusText.textContent = '⚡ Challenger connected! Both pilots must mark READY to initiate countdown.';
+        statusText.style.color = '#F59E0B';
+      } else if (room.status === 'COUNTDOWN') {
+        statusText.textContent = '🚀 BOTH PILOTS READY! Synchronized match countdown locked.';
+        statusText.style.color = '#22C55E';
+      } else if (room.status === 'CANCELLED') {
+        statusText.textContent = '⚠️ Room has been cancelled by a pilot.';
+        statusText.style.color = 'var(--coral-danger)';
+      }
+    }
+
+    // Ready button styling
+    if (readyBtn) {
+      const isMyReady = room.isHost ? room.hostReady : (room.isGuest ? room.guestReady : false);
+      if (isMyReady) {
+        readyBtn.textContent = '✓   READY CONFIRMED';
+        readyBtn.style.background = '#22C55E';
+        readyBtn.style.borderColor = '#22C55E';
+        readyBtn.disabled = true;
+      } else {
+        readyBtn.textContent = '✓   MARK READY';
+        readyBtn.style.background = '';
+        readyBtn.style.borderColor = '';
+        readyBtn.disabled = !room.guestId; // Can't ready if waiting for guest
+      }
+    }
+  }
+
+  private renderMultiplayerPresence(presences: Record<string, PilotPresenceState>): void {
+    const room = this.mpRoomService.getCurrentRoom();
+    if (!room) return;
+
+    const hostPresence = presences[room.hostId];
+    const hostPresenceElem = document.getElementById('mp-slot-host-presence');
+    if (hostPresenceElem) {
+      if (hostPresence && hostPresence.presenceStatus === 'online') {
+        hostPresenceElem.textContent = '● ONLINE';
+        hostPresenceElem.style.color = '#22C55E';
+      } else {
+        hostPresenceElem.textContent = '○ OFFLINE';
+        hostPresenceElem.style.color = '#EF4444';
+      }
+    }
+
+    if (room.guestId) {
+      const guestPresence = presences[room.guestId];
+      const guestPresenceElem = document.getElementById('mp-slot-guest-presence');
+      if (guestPresenceElem) {
+        if (guestPresence && guestPresence.presenceStatus === 'online') {
+          guestPresenceElem.textContent = '● ONLINE';
+          guestPresenceElem.style.color = '#22C55E';
+        } else {
+          guestPresenceElem.textContent = '○ OFFLINE';
+          guestPresenceElem.style.color = '#EF4444';
+        }
+      }
+    }
   }
 }

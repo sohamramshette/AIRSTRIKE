@@ -39,6 +39,7 @@
 
           <!-- Tactical Command Button Stack -->
           <button id="btn-start-game" class="cyber-btn btn-hero">▶   LAUNCH MISSION</button>
+          <button id="btn-open-multiplayer" class="cyber-btn btn-tactical purple">⚔   ONLINE 1v1 BATTLE (MULTIPLAYER)</button>
           <button id="btn-open-leaderboard" class="cyber-btn btn-tactical gold">★   GLOBAL LEADERBOARD (HALL OF FAME)</button>
           <button id="btn-open-profile" class="cyber-btn btn-tactical blue">◈   PILOT PROFILE & SYSTEM SETTINGS</button>
           <button id="btn-open-history" class="cyber-btn btn-tactical">⟡   MATCH HISTORY (FLIGHT LOGS)</button>
@@ -464,6 +465,110 @@ CREATE POLICY "anon_select_leaderboard" ON public.leaderboard FOR SELECT TO anon
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <button id="btn-ping-now" class="cyber-btn btn-hero" style="width: auto; padding: 0 18px; height: 32px; font-size: 12px;">TEST COMM LINK</button>
             <span id="diag-feedback" style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-primary);"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multiplayer 1v1 Lobby Modal -->
+      <div id="multiplayer-modal" class="modal-overlay hidden">
+        <div class="modal-dialog" style="max-width: 540px;">
+          <div class="modal-header">
+            <div>
+              <h3 class="modal-title" style="color: var(--purple-accent);">ONLINE 1v1 COMBAT LOBBY</h3>
+              <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Synchronized Realtime Score Attack • Private Starfleet Rooms</p>
+            </div>
+            <button id="multiplayer-modal-close" class="modal-close-btn">&times;</button>
+          </div>
+
+          <!-- Sub-View 1: Main Multiplayer Menu -->
+          <div id="mp-view-menu" class="mp-subview">
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; color: var(--text-muted); font-weight: bold;">PILOT IDENTITY:</span>
+                <span id="mp-menu-pilot-callsign" style="color: var(--cyan-primary); font-family: var(--font-mono); font-weight: bold; font-size: 12px;">CADET</span>
+              </div>
+              <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin: 0;">
+                Engage in a competitive 1v1 simultaneous score attack. Both cadets face identical deterministic enemy waves synchronized via private room seed.
+              </p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <button id="btn-mp-create-room" class="cyber-btn btn-tactical purple" style="justify-content: center; height: 42px; font-size: 13px;">
+                ▶   CREATE PRIVATE ROOM
+              </button>
+              <button id="btn-mp-show-join" class="cyber-btn btn-tactical blue" style="justify-content: center; height: 42px; font-size: 13px;">
+                ◈   JOIN MISSION VIA ROOM CODE
+              </button>
+              <button id="btn-mp-menu-close" class="cyber-btn btn-tactical" style="justify-content: center; height: 38px; color: var(--text-muted);">
+                ✕   RETURN TO MAIN MENU
+              </button>
+            </div>
+          </div>
+
+          <!-- Sub-View 2: Join Room Screen -->
+          <div id="mp-view-join" class="mp-subview hidden">
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <div style="color: var(--cyan-primary); font-weight: bold; font-size: 13px; margin-bottom: 6px;">ENTER COMBAT ROOM CODE:</div>
+              <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Enter the 6-character room code shared by your fellow cadet pilot.</p>
+              
+              <input type="text" id="mp-join-code-input" class="cyber-input" placeholder="E.G. A8X4KP" maxlength="8"
+                     style="text-transform: uppercase; letter-spacing: 4px; font-size: 18px; text-align: center; font-weight: bold; color: var(--gold-accent);" />
+
+              <div id="mp-join-error" style="color: var(--coral-danger); font-size: 11px; font-weight: bold; margin-top: 8px; display: none;"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+              <button id="btn-mp-back-to-menu" class="cyber-btn btn-tactical" style="flex: 1; justify-content: center;">⟵ BACK</button>
+              <button id="btn-mp-submit-join" class="cyber-btn btn-hero" style="flex: 2; justify-content: center;">▶   JOIN COMBAT ROOM</button>
+            </div>
+          </div>
+
+          <!-- Sub-View 3: Active Waiting Lobby -->
+          <div id="mp-view-lobby" class="mp-subview hidden">
+            <!-- Room Code Header Badge -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(147, 51, 234, 0.12); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
+              <div>
+                <span style="font-size: 10px; color: var(--text-muted); font-weight: bold; letter-spacing: 0.5px;">ROOM CODE:</span>
+                <span id="mp-lobby-code-display" style="font-family: var(--font-mono); font-size: 20px; font-weight: bold; color: var(--gold-accent); letter-spacing: 3px; margin-left: 8px;">------</span>
+              </div>
+              <button id="btn-mp-copy-code" class="pilot-pill-btn" style="height: 26px; padding: 0 12px;">COPY CODE</button>
+            </div>
+
+            <!-- Dual Pilot Slots Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+              <!-- Slot 1: Host -->
+              <div class="mp-slot-card" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 229, 255, 0.3); border-radius: 8px; padding: 12px;">
+                <div style="font-size: 10px; color: var(--cyan-primary); font-weight: bold; margin-bottom: 4px;">HOST PILOT</div>
+                <div id="mp-slot-host-name" style="font-size: 13px; font-weight: bold; color: #FFFFFF; overflow-wrap: anywhere; margin-bottom: 6px;">Pilot 1</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span id="mp-slot-host-presence" style="font-size: 10px; color: #22C55E; font-weight: bold;">● ONLINE</span>
+                  <span id="mp-slot-host-ready" class="mp-badge-not-ready">NOT READY</span>
+                </div>
+              </div>
+
+              <!-- Slot 2: Guest -->
+              <div class="mp-slot-card" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 12px;">
+                <div style="font-size: 10px; color: var(--purple-accent); font-weight: bold; margin-bottom: 4px;">CHALLENGER PILOT</div>
+                <div id="mp-slot-guest-name" style="font-size: 13px; font-weight: bold; color: var(--text-muted); overflow-wrap: anywhere; margin-bottom: 6px;">Waiting for pilot...</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span id="mp-slot-guest-presence" style="font-size: 10px; color: var(--text-muted);">○ DISCONNECTED</span>
+                  <span id="mp-slot-guest-ready" class="mp-badge-not-ready">NOT READY</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Mission Status Notice -->
+            <div id="mp-lobby-status-banner" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 10px; text-align: center; margin-bottom: 16px;">
+              <span id="mp-lobby-status-text" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">
+                Waiting for second cadet to enter room code...
+              </span>
+            </div>
+
+            <!-- Actions Footer -->
+            <div style="display: flex; gap: 10px;">
+              <button id="btn-mp-leave-lobby" class="cyber-btn btn-danger" style="flex: 1; justify-content: center; height: 38px;">✕   LEAVE ROOM</button>
+              <button id="btn-mp-toggle-ready" class="cyber-btn btn-hero" style="flex: 2; justify-content: center; height: 38px;">✓   MARK READY</button>
+            </div>
           </div>
         </div>
       </div>

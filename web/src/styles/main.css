@@ -95,7 +95,11 @@ html, body {
 
 /* On mobile screens: full screen viewport so space is never wasted! */
 @media (max-width: 768px) and (orientation: portrait), (max-width: 540px) {
-  #viewport-container {
+  #viewport-container,
+  :fullscreen #viewport-container,
+  :-webkit-full-screen #viewport-container,
+  #viewport-container:fullscreen,
+  #viewport-container:-webkit-full-screen {
     width: 100vw !important;
     height: 100dvh !important;
     max-width: 100vw !important;
@@ -107,7 +111,11 @@ html, body {
     box-shadow: none !important;
   }
 
-  #game-canvas {
+  #game-canvas,
+  :fullscreen #game-canvas,
+  :-webkit-full-screen #game-canvas,
+  #viewport-container:fullscreen #game-canvas,
+  #viewport-container:-webkit-full-screen #game-canvas {
     width: 100% !important;
     height: 100% !important;
     aspect-ratio: auto !important;
@@ -121,28 +129,30 @@ html, body {
   }
 }
 
-/* Fullscreen support across browsers: ALWAYS preserves 800:650 aspect ratio */
-:fullscreen #viewport-container,
-:-webkit-full-screen #viewport-container,
-#viewport-container:fullscreen,
-#viewport-container:-webkit-full-screen {
-  width: min(100vw, calc(100vh * 800 / 650)) !important;
-  height: min(100vh, calc(100vw * 650 / 800)) !important;
-  aspect-ratio: 800 / 650 !important;
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  border-radius: 0 !important;
-  margin: auto !important;
-}
+/* Fullscreen support across desktop browsers: ALWAYS preserves 800:650 aspect ratio */
+@media (min-width: 769px) and (orientation: landscape), (min-width: 541px) and (orientation: landscape) {
+  :fullscreen #viewport-container,
+  :-webkit-full-screen #viewport-container,
+  #viewport-container:fullscreen,
+  #viewport-container:-webkit-full-screen {
+    width: min(100vw, calc(100vh * 800 / 650)) !important;
+    height: min(100vh, calc(100vw * 650 / 800)) !important;
+    aspect-ratio: 800 / 650 !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    margin: auto !important;
+  }
 
-:fullscreen #game-canvas,
-:-webkit-full-screen #game-canvas,
-#viewport-container:fullscreen #game-canvas,
-#viewport-container:-webkit-full-screen #game-canvas {
-  width: 100% !important;
-  height: 100% !important;
-  aspect-ratio: 800 / 650 !important;
-  display: block !important;
+  :fullscreen #game-canvas,
+  :-webkit-full-screen #game-canvas,
+  #viewport-container:fullscreen #game-canvas,
+  #viewport-container:-webkit-full-screen #game-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 800 / 650 !important;
+    display: block !important;
+  }
 }
 
 /* UI Overlay Layers */
@@ -1437,6 +1447,58 @@ html, body {
   .co-cards-container {
     max-height: 32vh;
   }
+}
+
+/* Phase 12: 1v1 Online Multiplayer Lobby Styles */
+.mp-badge-ready {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid #22C55E;
+  color: #22C55E;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.mp-badge-not-ready {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #F87171;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.mp-slot-card {
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mp-slot-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+}
+
+.cyber-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(10, 14, 26, 0.9);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.cyber-input:focus {
+  border-color: var(--cyan-primary);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
 }
 
 @media (prefers-reduced-motion: reduce) {

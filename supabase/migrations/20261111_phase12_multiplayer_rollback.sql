@@ -28,3 +28,4 @@ DROP TABLE IF EXISTS public.multiplayer_rooms;
 DROP TABLE IF EXISTS public.multiplayer_leaderboard;
 
 COMMIT;
+
