@@ -18,6 +18,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/searching
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sorting
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hashing
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/multiplayer
 )
 
 # Collect source files

@@ -25,6 +25,9 @@
 #include "src/searching/hunter_targeting.h"
 #include "src/hashing/hash_shield_controller.h"
 
+// PL Multiplayer headers
+#include "src/multiplayer/multiplayer_demonstrator.h"
+
 // Test suite headers
 #include "tests/test_common.h"
 #include "tests/test_arrays.h"
@@ -35,6 +38,7 @@
 #include "tests/test_sorting.h"
 #include "tests/test_hashing.h"
 #include "tests/test_pl_enemies.h"
+#include "tests/test_multiplayer.h"
 
 // ==========================================
 // Automated Test Runner Function
@@ -54,6 +58,7 @@ int runAllTestsAndReport() {
     overall.merge(runSortingTests());
     overall.merge(runHashingTests());
     overall.merge(runPLEnemyTests());
+    overall.merge(runMultiplayerTests());
 
     std::cout << "\n==============================================================================\n";
     std::cout << "                          FINAL PL TEST RESULTS SUMMARY                       \n";
@@ -844,7 +849,7 @@ int main(int argc, char* argv[]) {
     }
 
     int choice = 0;
-    while (choice != 10) {
+    while (choice != 11) {
         std::cout << "\n==============================================================================\n";
         std::cout << "             AIRSTRIKE - PROGRAMMING LABORATORY (PL) IN C++17                 \n";
         std::cout << "             Data Structures & Algorithms Verification System                 \n";
@@ -857,10 +862,11 @@ int main(int argc, char* argv[]) {
         std::cout << "  [6] PL-CO4: Sorting Algorithms (5 Canonical Sorts & Leaderboard)\n";
         std::cout << "  [7] PL-CO5: Hashing Techniques (Chaining, Linear Probing, Rehashing)\n";
         std::cout << "  [8] PL Enemy Systems & Tactical Fleet Demonstrator (PL-CO1 to PL-CO5)\n";
-        std::cout << "  [9] Run All Demonstrations and Automated Verification Tests\n";
-        std::cout << "  [10] Exit Application\n";
+        std::cout << "  [9] PL-CO1 to PL-CO5 Multiplayer Match Processing Demonstrator\n";
+        std::cout << "  [10] Run All Demonstrations and Automated Verification Tests\n";
+        std::cout << "  [11] Exit Application\n";
         std::cout << "==============================================================================\n";
-        std::cout << "Enter selection [1-10]: ";
+        std::cout << "Enter selection [1-11]: ";
 
         if (!(std::cin >> choice)) {
             std::cin.clear();
@@ -878,12 +884,13 @@ int main(int argc, char* argv[]) {
             case 6: demoSorting(); break;
             case 7: demoHashing(); break;
             case 8: demoPLEnemies(); break;
-            case 9: runAllTestsAndReport(); break;
-            case 10:
+            case 9: Airstrike::Multiplayer::MultiplayerDemonstrator::runAllDemonstrations(); break;
+            case 10: runAllTestsAndReport(); break;
+            case 11:
                 std::cout << "\nExiting AIRSTRIKE Programming Laboratory suite. Farewell, Commander!\n";
                 break;
             default:
-                std::cout << "[ERROR] Invalid selection. Please enter a number between 1 and 10.\n";
+                std::cout << "[ERROR] Invalid selection. Please enter a number between 1 and 11.\n";
                 break;
         }
     }

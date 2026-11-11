@@ -12,6 +12,7 @@
 #include "projection/warp_cruiser.hpp"
 #include "clipping/boundary_skimmer.hpp"
 #include "appearance/phong_cruiser.hpp"
+#include "objects/multiplayer_battle_scene.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -617,6 +618,74 @@ void testCGLEnemies() {
     }
 }
 
+// -------------------------------------------------------------
+// Multiplayer Battle Scene Tests (CGL-CO1 to CGL-CO6)
+// -------------------------------------------------------------
+void testCGLMultiplayer() {
+    std::cout << "\n--- Testing CGL Multiplayer Dual-Player Visualizer (CO1-CO6) ---" << std::endl;
+
+    MultiplayerBattleScene scene;
+    scene.init();
+
+    // CO1: Geometric Primitives
+    const auto& p1 = scene.getPlayer1();
+    const auto& p2 = scene.getPlayer2();
+    CGL_ASSERT(approxEqual(p1.scale, 0.75f) && approxEqual(p2.scale, 0.85f),
+               "TC_CGL_MP1A: Distinct geometry scale parameters for Interceptor and Cruiser");
+    CGL_ASSERT(p1.health == 100 && p1.score == 4800 && p2.health == 85 && p2.score == 3200,
+               "TC_CGL_MP1B: Initial dual-player match telemetry and health initialized");
+
+    // CO2: Transformations
+    CGL_ASSERT(p1.x < 0.0f && p2.x > 0.0f,
+               "TC_CGL_MP2A: Independent opposing spawn translations across combat arena");
+    CGL_ASSERT(approxEqual(p1.rotation, 15.0f) && approxEqual(p2.rotation, 195.0f),
+               "TC_CGL_MP2B: Opposing orientation rotation angles facing combat center");
+
+    scene.update(0.5f);
+    const auto& p1_up = scene.getPlayer1();
+    const auto& p2_up = scene.getPlayer2();
+    CGL_ASSERT(!approxEqual(p1_up.y, 0.0f) && !approxEqual(p2_up.y, 0.0f),
+               "TC_CGL_MP2C: Dynamic maneuvering translation updates both ships independently");
+
+    // CO3: Line & Circle Drawing
+    int x1 = static_cast<int>(p1.x * 100.0f);
+    int y1 = static_cast<int>(p1.y * 100.0f);
+    int x2 = static_cast<int>(p2.x * 100.0f);
+    int y2 = static_cast<int>(p2.y * 100.0f);
+    std::vector<Point2D> laserPoints = RasterAlgorithmsDemo::bresenhamLine(x1, y1, x2, y2);
+    CGL_ASSERT(!laserPoints.empty(),
+               "TC_CGL_MP3A: Bresenham line algorithm generates targeting laser points");
+    CGL_ASSERT(laserPoints.front() == Point2D(x1, y1) && laserPoints.back() == Point2D(x2, y2),
+               "TC_CGL_MP3B: Bresenham laser beam endpoints strictly match player positions");
+
+    std::vector<Point2D> shieldPoints = RasterAlgorithmsDemo::midpointCircle(0, 0, 55);
+    CGL_ASSERT(shieldPoints.size() > 50,
+               "TC_CGL_MP3C: Midpoint circle algorithm rasterizes full protective shield ring");
+
+    // CO4: Viewing & Projection Modes
+    CGL_ASSERT(scene.getViewMode() == MPViewMode::ARENA_OVERVIEW,
+               "TC_CGL_MP4A: Initial camera mode defaults to Arena Wide-Angle Overview");
+    scene.toggleViewMode();
+    CGL_ASSERT(scene.getViewMode() == MPViewMode::SPLIT_SCREEN,
+               "TC_CGL_MP4B: Viewport mode successfully toggles to Split-Screen Dual Viewports");
+    scene.toggleViewMode(); // restore
+
+    // CO5: Clipping Algorithms
+    RectWindow arenaWin(-2.5f, -1.8f, 2.5f, 1.8f);
+    LineSegment outOfBoundsBeam(-1.6f, 0.0f, -4.0f, 0.0f); // Fires left beyond xmin = -2.5
+    LineSegment clippedBeam;
+    int c1 = 0, c2 = 0;
+    bool visible = ClippingAlgorithmsDemo::cohenSutherlandClip(outOfBoundsBeam, arenaWin, clippedBeam, c1, c2);
+    CGL_ASSERT(visible && approxEqual(clippedBeam.p2.x, -2.5f),
+               "TC_CGL_MP5A: Cohen-Sutherland line clipping truncates beam at combat boundary");
+
+    // CO6: Shading & Texture Mapping
+    CGL_ASSERT(scene.isLightingEnabled(),
+               "TC_CGL_MP6A: Gouraud smooth shading and directional lighting active");
+    CGL_ASSERT(scene.isTextureLoaded() && scene.getTextureBufferSize() == 196608,
+               "TC_CGL_MP6B: Space hull texture loaded into memory (196,608 bytes)");
+}
+
 int runAllCGLTests() {
     testsPassed = 0;
     testsTotal = 0;
@@ -635,6 +704,7 @@ int runAllCGLTests() {
     testCO5Clipping();
     testCO6Appearance();
     testCGLEnemies();
+    testCGLMultiplayer();
 
     std::cout << "\n========================================================" << std::endl;
     std::cout << "  TEST SUMMARY: " << testsPassed << " / " << testsTotal << " Passed ("

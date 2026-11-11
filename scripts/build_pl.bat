@@ -39,7 +39,7 @@ where cmake >nul 2>&1
 if %ERRORLEVEL% EQU 0 goto :build_cmake
 
 echo [INFO] CMake not detected in PATH. Using direct MinGW g++ compilation fallback...
-g++ -std=c++17 -Wall -Wextra -IPL -IPL/src -IPL/src/arrays -IPL/src/linked_lists -IPL/src/stacks -IPL/src/queues -IPL/src/searching -IPL/src/sorting -IPL/src/hashing PL/main.cpp PL/src/arrays/*.cpp PL/src/linked_lists/*.cpp PL/src/stacks/*.cpp PL/src/queues/*.cpp PL/src/searching/*.cpp PL/src/sorting/*.cpp PL/src/hashing/*.cpp PL/tests/*.cpp -o bin\pl\pl_test_runner.exe
+g++ -std=c++17 -Wall -Wextra -IPL -IPL/src -IPL/src/arrays -IPL/src/linked_lists -IPL/src/stacks -IPL/src/queues -IPL/src/searching -IPL/src/sorting -IPL/src/hashing -IPL/src/multiplayer PL/main.cpp PL/src/arrays/*.cpp PL/src/linked_lists/*.cpp PL/src/stacks/*.cpp PL/src/queues/*.cpp PL/src/searching/*.cpp PL/src/sorting/*.cpp PL/src/hashing/*.cpp PL/src/multiplayer/*.cpp PL/tests/*.cpp -o bin\pl\pl_test_runner.exe
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] C++ compilation failed!
     exit /b 1

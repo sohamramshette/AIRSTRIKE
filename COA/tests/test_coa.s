@@ -161,6 +161,27 @@ t_en_pipe_raw:
 t_en_pipe_fwd:
     .asciz "COA-Enemy4: Railgun Dreadnought Operand Forwarding Bypass (8 Cycles, 0 Stalls)"
 
+# Section 6: COA Multiplayer Demonstrations
+sec_co6_mp_test:
+    .asciz "\n[SUITE 6/6] COA Multiplayer Combat Architecture Verification (Pure 80386 Assembly)...\n"
+
+t_mp_cmp_flags:
+    .asciz "COA-MP1: CMP Score Comparison & Flag Extraction (ZF=0, SF=0, CF=0, OF=0, Leader=P1)"
+t_mp_cmp_equal:
+    .asciz "COA-MP1: Equal Scores CMP Zero Flag Activation (ZF=1, Leader=DRAW)"
+t_mp_sib_access:
+    .asciz "COA-MP1: SIB Addressing Mode [EBX + ECX*4 + 8] Telemetry Retrieval"
+t_mp_fib_cadence:
+    .asciz "COA-MP2: Iterative 80386 Fibonacci Attack Interval Generation (F(6) = 8)"
+t_mp_booth_penalty:
+    .asciz "COA-MP3: Booth's Signed Multiplier Negative Delta (15 * -3 = -45)"
+t_mp_booth_bonus:
+    .asciz "COA-MP3: Booth's Signed Multiplier Dual Negative Bonus (-20 * -4 = 80)"
+t_mp_pipe_raw:
+    .asciz "COA-MP4: 5-Stage Pipeline Packet Stream Simulation (8 Packets, RAW Stalls = 2, Latency = 14)"
+t_mp_pipe_fwd:
+    .asciz "COA-MP4: 5-Stage Pipeline Forwarding Bypass (8 Packets, Stalls = 0, Latency = 12)"
+
 # Test data arrays
 test_array_coa:
     .long 45, -12, 88, 0, -34, 102, -5, 23
@@ -195,6 +216,12 @@ test_sib_layers:
 .lcomm test_en_flg, 4
 .lcomm test_en_cyc, 4
 .lcomm test_en_stl, 4
+.lcomm test_mp_zf, 4
+.lcomm test_mp_sf, 4
+.lcomm test_mp_cf, 4
+.lcomm test_mp_of, 4
+.lcomm test_mp_cyc, 4
+.lcomm test_mp_stl, 4
 
 .text
 
@@ -1207,6 +1234,158 @@ _run_all_coa_tests:
     mov ebx, 1
 .L_en_pipe3_bad:
     push offset t_en_pipe_fwd
+    push ebx
+    call record_result
+    add esp, 8
+
+    # ==========================================================================
+    # SUITE 6/6: COA Multiplayer Combat Architecture Tests
+    # ==========================================================================
+    push offset sec_co6_mp_test
+    call _print_str
+    add esp, 4
+
+    # 1. COA-MP1: CMP Score Comparison (4800 > 3200 -> EAX=1, ZF=0, SF=0, CF=0, OF=0)
+    push offset test_mp_of
+    push offset test_mp_cf
+    push offset test_mp_sf
+    push offset test_mp_zf
+    push 3200
+    push 4800
+    call _coa_mp_compare_scores
+    add esp, 24
+    xor ebx, ebx
+    cmp eax, 1
+    jne .L_mp1_bad
+    cmp dword ptr [test_mp_zf], 0
+    jne .L_mp1_bad
+    cmp dword ptr [test_mp_sf], 0
+    jne .L_mp1_bad
+    cmp dword ptr [test_mp_cf], 0
+    jne .L_mp1_bad
+    cmp dword ptr [test_mp_of], 0
+    jne .L_mp1_bad
+    mov ebx, 1
+.L_mp1_bad:
+    push offset t_mp_cmp_flags
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 2. COA-MP1: Equal Scores (2500 == 2500 -> EAX=0, ZF=1)
+    push offset test_mp_of
+    push offset test_mp_cf
+    push offset test_mp_sf
+    push offset test_mp_zf
+    push 2500
+    push 2500
+    call _coa_mp_compare_scores
+    add esp, 24
+    xor ebx, ebx
+    cmp eax, 0
+    jne .L_mp2_bad
+    cmp dword ptr [test_mp_zf], 1
+    jne .L_mp2_bad
+    mov ebx, 1
+.L_mp2_bad:
+    push offset t_mp_cmp_equal
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 3. COA-MP1: SIB Addressing Mode [EBX + ECX*4 + 8]
+    push 2                          # Index 2 -> test_sib_layers[2] = 0xCCCC0003
+    push offset test_sib_layers
+    call _coa_mp_sib_lookup
+    add esp, 8
+    xor ebx, ebx
+    cmp eax, 0xCCCC0003
+    jne .L_mp3_bad
+    mov ebx, 1
+.L_mp3_bad:
+    push offset t_mp_sib_access
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 4. COA-MP2: Fibonacci Attack Interval (F(6) = 8)
+    push 6
+    call _coa_mp_fibonacci_interval
+    add esp, 4
+    xor ebx, ebx
+    cmp eax, 8
+    jne .L_mp4_bad
+    mov ebx, 1
+.L_mp4_bad:
+    push offset t_mp_fib_cadence
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 5. COA-MP3: Booth's Signed Multiplication Negative Delta (15 * -3 = -45)
+    push -3
+    push 15
+    call _coa_mp_booth_score_delta
+    add esp, 8
+    xor ebx, ebx
+    cmp eax, -45
+    jne .L_mp5_bad
+    mov ebx, 1
+.L_mp5_bad:
+    push offset t_mp_booth_penalty
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 6. COA-MP3: Booth's Signed Multiplication Dual Negative Bonus (-20 * -4 = 80)
+    push -4
+    push -20
+    call _coa_mp_booth_score_delta
+    add esp, 8
+    xor ebx, ebx
+    cmp eax, 80
+    jne .L_mp6_bad
+    mov ebx, 1
+.L_mp6_bad:
+    push offset t_mp_booth_bonus
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 7. COA-MP4: 5-Stage Pipeline Simulation with RAW Hazard (8 packets, Mode 1 -> 14 cycles, 2 stalls)
+    push offset test_mp_stl
+    push offset test_mp_cyc
+    push 1                          # Mode 1: RAW
+    push 8                          # 8 packets
+    call _coa_mp_pipeline_stream
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_mp_cyc], 14
+    jne .L_mp7_bad
+    cmp dword ptr [test_mp_stl], 2
+    jne .L_mp7_bad
+    mov ebx, 1
+.L_mp7_bad:
+    push offset t_mp_pipe_raw
+    push ebx
+    call record_result
+    add esp, 8
+
+    # 8. COA-MP4: 5-Stage Pipeline Forwarding Bypass (8 packets, Mode 2 -> 12 cycles, 0 stalls)
+    push offset test_mp_stl
+    push offset test_mp_cyc
+    push 2                          # Mode 2: Forwarding
+    push 8                          # 8 packets
+    call _coa_mp_pipeline_stream
+    add esp, 16
+    xor ebx, ebx
+    cmp dword ptr [test_mp_cyc], 12
+    jne .L_mp8_bad
+    cmp dword ptr [test_mp_stl], 0
+    jne .L_mp8_bad
+    mov ebx, 1
+.L_mp8_bad:
+    push offset t_mp_pipe_fwd
     push ebx
     call record_result
     add esp, 8

@@ -418,3 +418,4 @@ public class MultiplayerJavaTest {
         pass("Cross-client schema parity confirmed against TypeScript MultiplayerTypes contracts");
     }
 }
+

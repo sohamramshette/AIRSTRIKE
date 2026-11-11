@@ -9,12 +9,12 @@
 
 .data
 main_banner:
-    .asciz "\n==============================================================================\n        AIRSTRIKE - COMPUTER ORGANIZATION & ARCHITECTURE (COA) IN 80386       \n               Academic Demonstration & Architecture Verification              \n==============================================================================\n  [1] 80386 Architecture Demonstration (CO1: GPR, Flags, Segments, Addressing)\n  [2] Assembly Language Programs (CO2: 10 Core 80386 Programs)\n  [3] Computer Arithmetic Algorithms (CO3: Booth's Algorithm & Restoring Div)\n  [4] Control Unit & Instruction Pipelining (CO4: Hazards, Stalls, Flushes)\n  [5] Run All Demonstrations & Automated Verification Tests\n  [6] Exit Application\n==============================================================================\n  Enter selection [1-6]: "
+    .asciz "\n==============================================================================\n        AIRSTRIKE - COMPUTER ORGANIZATION & ARCHITECTURE (COA) IN 80386       \n               Academic Demonstration & Architecture Verification              \n==============================================================================\n  [1] 80386 Architecture Demonstration (CO1: GPR, Flags, Segments, Addressing)\n  [2] Assembly Language Programs (CO2: 10 Core 80386 Programs)\n  [3] Computer Arithmetic Algorithms (CO3: Booth's Algorithm & Restoring Div)\n  [4] Control Unit & Instruction Pipelining (CO4: Hazards, Stalls, Flushes)\n  [5] COA Multiplayer Combat Architecture Demonstrator (CO1 to CO4)\n  [6] Run All Demonstrations & Automated Verification Tests\n  [7] Exit Application\n==============================================================================\n  Enter selection [1-7]: "
 
 farewell_msg:
     .asciz "\nExiting AIRSTRIKE 80386 Architecture module. Systems offline.\n"
 invalid_msg:
-    .asciz "\n[ERROR] Invalid option. Please select a number between 1 and 6.\n"
+    .asciz "\n[ERROR] Invalid option. Please select a number between 1 and 7.\n"
 
 arg_test1:
     .asciz "--test"
@@ -95,11 +95,13 @@ _main:
     cmp ebx, 4
     je .L_opt4_control_pipe
     cmp ebx, 5
-    je .L_opt5_run_all
+    je .L_opt5_multiplayer
     cmp ebx, 6
-    je .L_opt6_exit
+    je .L_opt6_run_all
+    cmp ebx, 7
+    je .L_opt7_exit
     cmp ebx, -1
-    je .L_opt6_exit
+    je .L_opt7_exit
 
     push offset invalid_msg
     call _print_str
@@ -122,7 +124,12 @@ _main:
     call _co4_menu_loop
     jmp .L_main_menu_loop
 
-.L_opt5_run_all:
+.L_opt5_multiplayer:
+    call _coa_demo_multiplayer
+    call _pause_key
+    jmp .L_main_menu_loop
+
+.L_opt6_run_all:
     # Run all CO demonstrations, Enemy demonstrations + automated tests
     call _co1_run_all
     call _co2_run_all
@@ -132,11 +139,12 @@ _main:
     call _coa_demo_fibonacci_skimmer
     call _coa_demo_booth_gunship
     call _coa_demo_pipelined_railgun
+    call _coa_demo_multiplayer
     call _run_all_coa_tests
     call _pause_key
     jmp .L_main_menu_loop
 
-.L_opt6_exit:
+.L_opt7_exit:
     push offset farewell_msg
     call _print_str
     add esp, 4

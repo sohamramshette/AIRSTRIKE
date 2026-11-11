@@ -9,6 +9,7 @@
 #include "appearance/lighting_texture_demo.hpp"
 #include "objects/space_scene.hpp"
 #include "objects/enemy_demo_scene.hpp"
+#include "objects/multiplayer_battle_scene.hpp"
 #include "../tests/test_cgl.hpp"
 
 #include <iostream>
@@ -20,7 +21,7 @@ namespace CGL {
 // Active Window Dimensions
 static int windowWidth = 1024;
 static int windowHeight = 720;
-static int currentScreen = 0; // 0: Integrated, 1-6: CO1-CO6, 7: Enemy Demonstrator
+static int currentScreen = 0; // 0: Integrated, 1-6: CO1-CO6, 7: Enemy Demonstrator, 8: Multiplayer
 static bool screenshotMode = false;
 static int screenshotStep = 0;
 
@@ -33,6 +34,7 @@ static std::unique_ptr<ClippingAlgorithmsDemo> clippingDemo;
 static std::unique_ptr<LightingTextureDemo> lightingDemo;
 static std::unique_ptr<SpaceCombatScene> combatScene;
 static std::unique_ptr<EnemyDemoScene> enemyDemoScene;
+static std::unique_ptr<MultiplayerBattleScene> multiplayerScene;
 
 void initModules() {
     primitivesDemo = std::make_unique<SpacePrimitivesDemo>();
@@ -58,6 +60,9 @@ void initModules() {
 
     enemyDemoScene = std::make_unique<EnemyDemoScene>();
     enemyDemoScene->init();
+
+    multiplayerScene = std::make_unique<MultiplayerBattleScene>();
+    multiplayerScene->init();
 }
 
 void displayCallback() {
@@ -69,6 +74,7 @@ void displayCallback() {
         case 5: clippingDemo->render(windowWidth, windowHeight); break;
         case 6: lightingDemo->render(windowWidth, windowHeight); break;
         case 7: enemyDemoScene->render(windowWidth, windowHeight); break;
+        case 8: multiplayerScene->render(windowWidth, windowHeight); break;
         case 0:
         default:
             combatScene->render(windowWidth, windowHeight);
@@ -185,7 +191,23 @@ void timerCallback(int value) {
                 enemyDemoScene->selectEnemy(5);
                 displayCallback();
                 captureScreenshot("docs/screenshots/CGL/cgl_enemy6_phong_cruiser.bmp", windowWidth, windowHeight);
-                std::cout << "[SUCCESS] All 13 CGL screenshots (Base + 6 Enemies) successfully generated!" << std::endl;
+                screenshotStep++;
+                glutTimerFunc(100, timerCallback, 0);
+                return;
+            case 13:
+                currentScreen = 8;
+                multiplayerScene->setViewMode(MPViewMode::ARENA_OVERVIEW);
+                displayCallback();
+                captureScreenshot("docs/screenshots/CGL/cgl_mp_arena_overview.bmp", windowWidth, windowHeight);
+                screenshotStep++;
+                glutTimerFunc(100, timerCallback, 0);
+                return;
+            case 14:
+                currentScreen = 8;
+                multiplayerScene->setViewMode(MPViewMode::SPLIT_SCREEN);
+                displayCallback();
+                captureScreenshot("docs/screenshots/CGL/cgl_mp_split_screen.bmp", windowWidth, windowHeight);
+                std::cout << "[SUCCESS] All 15 CGL screenshots (Base + 6 Enemies + 2 Multiplayer) successfully generated!" << std::endl;
                 std::exit(0);
         }
     }
@@ -198,6 +220,7 @@ void timerCallback(int value) {
         case 5: clippingDemo->update(dt); break;
         case 6: lightingDemo->update(dt); break;
         case 7: enemyDemoScene->update(dt); break;
+        case 8: multiplayerScene->update(dt); break;
         case 0: combatScene->update(dt); break;
         default: break;
     }
@@ -208,6 +231,16 @@ void timerCallback(int value) {
 
 void keyboardCallback(unsigned char key, int x, int y) {
     (void)x; (void)y;
+
+    // Dedicated input routing for Screen 8: Multiplayer Visualizer
+    if (currentScreen == 8) {
+        if (key == 27 || key == '0') {
+            currentScreen = 0; // Return to Main Menu / Integrated Scene
+            return;
+        }
+        multiplayerScene->handleKey(key);
+        return;
+    }
 
     // Dedicated input routing for Screen 7: Enemy Demonstrator
     if (currentScreen == 7) {
@@ -301,6 +334,7 @@ void keyboardCallback(unsigned char key, int x, int y) {
         case 'm': case 'M':
             if (currentScreen == 3) rasterDemo->cycleMode();
             else if (currentScreen == 5) clippingDemo->cycleMode();
+            else currentScreen = 8;
             break;
 
         case 'p': case 'P':
@@ -344,6 +378,7 @@ void keyboardCallback(unsigned char key, int x, int y) {
 
         case '8':
             if (currentScreen == 6) lightingDemo->toggleDiffuse();
+            else currentScreen = 8;
             break;
 
         case '9':
