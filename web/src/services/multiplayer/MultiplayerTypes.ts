@@ -74,3 +74,4 @@ export interface GuestJoinedEventPayload {
 
 export type RoomStateListener = (room: MultiplayerRoomState | null) => void;
 export type PresenceListener = (presences: Record<string, PilotPresenceState>) => void;
+

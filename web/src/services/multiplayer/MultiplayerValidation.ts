@@ -40,3 +40,4 @@ export class MultiplayerValidation {
     return score <= maxTheoretical;
   }
 }
+

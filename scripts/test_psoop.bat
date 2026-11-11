@@ -47,10 +47,18 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [TEST 5/5] Running Chaos Protocol CO-Mapped Test Suite...
+echo [TEST 5/6] Running Chaos Protocol CO-Mapped Test Suite...
 java -cp bin\java test.ChaosProtocolTest
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] ChaosProtocolTest failed!
+    exit /b 1
+)
+
+echo.
+echo [TEST 6/6] Running Phase 12 Java Multiplayer Desktop Test Suite...
+java -cp bin\java test.MultiplayerJavaTest
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] MultiplayerJavaTest failed!
     exit /b 1
 )
 

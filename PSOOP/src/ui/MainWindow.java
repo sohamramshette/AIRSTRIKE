@@ -109,6 +109,11 @@ public class MainWindow extends JFrame {
         dialog.setVisible(true);
     }
 
+    public void showMultiplayerDialog() {
+        MultiplayerDialog dialog = new MultiplayerDialog(this, this);
+        dialog.setVisible(true);
+    }
+
     public void showMatchHistoryDialog() {
         MatchHistoryDialog dialog = new MatchHistoryDialog(this, this, matchService);
         dialog.setVisible(true);

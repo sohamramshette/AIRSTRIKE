@@ -119,20 +119,31 @@ public class MenuPanel extends JPanel {
 
         // 1. Pilot Status HUD Capsule (top header space)
         gbc.gridy = 0;
-        gbc.insets = new Insets(136, 12, 10, 12);
+        gbc.insets = new Insets(120, 12, 8, 12);
         JPanel pilotHud = buildPilotStatusCapsule();
         add(pilotHud, gbc);
 
         // 2. Primary Hero Button: LAUNCH MISSION
         gbc.gridy = 1;
-        gbc.insets = new Insets(4, 12, 6, 12);
+        gbc.insets = new Insets(3, 12, 4, 12);
         CyberButton launchBtn = CyberButton.hero("▶   LAUNCH MISSION");
         launchBtn.addActionListener(e -> mainWindow.startGame());
         add(launchBtn, gbc);
 
-        // 3. Academic Curriculum: 19 Course Outcomes (All 4 Subjects)
+        // 3. Online 1v1 Battle (Multiplayer)
         gbc.gridy = 2;
-        gbc.insets = new Insets(3, 12, 3, 12);
+        gbc.insets = new Insets(2, 12, 3, 12);
+        CyberButton multiplayerBtn = CyberButton.tactical(
+                "⚔   ONLINE 1v1 BATTLE (MULTIPLAYER)",
+                Theme.PURPLE_ACCENT,
+                Theme.PURPLE_DARK
+        );
+        multiplayerBtn.addActionListener(e -> mainWindow.showMultiplayerDialog());
+        add(multiplayerBtn, gbc);
+
+        // 4. Academic Curriculum: 19 Course Outcomes (All 4 Subjects)
+        gbc.gridy = 3;
+        gbc.insets = new Insets(2, 12, 3, 12);
         CyberButton subjectCoBtn = CyberButton.tactical(
                 "✦   COURSE OUTCOMES & SUBJECTS (19 COs)",
                 Theme.PURPLE_ACCENT,
@@ -141,9 +152,9 @@ public class MenuPanel extends JPanel {
         subjectCoBtn.addActionListener(e -> mainWindow.showSubjectCODialog());
         add(subjectCoBtn, gbc);
 
-        // 4. Global Leaderboard
-        gbc.gridy = 3;
-        gbc.insets = new Insets(3, 12, 3, 12);
+        // 5. Global Leaderboard
+        gbc.gridy = 4;
+        gbc.insets = new Insets(2, 12, 3, 12);
         CyberButton leaderboardBtn = CyberButton.tactical(
                 "★   GLOBAL LEADERBOARD (HALL OF FAME)",
                 Theme.GOLD_ACCENT,
@@ -152,8 +163,8 @@ public class MenuPanel extends JPanel {
         leaderboardBtn.addActionListener(e -> mainWindow.showLeaderboardDialog());
         add(leaderboardBtn, gbc);
 
-        // 5. Pilot Profile & System Settings
-        gbc.gridy = 4;
+        // 6. Pilot Profile & System Settings
+        gbc.gridy = 5;
         CyberButton profileSettingsBtn = CyberButton.tactical(
                 "◈   PILOT PROFILE & SYSTEM SETTINGS",
                 Theme.BLUE_ACCENT,
@@ -162,8 +173,8 @@ public class MenuPanel extends JPanel {
         profileSettingsBtn.addActionListener(e -> mainWindow.showProfileSettingsDialog());
         add(profileSettingsBtn, gbc);
 
-        // 6. Match History / Flight Logs
-        gbc.gridy = 5;
+        // 7. Match History / Flight Logs
+        gbc.gridy = 6;
         CyberButton historyBtn = CyberButton.tactical(
                 "⟡   MATCH HISTORY (FLIGHT LOGS)",
                 new Color(56, 189, 248),
@@ -172,8 +183,8 @@ public class MenuPanel extends JPanel {
         historyBtn.addActionListener(e -> mainWindow.showMatchHistoryDialog());
         add(historyBtn, gbc);
 
-        // 7. Pilot Manual (Controls)
-        gbc.gridy = 6;
+        // 8. Pilot Manual (Controls)
+        gbc.gridy = 7;
         CyberButton manualBtn = CyberButton.tactical(
                 "❖   PILOT MANUAL (FLIGHT CONTROLS)",
                 Theme.EMERALD_STATUS,
@@ -182,9 +193,9 @@ public class MenuPanel extends JPanel {
         manualBtn.addActionListener(e -> mainWindow.showInstructions());
         add(manualBtn, gbc);
 
-        // 8. Abort to Desktop Button
-        gbc.gridy = 7;
-        gbc.insets = new Insets(6, 12, 14, 12);
+        // 9. Abort to Desktop Button
+        gbc.gridy = 8;
+        gbc.insets = new Insets(4, 12, 10, 12);
         CyberButton exitBtn = CyberButton.danger("✕   ABORT TO DESKTOP");
         exitBtn.addActionListener(e -> System.exit(0));
         add(exitBtn, gbc);

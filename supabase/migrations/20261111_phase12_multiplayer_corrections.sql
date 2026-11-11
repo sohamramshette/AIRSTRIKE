@@ -159,3 +159,4 @@ REVOKE ALL ON FUNCTION public.get_multiplayer_room(uuid) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.get_multiplayer_room(uuid) TO authenticated;
 
 COMMIT;
+

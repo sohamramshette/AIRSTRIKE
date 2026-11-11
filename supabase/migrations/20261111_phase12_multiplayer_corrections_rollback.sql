@@ -11,3 +11,4 @@ DROP FUNCTION IF EXISTS public.get_multiplayer_room(uuid);
 DROP FUNCTION IF EXISTS public.leave_multiplayer_room(uuid);
 
 COMMIT;
+
