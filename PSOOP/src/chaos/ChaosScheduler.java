@@ -39,6 +39,7 @@ public class ChaosScheduler {
     private final LinkedList<ChaosEventType> history;
     private ChaosEventType lastTriggered;
     private final Random random;
+    private database.multiplayer.DeterministicPRNG prng;
 
     public ChaosScheduler() {
         this(45.0, 18.0, 35.0);
@@ -55,6 +56,15 @@ public class ChaosScheduler {
         this.history = new LinkedList<>();
         this.lastTriggered = null;
         this.random = new Random();
+        this.prng = null;
+    }
+
+    public void setPRNG(database.multiplayer.DeterministicPRNG prng) {
+        this.prng = prng;
+    }
+
+    public database.multiplayer.DeterministicPRNG getPRNG() {
+        return this.prng;
     }
 
     /**
@@ -94,7 +104,7 @@ public class ChaosScheduler {
                     }
                 }
                 // Schedule next interval
-                nextEventTimer = minInterval + random.nextDouble() * (maxInterval - minInterval);
+                nextEventTimer = minInterval + (prng != null ? prng.nextFloat() : random.nextDouble()) * (maxInterval - minInterval);
             }
         }
 
@@ -160,7 +170,7 @@ public class ChaosScheduler {
             event = triggerEvent(primary, engine, warningDuration);
         }
 
-        nextEventTimer = minInterval + random.nextDouble() * (maxInterval - minInterval);
+        nextEventTimer = minInterval + (prng != null ? prng.nextFloat() : random.nextDouble()) * (maxInterval - minInterval);
         return event;
     }
 
@@ -213,7 +223,8 @@ public class ChaosScheduler {
         }
 
         if (candidates.isEmpty()) return null;
-        return candidates.get(random.nextInt(candidates.size()));
+        int idx = prng != null ? prng.nextInt(0, candidates.size()) : random.nextInt(candidates.size());
+        return candidates.get(idx);
     }
 
     /**
@@ -253,7 +264,8 @@ public class ChaosScheduler {
         }
 
         if (candidates.isEmpty()) return null;
-        return candidates.get(random.nextInt(candidates.size()));
+        int idx2 = prng != null ? prng.nextInt(0, candidates.size()) : random.nextInt(candidates.size());
+        return candidates.get(idx2);
     }
 
     public ActiveChaosEvent triggerDualChaos(ChaosEventType primary, ChaosEventType secondary, GameEngine engine) {

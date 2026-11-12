@@ -87,6 +87,7 @@ public class MultiplayerDialog extends JDialog {
 
     // Local state tracking
     private MultiplayerRoomState activeRoom = null;
+    private javax.swing.Timer mpCountdownTimer = null;
 
     public MultiplayerDialog(JFrame parent, MainWindow mainWindow) {
         super(parent, "STARFLEET 1v1 COMBAT LOBBY – MULTIPLAYER", true);
@@ -574,6 +575,10 @@ public class MultiplayerDialog extends JDialog {
     }
 
     private void handleDialogClose() {
+        if (mpCountdownTimer != null) {
+            mpCountdownTimer.stop();
+            mpCountdownTimer = null;
+        }
         if (activeRoom != null) {
             roomService.leaveRoom(activeRoom.getRoomId());
             activeRoom = null;
@@ -622,20 +627,60 @@ public class MultiplayerDialog extends JDialog {
 
         // Status banner messaging
         if (room.getStatus() == RoomStatus.COUNTDOWN) {
-            lobbyStatusText.setText("⚔ COMBAT IMMINENT! BOTH PILOTS READY — COUNTDOWN ENGAGED!");
-            lobbyStatusText.setForeground(Theme.GOLD_ACCENT);
-            toggleReadyBtn.setEnabled(false);
-            toggleReadyBtn.setText("✓   COUNTDOWN ACTIVE");
+            if (mpCountdownTimer == null) {
+                final int[] count = {3};
+                lobbyStatusText.setText("⚔ COMBAT IMMINENT! ENGAGING IN " + count[0] + "...");
+                lobbyStatusText.setForeground(Theme.GOLD_ACCENT);
+                toggleReadyBtn.setEnabled(false);
+                toggleReadyBtn.setText("✓   COUNTDOWN ACTIVE");
+
+                mpCountdownTimer = new javax.swing.Timer(1000, null);
+                mpCountdownTimer.addActionListener(e -> {
+                    count[0]--;
+                    if (count[0] > 0) {
+                        lobbyStatusText.setText("⚔ COMBAT IMMINENT! ENGAGING IN " + count[0] + "...");
+                    } else {
+                        if (mpCountdownTimer != null) {
+                            mpCountdownTimer.stop();
+                            mpCountdownTimer = null;
+                        }
+                        lobbyStatusText.setText("⚔ ENGAGE!");
+                        if (room.isHost()) {
+                            roomService.startMatch(room.getRoomId());
+                        }
+                    }
+                });
+                mpCountdownTimer.start();
+            }
+        } else if (room.getStatus() == RoomStatus.ACTIVE) {
+            if (mpCountdownTimer != null) {
+                mpCountdownTimer.stop();
+                mpCountdownTimer = null;
+            }
+            dispose();
+            mainWindow.startMultiplayerGame(room.getMatchSeed(), room.getStartedAt(), room);
         } else if (room.isBothReady()) {
+            if (mpCountdownTimer != null) {
+                mpCountdownTimer.stop();
+                mpCountdownTimer = null;
+            }
             lobbyStatusText.setText("⚔ BOTH PILOTS READY! PREPARING COMBAT...");
             lobbyStatusText.setForeground(Theme.EMERALD_STATUS);
         } else if (room.hasGuest()) {
+            if (mpCountdownTimer != null) {
+                mpCountdownTimer.stop();
+                mpCountdownTimer = null;
+            }
             lobbyStatusText.setText("Both cadets connected. Mark READY when prepared for combat.");
             lobbyStatusText.setForeground(Theme.CYAN_PRIMARY);
             boolean myReady = room.isHost() ? room.isHostReady() : room.isGuestReady();
             toggleReadyBtn.setText(myReady ? "✓   READY CONFIRMED" : "✓   MARK READY");
             toggleReadyBtn.setEnabled(!myReady);
         } else {
+            if (mpCountdownTimer != null) {
+                mpCountdownTimer.stop();
+                mpCountdownTimer = null;
+            }
             lobbyStatusText.setText("Waiting for second cadet to enter room code...");
             lobbyStatusText.setForeground(Theme.TEXT_MUTED);
             toggleReadyBtn.setText("✓   MARK READY");

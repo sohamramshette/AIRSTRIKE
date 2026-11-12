@@ -58,11 +58,25 @@ public final class MultiplayerModels {
         private final boolean isGuest;
         private final String createdAt;
         private final String expiresAt;
+        private final String startedAt;
+        private final int durationSeconds;
+        private final Integer hostScore;
+        private final Integer guestScore;
+        private final String winnerId;
 
         public MultiplayerRoomState(String roomId, String roomCode, String hostId, String hostUsername,
                                     boolean hostReady, String guestId, String guestUsername, boolean guestReady,
                                     long matchSeed, RoomStatus status, boolean isHost, boolean isGuest,
                                     String createdAt, String expiresAt) {
+            this(roomId, roomCode, hostId, hostUsername, hostReady, guestId, guestUsername, guestReady,
+                 matchSeed, status, isHost, isGuest, createdAt, expiresAt, "", 90, null, null, null);
+        }
+
+        public MultiplayerRoomState(String roomId, String roomCode, String hostId, String hostUsername,
+                                    boolean hostReady, String guestId, String guestUsername, boolean guestReady,
+                                    long matchSeed, RoomStatus status, boolean isHost, boolean isGuest,
+                                    String createdAt, String expiresAt, String startedAt, int durationSeconds,
+                                    Integer hostScore, Integer guestScore, String winnerId) {
             this.roomId = roomId != null ? roomId : "";
             this.roomCode = roomCode != null ? roomCode.toUpperCase() : "";
             this.hostId = hostId != null ? hostId : "";
@@ -77,6 +91,11 @@ public final class MultiplayerModels {
             this.isGuest = isGuest;
             this.createdAt = createdAt != null ? createdAt : "";
             this.expiresAt = expiresAt != null ? expiresAt : "";
+            this.startedAt = startedAt != null ? startedAt : "";
+            this.durationSeconds = durationSeconds > 0 ? durationSeconds : 90;
+            this.hostScore = hostScore;
+            this.guestScore = guestScore;
+            this.winnerId = winnerId;
         }
 
         public String getRoomId() { return roomId; }
@@ -93,6 +112,11 @@ public final class MultiplayerModels {
         public boolean isGuest() { return isGuest; }
         public String getCreatedAt() { return createdAt; }
         public String getExpiresAt() { return expiresAt; }
+        public String getStartedAt() { return startedAt; }
+        public int getDurationSeconds() { return durationSeconds; }
+        public Integer getHostScore() { return hostScore; }
+        public Integer getGuestScore() { return guestScore; }
+        public String getWinnerId() { return winnerId; }
 
         public boolean isBothReady() {
             return hostReady && guestReady;
@@ -222,6 +246,82 @@ public final class MultiplayerModels {
         public void setCurrentScore(int score) { this.currentScore = Math.max(0, score); }
         public int getHealth() { return health; }
         public void setHealth(int health) { this.health = Math.max(0, Math.min(100, health)); }
+    }
+
+    /**
+     * Ephemeral Realtime Telemetry Broadcast Payload (~10 Hz).
+     */
+    public static class MultiplayerTelemetryPayload {
+        private final String roomId;
+        private final String playerId;
+        private final String callsign;
+        private final int score;
+        private final int health;
+        private final int shield;
+        private final int lives;
+        private final int wave;
+        private final int combo;
+        private final boolean overheated;
+        private final long sequence;
+        private final long timestamp;
+
+        public MultiplayerTelemetryPayload(String roomId, String playerId, String callsign, int score,
+                                          int health, int shield, int lives, int wave, int combo,
+                                          boolean overheated, long sequence, long timestamp) {
+            this.roomId = roomId != null ? roomId : "";
+            this.playerId = playerId != null ? playerId : "";
+            this.callsign = callsign != null ? callsign : "Pilot";
+            this.score = Math.max(0, score);
+            this.health = Math.max(0, Math.min(100, health));
+            this.shield = Math.max(0, Math.min(100, shield));
+            this.lives = Math.max(0, lives);
+            this.wave = Math.max(1, wave);
+            this.combo = Math.max(1, combo);
+            this.overheated = overheated;
+            this.sequence = sequence;
+            this.timestamp = timestamp > 0 ? timestamp : System.currentTimeMillis();
+        }
+
+        public String getRoomId() { return roomId; }
+        public String getPlayerId() { return playerId; }
+        public String getCallsign() { return callsign; }
+        public int getScore() { return score; }
+        public int getHealth() { return health; }
+        public int getShield() { return shield; }
+        public int getLives() { return lives; }
+        public int getWave() { return wave; }
+        public int getCombo() { return combo; }
+        public boolean isOverheated() { return overheated; }
+        public long getSequence() { return sequence; }
+        public long getTimestamp() { return timestamp; }
+    }
+
+    /**
+     * Match resolution payload from PostgreSQL finalize_multiplayer_match RPC.
+     */
+    public static class MatchFinalizedPayload {
+        private final String roomId;
+        private final String winnerId;
+        private final boolean draw;
+        private final int hostScore;
+        private final int guestScore;
+        private final String completedAt;
+
+        public MatchFinalizedPayload(String roomId, String winnerId, boolean draw, int hostScore, int guestScore, String completedAt) {
+            this.roomId = roomId != null ? roomId : "";
+            this.winnerId = winnerId;
+            this.draw = draw;
+            this.hostScore = hostScore;
+            this.guestScore = guestScore;
+            this.completedAt = completedAt != null ? completedAt : "";
+        }
+
+        public String getRoomId() { return roomId; }
+        public String getWinnerId() { return winnerId; }
+        public boolean isDraw() { return draw; }
+        public int getHostScore() { return hostScore; }
+        public int getGuestScore() { return guestScore; }
+        public String getCompletedAt() { return completedAt; }
     }
 
     /**

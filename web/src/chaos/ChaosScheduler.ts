@@ -3,6 +3,7 @@ import { ActiveChaosEvent } from './ActiveChaosEvent';
 import { Fighter } from '../game/Fighter';
 import { Armoured } from '../game/Armoured';
 import { Projectile } from '../game/Projectile';
+import { DeterministicPRNG } from '../services/multiplayer/DeterministicPRNG';
 
 export class ChaosScheduler {
   public enabled: boolean = true;
@@ -11,6 +12,15 @@ export class ChaosScheduler {
   public maxInterval: number;
   public nextEventTimer: number;
   public maxActiveEvents: number = 4;
+  private prng: DeterministicPRNG | null = null;
+
+  public setPRNG(prng: DeterministicPRNG | null): void {
+    this.prng = prng;
+  }
+
+  public getPRNG(): DeterministicPRNG | null {
+    return this.prng;
+  }
 
   public activeEvents: ActiveChaosEvent[] = [];
   public lastTriggered: ChaosEventType | null = null;
@@ -52,7 +62,7 @@ export class ChaosScheduler {
             this.triggerEvent(primary, engine, 3.0);
           }
         }
-        this.nextEventTimer = this.minInterval + Math.random() * (this.maxInterval - this.minInterval);
+        this.nextEventTimer = this.minInterval + (this.prng ? this.prng.nextFloat() : Math.random()) * (this.maxInterval - this.minInterval);
       }
     }
 
@@ -150,7 +160,8 @@ export class ChaosScheduler {
     }
 
     if (candidates.length === 0) return null;
-    return candidates[Math.floor(Math.random() * candidates.length)];
+    const r1 = this.prng ? this.prng.nextFloat() : Math.random();
+    return candidates[Math.floor(r1 * candidates.length)];
   }
 
   public pickEligibleEvent(currentLevel: number): ChaosEventType | null {
@@ -176,7 +187,8 @@ export class ChaosScheduler {
     }
 
     if (candidates.length === 0) return null;
-    return candidates[Math.floor(Math.random() * candidates.length)];
+    const r2 = this.prng ? this.prng.nextFloat() : Math.random();
+    return candidates[Math.floor(r2 * candidates.length)];
   }
 
   public triggerDualChaos(

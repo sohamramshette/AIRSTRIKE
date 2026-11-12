@@ -1,6 +1,7 @@
 import { GameEngine } from './game/GameEngine';
 import { UIManager } from './ui/UIManager';
 import { AnnouncerManager } from './announcer/AnnouncerManager';
+import { MultiplayerCombatSyncService } from './services/multiplayer/MultiplayerCombatSyncService';
 
 document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     (window as any).__airstrikeEngine = engine;
     (window as any).__airstrikeUI = ui;
     (window as any).__announcerManager = AnnouncerManager.getInstance();
+    (window as any).__combatSyncService = MultiplayerCombatSyncService.getInstance();
     (window as any).__updateDimensions = updateDimensions;
 
     console.log('%c AIRSTRIKE v1.0.0 (Browser Edition) %c Ready for Deployment ',

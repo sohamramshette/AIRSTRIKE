@@ -63,6 +63,12 @@ public class GameEngine {
     private int mouseX;
     private int mouseY;
 
+    // Multiplayer 1v1 Score Attack (Phase 12 Part 6)
+    private boolean multiplayerMode;
+    private database.multiplayer.DeterministicPRNG deterministicPRNG;
+    private database.multiplayer.MultiplayerModels.MultiplayerRoomState multiplayerRoom;
+    private boolean multiplayerFinalized;
+
     public enum PauseButton { RESUME, RESTART, SETTINGS, MENU, EXIT, NONE }
     public enum GameOverButton { REDEPLOY, MENU, NONE }
 
@@ -85,6 +91,8 @@ public class GameEngine {
         this.shotsHit = 0;
         this.mouseX = -1;
         this.mouseY = -1;
+        this.multiplayerMode = false;
+        this.multiplayerFinalized = false;
 
         this.player = new Player((this.screenWidth - 48) / 2.0, this.screenHeight - 110);
         this.enemies = new ArrayList<>();
@@ -120,6 +128,7 @@ public class GameEngine {
 
     private void onGameOver() {
         announcer.AnnouncerManager.getInstance().trigger(announcer.AnnouncerEvent.GAME_OVER, true);
+        if (multiplayerMode) return; // Handled atomically by finishMultiplayerMatch()
         if (matchUploaded) return; // Prevent duplicate submission
         matchUploaded = true;
 
@@ -146,6 +155,10 @@ public class GameEngine {
      * Initiates a fresh game session.
      */
     public void startNewGame() {
+        if (!multiplayerMode) {
+            waveManager.setPRNG(null);
+            chaosScheduler.setPRNG(null);
+        }
         this.enemyDemoMode = false;
         enemies.clear();
         projectiles.clear();
@@ -170,6 +183,100 @@ public class GameEngine {
         try {
             setState(GameState.PLAYING);
         } catch (InvalidGameStateException ignored) {}
+    }
+
+    public boolean isMultiplayer() {
+        return multiplayerMode;
+    }
+
+    public void startMultiplayerGame(long matchSeed, String startedAtIso, database.multiplayer.MultiplayerModels.MultiplayerRoomState room) {
+        this.multiplayerMode = true;
+        this.multiplayerRoom = room;
+        this.multiplayerFinalized = false;
+        this.enemyDemoMode = false;
+
+        this.deterministicPRNG = new database.multiplayer.DeterministicPRNG(matchSeed);
+        this.waveManager.setPRNG(deterministicPRNG);
+        this.chaosScheduler.setPRNG(deterministicPRNG);
+
+        enemies.clear();
+        projectiles.clear();
+        powerUps.clear();
+        particles.clear();
+
+        scoreCalculator.resetGame();
+        waveManager.resetToLevel(1);
+        chaosScheduler.reset(this);
+        player.resetFull((screenWidth - player.getWidth()) / 2, screenHeight - 110);
+        player.setLives(2); // Strict 2 lives for multiplayer score attack
+
+        this.matchStartTimeMs = System.currentTimeMillis();
+        this.matchUploaded = false;
+        this.matchUploadStatus = "";
+        this.enemiesDestroyed = 0;
+        this.shotsFired = 0;
+        this.shotsHit = 0;
+
+        announcer.AnnouncerManager.getInstance().reset();
+        announcer.AnnouncerManager.getInstance().trigger(announcer.AnnouncerEvent.WAVE_START, false);
+
+        String localId = room != null ? (room.isHost() ? room.getHostId() : (room.getGuestId() != null ? room.getGuestId() : "")) : "";
+        String localCallsign = room != null ? (room.isHost() ? room.getHostUsername() : (room.getGuestUsername() != null ? room.getGuestUsername() : "Pilot")) : "Pilot";
+
+        database.multiplayer.MultiplayerCombatSyncService.getInstance().startCombatSync(
+                room,
+                localId,
+                localCallsign,
+                startedAtIso,
+                () -> new database.multiplayer.MultiplayerModels.MultiplayerTelemetryPayload(
+                        room != null ? room.getRoomId() : "",
+                        localId,
+                        localCallsign,
+                        scoreCalculator.getScore(),
+                        player.getHealth(),
+                        player.getShield(),
+                        player.getLives(),
+                        waveManager.getCurrentLevel(),
+                        scoreCalculator.getMultiplier(),
+                        player.isOverheated(),
+                        0,
+                        System.currentTimeMillis()
+                ),
+                this::finishMultiplayerMatch
+        );
+
+        try {
+            setState(GameState.PLAYING);
+        } catch (InvalidGameStateException ignored) {}
+    }
+
+    public synchronized void finishMultiplayerMatch() {
+        if (multiplayerFinalized) return;
+        multiplayerFinalized = true;
+
+        // Final burst transmission
+        database.multiplayer.MultiplayerCombatSyncService.getInstance().sendLocalTelemetry();
+
+        try {
+            setState(GameState.GAME_OVER);
+        } catch (InvalidGameStateException ignored) {}
+
+        if (multiplayerRoom != null) {
+            matchUploadStatus = "FINALIZING 1v1 MATCH ON STARFLEET CLOUD...";
+            database.multiplayer.MultiplayerRoomService.getInstance().finalizeMatch(
+                    multiplayerRoom.getRoomId(),
+                    scoreCalculator.getScore(),
+                    90
+            ).thenAccept(res -> {
+                if (res != null && res.isSuccess()) {
+                    matchUploadStatus = "1v1 MATCH RESOLVED ON STARFLEET CLOUD";
+                } else {
+                    matchUploadStatus = "1v1 TELEMETRY TRANSMITTED";
+                }
+            });
+        }
+
+        database.multiplayer.MultiplayerCombatSyncService.getInstance().stopCombatSync();
     }
 
     /**
@@ -367,6 +474,14 @@ public class GameEngine {
             shotsHit += (pActiveBefore - pActiveAfter);
         }
 
+        // Multiplayer Time Expiration Check
+        if (multiplayerMode && !multiplayerFinalized) {
+            if (database.multiplayer.MultiplayerCombatSyncService.getInstance().getRemainingSeconds() <= 0) {
+                finishMultiplayerMatch();
+                return;
+            }
+        }
+
         // 8. Player Destruction & Respawn Handling
         if (player.isDestroyed()) {
             if (enemyDemoMode) {
@@ -377,9 +492,13 @@ public class GameEngine {
                 boolean hasRemainingLives = player.loseLifeAndRespawn((screenWidth - player.getWidth()) / 2, screenHeight - 110);
                 announcer.AnnouncerManager.getInstance().trigger(announcer.AnnouncerEvent.PLAYER_DEATH, true);
                 if (!hasRemainingLives) {
-                    try {
-                        setState(GameState.GAME_OVER);
-                    } catch (InvalidGameStateException ignored) {}
+                    if (multiplayerMode && !multiplayerFinalized) {
+                        finishMultiplayerMatch();
+                    } else {
+                        try {
+                            setState(GameState.GAME_OVER);
+                        } catch (InvalidGameStateException ignored) {}
+                    }
                 }
             }
         }
@@ -435,7 +554,11 @@ public class GameEngine {
 
         // 7. HUD Overlay (Health, Shield, Score, Level, Lives)
         if (state == GameState.PLAYING || state == GameState.PAUSED) {
-            renderHUD(g);
+            if (multiplayerMode) {
+                renderMultiplayerHUD(g, width);
+            } else {
+                renderHUD(g);
+            }
         }
 
         // Academic Demo Banner
@@ -455,7 +578,11 @@ public class GameEngine {
 
         // 10. Game Over Overlay
         if (state == GameState.GAME_OVER) {
-            renderGameOverScreen(g);
+            if (multiplayerMode) {
+                renderMultiplayerGameOverScreen(g);
+            } else {
+                renderGameOverScreen(g);
+            }
         }
     }
 
@@ -724,6 +851,211 @@ public class GameEngine {
         int btnW = 400;
         int bx = cardX + 40;
         renderTacticalButton(g, bx, cardY + 244, btnW, 40, "▶   REDEPLOY VESSEL", "[R]", new Color(0, 229, 255), new Color(0, 119, 182), isButtonHovered(bx, cardY + 244, btnW, 40));
+        renderTacticalButton(g, bx, cardY + 294, btnW, 36, "◈   RETURN TO MAIN MENU", "[M]", new Color(168, 85, 247), new Color(36, 18, 48), isButtonHovered(bx, cardY + 294, btnW, 36));
+    }
+
+    private void renderMultiplayerHUD(Graphics2D g, int width) {
+        database.multiplayer.MultiplayerCombatSyncService sync = database.multiplayer.MultiplayerCombatSyncService.getInstance();
+        int remaining = sync.getRemainingSeconds();
+        int delta = sync.getScoreDelta();
+
+        int min = remaining / 60;
+        int sec = remaining % 60;
+        String timeStr = String.format("%02d:%02d", min, sec);
+
+        int topY = 16;
+        int podW = Math.min(260, (width - 180) / 2);
+        int podH = 68;
+        int leftX = 14;
+        int rightX = width - podW - 14;
+        int centerX = width / 2;
+
+        // 1. LEFT POD: LOCAL PILOT
+        g.setColor(new Color(13, 19, 33, 225));
+        g.fillRoundRect(leftX, topY, podW, podH, 10, 10);
+        g.setColor(delta >= 0 ? new Color(16, 185, 129) : new Color(0, 229, 255, 120));
+        g.setStroke(new BasicStroke(delta > 0 ? 1.5f : 1.0f));
+        g.drawRoundRect(leftX, topY, podW, podH, 10, 10);
+
+        String localName = multiplayerRoom != null ? (multiplayerRoom.isHost() ? multiplayerRoom.getHostUsername() : multiplayerRoom.getGuestUsername()) : "YOU";
+        g.setFont(new Font("SansSerif", Font.BOLD, 11));
+        g.setColor(new Color(56, 189, 248));
+        g.drawString("PILOT: " + (localName != null ? localName.toUpperCase() : "YOU"), leftX + 10, topY + 16);
+
+        g.setFont(new Font("SansSerif", Font.BOLD, 15));
+        g.setColor(new Color(251, 191, 36));
+        g.drawString(String.format("%,d PTS", scoreCalculator.getScore()), leftX + 10, topY + 36);
+
+        // Mini Hull Bar
+        int miniBarW = Math.max(30, podW - 100);
+        int miniBarH = 6;
+        int barX = leftX + podW - miniBarW - 10;
+        g.setColor(new Color(22, 31, 56));
+        g.fillRoundRect(barX, topY + 10, miniBarW, miniBarH, 2, 2);
+        float hRatio = Math.max(0f, Math.min(1f, (float) player.getHealth() / player.getMaxHealth()));
+        g.setColor(hRatio > 0.35f ? new Color(16, 185, 129) : new Color(239, 68, 68));
+        if (hRatio > 0) g.fillRoundRect(barX, topY + 10, (int) (miniBarW * hRatio), miniBarH, 2, 2);
+
+        g.setFont(new Font("SansSerif", Font.BOLD, 10));
+        g.setColor(new Color(148, 163, 184));
+        g.drawString("VESSELS: " + player.getLives(), leftX + 10, topY + 54);
+        if (player.isOverheated()) {
+            g.setColor(new Color(239, 68, 68));
+            g.drawString("🔥 OVERHEAT", leftX + 85, topY + 54);
+        } else {
+            g.setColor(new Color(16, 185, 129));
+            g.drawString(scoreCalculator.getMultiplier() + "x COMBO", leftX + 85, topY + 54);
+        }
+
+        // 2. CENTER POD: 90s COUNTDOWN & LEADER BANNER
+        int centerW = 150;
+        int centerH = 68;
+        int cx = centerX - centerW / 2;
+        g.setColor(new Color(10, 15, 29, 240));
+        g.fillRoundRect(cx, topY, centerW, centerH, 10, 10);
+        boolean isCritical = remaining <= 10;
+        g.setColor(isCritical ? new Color(239, 68, 68) : new Color(245, 158, 11));
+        g.setStroke(new BasicStroke(isCritical ? 2.0f : 1.0f));
+        g.drawRoundRect(cx, topY, centerW, centerH, 10, 10);
+
+        g.setFont(new Font("SansSerif", Font.BOLD, isCritical ? 22 : 20));
+        FontMetrics fmTime = g.getFontMetrics();
+        g.setColor(isCritical ? new Color(239, 68, 68) : Color.WHITE);
+        g.drawString(timeStr, centerX - fmTime.stringWidth(timeStr) / 2, topY + 28);
+
+        g.setFont(new Font("SansSerif", Font.BOLD, 10));
+        FontMetrics fmLead = g.getFontMetrics();
+        String leadStr;
+        Color leadCol;
+        if (delta > 0) {
+            leadStr = "▲ LEADING (+" + delta + ")";
+            leadCol = new Color(16, 185, 129);
+        } else if (delta < 0) {
+            leadStr = "▼ TRAILING (-" + Math.abs(delta) + ")";
+            leadCol = new Color(239, 68, 68);
+        } else {
+            leadStr = "● TIED MATCH";
+            leadCol = new Color(245, 158, 11);
+        }
+        g.setColor(leadCol);
+        g.drawString(leadStr, centerX - fmLead.stringWidth(leadStr) / 2, topY + 50);
+
+        // 3. RIGHT POD: OPPONENT PILOT
+        g.setColor(new Color(13, 19, 33, 225));
+        g.fillRoundRect(rightX, topY, podW, podH, 10, 10);
+        g.setColor(delta < 0 ? new Color(16, 185, 129) : new Color(239, 68, 68, 100));
+        g.setStroke(new BasicStroke(delta < 0 ? 1.5f : 1.0f));
+        g.drawRoundRect(rightX, topY, podW, podH, 10, 10);
+
+        g.setFont(new Font("SansSerif", Font.BOLD, 11));
+        boolean oppConn = sync.isOpponentConnected();
+        g.setColor(oppConn ? new Color(16, 185, 129) : new Color(239, 68, 68));
+        String oppName = sync.getOpponentCallsign();
+        g.drawString((oppConn ? "● " : "○ ") + oppName.toUpperCase(), rightX + 10, topY + 16);
+
+        g.setFont(new Font("SansSerif", Font.BOLD, 15));
+        g.setColor(new Color(251, 191, 36));
+        g.drawString(String.format("%,d PTS", sync.getOpponentScore()), rightX + 10, topY + 36);
+
+        // Opponent Hull
+        int oppBarX = rightX + podW - miniBarW - 10;
+        g.setColor(new Color(22, 31, 56));
+        g.fillRoundRect(oppBarX, topY + 10, miniBarW, miniBarH, 2, 2);
+        float oppHRatio = Math.max(0f, Math.min(1f, (float) sync.getOpponentHealth() / 100.0f));
+        g.setColor(oppHRatio > 0.35f ? new Color(16, 185, 129) : new Color(239, 68, 68));
+        if (oppHRatio > 0) g.fillRoundRect(oppBarX, topY + 10, (int) (miniBarW * oppHRatio), miniBarH, 2, 2);
+
+        g.setFont(new Font("SansSerif", Font.BOLD, 10));
+        g.setColor(new Color(148, 163, 184));
+        g.drawString("VESSELS: " + sync.getOpponentLives(), rightX + 10, topY + 54);
+        if (!oppConn) {
+            g.setColor(new Color(239, 68, 68));
+            g.drawString("RECONNECTING...", rightX + 85, topY + 54);
+        } else {
+            g.setColor(new Color(56, 189, 248));
+            g.drawString("WAVE " + sync.getOpponentWave(), rightX + 85, topY + 54);
+        }
+    }
+
+    private void renderMultiplayerGameOverScreen(Graphics2D g) {
+        g.setColor(new Color(13, 5, 10, 225));
+        g.fillRect(0, 0, screenWidth, screenHeight);
+
+        int cardW = 480;
+        int cardH = 370;
+        int cardX = (screenWidth - cardW) / 2;
+        int cardY = (screenHeight - cardH) / 2;
+
+        g.setColor(new Color(13, 19, 33, 240));
+        g.fillRoundRect(cardX, cardY, cardW, cardH, 16, 16);
+
+        database.multiplayer.MultiplayerCombatSyncService sync = database.multiplayer.MultiplayerCombatSyncService.getInstance();
+        int localScore = scoreCalculator.getScore();
+        int oppScore = sync.getOpponentScore();
+        int delta = localScore - oppScore;
+
+        Color borderCol = delta > 0 ? new Color(16, 185, 129) : (delta < 0 ? new Color(239, 68, 68) : new Color(245, 158, 11));
+        g.setColor(borderCol);
+        g.setStroke(new BasicStroke(1.5f));
+        g.drawRoundRect(cardX, cardY, cardW, cardH, 16, 16);
+
+        // Title
+        g.setFont(new Font("SansSerif", Font.BOLD, 22));
+        FontMetrics fmTitle = g.getFontMetrics();
+        String title = "1v1 SCORE ATTACK DEBRIEF";
+        int tx = (screenWidth - fmTitle.stringWidth(title)) / 2;
+        g.setColor(Color.WHITE);
+        g.drawString(title, tx, cardY + 36);
+
+        // Subtitle Outcome
+        String outcomeStr;
+        if (delta > 0) {
+            outcomeStr = "🏆 VICTORY! +25 RATING POINTS";
+        } else if (delta < 0) {
+            outcomeStr = "💀 DEFEAT! 0 RATING POINTS";
+        } else {
+            outcomeStr = "🤝 HONORABLE DRAW! +10 RATING POINTS";
+        }
+        g.setFont(new Font("SansSerif", Font.BOLD, 12));
+        FontMetrics fmSub = g.getFontMetrics();
+        g.setColor(borderCol);
+        g.drawString(outcomeStr, (screenWidth - fmSub.stringWidth(outcomeStr)) / 2, cardY + 56);
+
+        // Stats Panel
+        int statW = 400;
+        int statH = 150;
+        int statX = cardX + 40;
+        int statY = cardY + 74;
+
+        g.setColor(new Color(22, 31, 56));
+        g.fillRoundRect(statX, statY, statW, statH, 10, 10);
+        g.setColor(new Color(50, 65, 95));
+        g.drawRoundRect(statX, statY, statW, statH, 10, 10);
+
+        int rowY = statY + 24;
+        renderStatRow(g, statX + 16, statW - 32, rowY, "YOUR SCORE:", String.format("%,d PTS", localScore), new Color(0, 229, 255), true);
+        rowY += 21;
+        renderStatRow(g, statX + 16, statW - 32, rowY, "OPPONENT (" + sync.getOpponentCallsign() + "):", String.format("%,d PTS", oppScore), new Color(251, 191, 36), true);
+        rowY += 21;
+        renderStatRow(g, statX + 16, statW - 32, rowY, "SCORE MARGIN:", (delta >= 0 ? "+" : "-") + Math.abs(delta) + " PTS", borderCol, false);
+        rowY += 21;
+        renderStatRow(g, statX + 16, statW - 32, rowY, "HOSTILES DESTROYED:", String.valueOf(enemiesDestroyed), Color.WHITE, false);
+        rowY += 21;
+        renderStatRow(g, statX + 16, statW - 32, rowY, "MATCH DURATION / ACCURACY:", "90s  /  " + getAccuracy() + "%", new Color(52, 211, 153), false);
+        rowY += 19;
+
+        // Cloud sync status bar
+        g.setColor(new Color(30, 42, 68));
+        g.drawLine(statX + 16, rowY - 4, statX + statW - 16, rowY - 4);
+        String syncText = (matchUploadStatus != null && !matchUploadStatus.isEmpty()) ? matchUploadStatus : "1v1 MATCH COMPLETED";
+        g.setColor(new Color(52, 211, 153));
+        g.setFont(new Font("SansSerif", Font.BOLD, 10));
+        g.drawString("● " + syncText, statX + 16, rowY + 10);
+
+        // Buttons
+        int btnW = 400;
+        int bx = cardX + 40;
+        renderTacticalButton(g, bx, cardY + 244, btnW, 40, "▶   MULTIPLAYER LOBBY", "[R]", new Color(0, 229, 255), new Color(0, 119, 182), isButtonHovered(bx, cardY + 244, btnW, 40));
         renderTacticalButton(g, bx, cardY + 294, btnW, 36, "◈   RETURN TO MAIN MENU", "[M]", new Color(168, 85, 247), new Color(36, 18, 48), isButtonHovered(bx, cardY + 294, btnW, 36));
     }
 

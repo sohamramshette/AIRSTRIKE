@@ -132,6 +132,42 @@ public class MultiplayerRoomService {
                 }
             }
         });
+
+        // 4. Match Started broadcast from peer/host
+        presenceService.addBroadcastListener("MATCH_STARTED", (event, payload) -> {
+            MultiplayerRoomState current = stateManager.getCurrentRoom();
+            if (current != null) {
+                String startedAt = SimpleJson.getString(payload, "startedAt");
+                long seed = SimpleJson.getLong(payload, "matchSeed", current.getMatchSeed());
+                MultiplayerRoomState updated = new MultiplayerRoomState(
+                        current.getRoomId(), current.getRoomCode(), current.getHostId(), current.getHostUsername(),
+                        current.isHostReady(), current.getGuestId(), current.getGuestUsername(), current.isGuestReady(),
+                        seed, RoomStatus.ACTIVE, current.isHost(), current.isGuest(),
+                        current.getCreatedAt(), current.getExpiresAt(), startedAt, 90, null, null, null
+                );
+                stateManager.updateState(updated);
+                notifyRoomListeners(updated);
+            }
+        });
+
+        // 5. Match Finalized broadcast from peer
+        presenceService.addBroadcastListener("MATCH_FINALIZED", (event, payload) -> {
+            MultiplayerRoomState current = stateManager.getCurrentRoom();
+            if (current != null) {
+                String winnerId = SimpleJson.getString(payload, "winnerId");
+                int hScore = SimpleJson.getInt(payload, "hostScore", 0);
+                int gScore = SimpleJson.getInt(payload, "guestScore", 0);
+                MultiplayerRoomState updated = new MultiplayerRoomState(
+                        current.getRoomId(), current.getRoomCode(), current.getHostId(), current.getHostUsername(),
+                        current.isHostReady(), current.getGuestId(), current.getGuestUsername(), current.isGuestReady(),
+                        current.getMatchSeed(), RoomStatus.COMPLETED, current.isHost(), current.isGuest(),
+                        current.getCreatedAt(), current.getExpiresAt(), current.getStartedAt(), current.getDurationSeconds(),
+                        hScore, gScore, winnerId
+                );
+                stateManager.updateState(updated);
+                notifyRoomListeners(updated);
+            }
+        });
     }
 
     /**
@@ -357,6 +393,117 @@ public class MultiplayerRoomService {
         }
 
         return RoomOperationResult.fail("Room not active locally", "STATE_ERROR");
+    }
+
+    /**
+     * Initiates the 1v1 multiplayer match.
+     */
+    public CompletableFuture<RoomOperationResult<MultiplayerRoomState>> startMatch(String roomId) {
+        UserSession session = sessionManager.getCurrentSession();
+        if (session == null || !session.isAuthenticated()) {
+            return CompletableFuture.completedFuture(
+                    RoomOperationResult.fail("Authentication required.", "UNAUTHENTICATED")
+            );
+        }
+
+        String payload = SimpleJson.toJson(Map.of("p_room_id", roomId));
+        return httpClient.post("/rest/v1/rpc/start_multiplayer_match", payload, session.getAccessToken())
+                .thenApply(response -> {
+                    if (response.statusCode() >= 400) {
+                        Map<String, Object> errMap = SimpleJson.parseObject(response.body());
+                        String msg = SimpleJson.getString(errMap, "message");
+                        return RoomOperationResult.<MultiplayerRoomState>fail(msg != null ? msg : "Failed to start match", "RPC_ERROR");
+                    }
+
+                    Map<String, Object> data = SimpleJson.parseObject(response.body());
+                    String startedAt = SimpleJson.getString(data, "started_at");
+                    long seed = SimpleJson.getLong(data, "match_seed", 1337L);
+
+                    MultiplayerRoomState current = stateManager.getCurrentRoom();
+                    if (current != null) {
+                        MultiplayerRoomState updated = new MultiplayerRoomState(
+                                current.getRoomId(), current.getRoomCode(), current.getHostId(), current.getHostUsername(),
+                                current.isHostReady(), current.getGuestId(), current.getGuestUsername(), current.isGuestReady(),
+                                seed, RoomStatus.ACTIVE, current.isHost(), current.isGuest(),
+                                current.getCreatedAt(), current.getExpiresAt(), startedAt != null ? startedAt : "", 90, null, null, null
+                        );
+                        stateManager.updateState(updated);
+                        notifyRoomListeners(updated);
+
+                        presenceService.broadcast("MATCH_STARTED", Map.of(
+                                "roomId", roomId,
+                                "startedAt", startedAt != null ? startedAt : "",
+                                "matchSeed", seed,
+                                "durationSeconds", 90
+                        ));
+
+                        return RoomOperationResult.ok(updated);
+                    }
+                    return RoomOperationResult.<MultiplayerRoomState>fail("Room not active", "STATE_ERROR");
+                })
+                .exceptionally(ex -> RoomOperationResult.fail("Network error starting match: " + ex.getMessage(), "NETWORK_ERROR"));
+    }
+
+    /**
+     * Finalizes the match on PostgreSQL and resolves the winner.
+     */
+    public CompletableFuture<RoomOperationResult<Map<String, Object>>> finalizeMatch(String roomId, int submittedScore, int durationSeconds) {
+        UserSession session = sessionManager.getCurrentSession();
+        if (session == null || !session.isAuthenticated()) {
+            return CompletableFuture.completedFuture(
+                    RoomOperationResult.fail("Authentication required.", "UNAUTHENTICATED")
+            );
+        }
+
+        Map<String, Object> body = Map.of(
+                "p_room_id", roomId,
+                "p_submitted_score", Math.max(0, submittedScore),
+                "p_duration_seconds", Math.max(1, durationSeconds)
+        );
+        String payload = SimpleJson.toJson(body);
+
+        return httpClient.post("/rest/v1/rpc/finalize_multiplayer_match", payload, session.getAccessToken())
+                .thenApply(response -> {
+                    if (response.statusCode() >= 400) {
+                        Map<String, Object> errMap = SimpleJson.parseObject(response.body());
+                        String msg = SimpleJson.getString(errMap, "message");
+                        return RoomOperationResult.<Map<String, Object>>fail(msg != null ? msg : "Failed to finalize match", "RPC_ERROR");
+                    }
+
+                    Map<String, Object> data = SimpleJson.parseObject(response.body());
+                    String status = SimpleJson.getString(data, "status");
+
+                    if ("RESOLVED".equalsIgnoreCase(status)) {
+                        String winnerId = SimpleJson.getString(data, "winner_id");
+                        int p1Score = SimpleJson.getInt(data, "player1_score", 0);
+                        int p2Score = SimpleJson.getInt(data, "player2_score", 0);
+                        boolean draw = SimpleJson.getBoolean(data, "is_draw", false);
+
+                        MultiplayerRoomState current = stateManager.getCurrentRoom();
+                        if (current != null) {
+                            MultiplayerRoomState updated = new MultiplayerRoomState(
+                                    current.getRoomId(), current.getRoomCode(), current.getHostId(), current.getHostUsername(),
+                                    current.isHostReady(), current.getGuestId(), current.getGuestUsername(), current.isGuestReady(),
+                                    current.getMatchSeed(), RoomStatus.COMPLETED, current.isHost(), current.isGuest(),
+                                    current.getCreatedAt(), current.getExpiresAt(), current.getStartedAt(), current.getDurationSeconds(),
+                                    p1Score, p2Score, winnerId
+                            );
+                            stateManager.updateState(updated);
+                            notifyRoomListeners(updated);
+                        }
+
+                        presenceService.broadcast("MATCH_FINALIZED", Map.of(
+                                "roomId", roomId,
+                                "winnerId", winnerId != null ? winnerId : "",
+                                "isDraw", draw,
+                                "hostScore", p1Score,
+                                "guestScore", p2Score
+                        ));
+                    }
+
+                    return RoomOperationResult.ok(data);
+                })
+                .exceptionally(ex -> RoomOperationResult.fail("Network error finalizing match: " + ex.getMessage(), "NETWORK_ERROR"));
     }
 
     /**

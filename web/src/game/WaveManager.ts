@@ -7,6 +7,7 @@ import { Interceptor } from './Interceptor';
 import { Morphing } from './Morphing';
 import { FailSafe } from './FailSafe';
 import { Rammer } from './Rammer';
+import { DeterministicPRNG } from '../services/multiplayer/DeterministicPRNG';
 
 export class WaveManager {
   public currentLevel: number = 1;
@@ -19,6 +20,15 @@ export class WaveManager {
   public bannerTimer: number = 0;
   public playfieldWidth: number = 800;
   public playfieldHeight: number = 650;
+  private prng: DeterministicPRNG | null = null;
+
+  public setPRNG(prng: DeterministicPRNG | null): void {
+    this.prng = prng;
+  }
+
+  public getPRNG(): DeterministicPRNG | null {
+    return this.prng;
+  }
 
   public setPlayfieldBounds(w: number, h: number): void {
     this.playfieldWidth = w;
@@ -101,8 +111,8 @@ export class WaveManager {
 
           const margin = 40;
           const usableW = Math.max(120, this.playfieldWidth - margin * 2);
-          const spawnX = margin + Math.random() * usableW;
-          const roll = Math.random() * 100;
+          const spawnX = margin + (this.prng ? this.prng.nextRange(0, usableW) : Math.random() * usableW);
+          const roll = this.prng ? this.prng.nextRange(0, 100) : Math.random() * 100;
 
           if (this.currentLevel === 1) {
             // Level 1: Baseline introduction (70% Drone, 30% Fighter)

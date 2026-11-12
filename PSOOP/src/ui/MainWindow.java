@@ -70,6 +70,12 @@ public class MainWindow extends JFrame {
         gameCanvas.requestFocusInWindow();
     }
 
+    public void startMultiplayerGame(long matchSeed, String startedAt, database.multiplayer.MultiplayerModels.MultiplayerRoomState room) {
+        cardLayout.show(rootPanel, "GAME");
+        engine.startMultiplayerGame(matchSeed, startedAt, room);
+        gameCanvas.requestFocusInWindow();
+    }
+
     public void startEnemyDemo() {
         cardLayout.show(rootPanel, "GAME");
         engine.startEnemyDemo();

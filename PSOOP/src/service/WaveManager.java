@@ -30,10 +30,20 @@ public class WaveManager {
     private boolean waveClearNotice;
     private double noticeTimer;
     private final Random random;
+    private database.multiplayer.DeterministicPRNG prng;
 
     public WaveManager() {
         this.random = new Random();
+        this.prng = null;
         resetToLevel(1);
+    }
+
+    public void setPRNG(database.multiplayer.DeterministicPRNG prng) {
+        this.prng = prng;
+    }
+
+    public database.multiplayer.DeterministicPRNG getPRNG() {
+        return this.prng;
     }
 
     public final void resetToLevel(int level) {
@@ -95,10 +105,11 @@ public class WaveManager {
 
     private void spawnRegularEnemy(List<Enemy> enemyList, int screenWidth) {
         int margin = 60;
-        double spawnX = margin + random.nextInt(Math.max(10, screenWidth - margin * 2));
+        int usableW = Math.max(10, screenWidth - margin * 2);
+        double spawnX = margin + (prng != null ? prng.nextRange(0, usableW) : random.nextInt(usableW));
         double spawnY = -40;
 
-        int roll = random.nextInt(100);
+        int roll = prng != null ? prng.nextInt(0, 100) : random.nextInt(100);
 
         if (currentLevel == 1) {
             // Level 1: Baseline introduction (70% Drone, 30% Fighter)
@@ -156,9 +167,11 @@ public class WaveManager {
      */
     public void evaluatePowerUpDrop(double x, double y, List<PowerUp> powerUpList) {
         // 20% drop rate
-        if (random.nextInt(100) < 22) {
+        int roll = prng != null ? prng.nextInt(0, 100) : random.nextInt(100);
+        if (roll < 22) {
             PowerUpType[] types = PowerUpType.values();
-            PowerUpType chosen = types[random.nextInt(types.length)];
+            int idx = prng != null ? prng.nextInt(0, types.length) : random.nextInt(types.length);
+            PowerUpType chosen = types[idx];
             powerUpList.add(new PowerUp(x, y, chosen));
         }
     }

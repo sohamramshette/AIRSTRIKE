@@ -55,10 +55,23 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [TEST 6/6] Running Phase 12 Java Multiplayer Desktop Test Suite...
+echo [TEST 6/7] Running Phase 12 Java Multiplayer Desktop Test Suite...
 java -cp bin\java test.MultiplayerJavaTest
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] MultiplayerJavaTest failed!
+    exit /b 1
+)
+
+echo.
+echo [TEST 7/7] Running Phase 12 Part 6 PRNG and Combat Synchronization Tests...
+java -cp bin\java test.DeterministicPRNGTest
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] DeterministicPRNGTest failed!
+    exit /b 1
+)
+java -cp bin\java test.MultiplayerCombatSyncTest
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] MultiplayerCombatSyncTest failed!
     exit /b 1
 )
 

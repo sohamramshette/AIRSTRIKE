@@ -353,6 +353,116 @@ export class MultiplayerRoomService {
   }
 
   /**
+   * Initiates the 1v1 multiplayer match.
+   */
+  public async startMatch(roomId: string): Promise<RoomOperationResult<MultiplayerRoomState>> {
+    const session = this.authService.getSession();
+    if (!session) {
+      return { success: false, error: 'Authentication required.', errorCode: 'UNAUTHENTICATED' };
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('start_multiplayer_match', {
+        p_room_id: roomId
+      });
+
+      if (error) {
+        return { success: false, error: error.message, errorCode: error.code };
+      }
+
+      const d = data as {
+        status: string;
+        started_at: string;
+        match_seed: number;
+      };
+
+      if (this.currentRoom && this.currentRoom.roomId === roomId) {
+        this.currentRoom = {
+          ...this.currentRoom,
+          status: 'ACTIVE',
+          startedAt: d.started_at,
+          matchSeed: d.match_seed || this.currentRoom.matchSeed
+        };
+        this.notifyRoomListeners();
+      }
+
+      // Broadcast MATCH_STARTED to peer
+      await this.presenceService.broadcast('MATCH_STARTED', {
+        roomId,
+        startedAt: d.started_at,
+        matchSeed: d.match_seed || this.currentRoom?.matchSeed || 1337,
+        durationSeconds: 90
+      });
+
+      return {
+        success: true,
+        data: this.currentRoom!
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg, errorCode: 'RPC_ERROR' };
+    }
+  }
+
+  /**
+   * Finalizes the match on PostgreSQL and resolves the winner.
+   */
+  public async finalizeMatch(
+    roomId: string,
+    submittedScore: number,
+    durationSeconds: number = 90
+  ): Promise<RoomOperationResult<any>> {
+    const session = this.authService.getSession();
+    if (!session) {
+      return { success: false, error: 'Authentication required.', errorCode: 'UNAUTHENTICATED' };
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('finalize_multiplayer_match', {
+        p_room_id: roomId,
+        p_submitted_score: Math.max(0, Math.floor(submittedScore)),
+        p_duration_seconds: Math.max(1, Math.floor(durationSeconds))
+      });
+
+      if (error) {
+        return { success: false, error: error.message, errorCode: error.code };
+      }
+
+      const res = data as any;
+      if (res && res.status === 'RESOLVED') {
+        if (this.currentRoom && this.currentRoom.roomId === roomId) {
+          this.currentRoom = {
+            ...this.currentRoom,
+            status: 'COMPLETED',
+            winnerId: res.winner_id,
+            hostScore: res.player1_score,
+            guestScore: res.player2_score
+          };
+          this.notifyRoomListeners();
+        }
+
+        // Broadcast MATCH_FINALIZED
+        await this.presenceService.broadcast('MATCH_FINALIZED', {
+          roomId,
+          winnerId: res.winner_id,
+          isDraw: res.is_draw,
+          hostScore: res.player1_score,
+          guestScore: res.player2_score,
+          completedAt: res.completed_at
+        });
+      }
+
+      return {
+        success: true,
+        data: res
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg, errorCode: 'RPC_ERROR' };
+    }
+  }
+
+  /**
    * Leaves or cancels the current room.
    */
   public async leaveRoom(roomId: string): Promise<RoomOperationResult<void>> {
@@ -458,6 +568,44 @@ export class MultiplayerRoomService {
       }
     );
     this.broadcastCleanupFns.push(unCancel);
+
+    // 4. Listen for MATCH_STARTED broadcast
+    const unStart = this.presenceService.onBroadcast<{
+      roomId: string;
+      startedAt: string;
+      matchSeed: number;
+    }>('MATCH_STARTED', (payload) => {
+      if (this.currentRoom && this.currentRoom.roomId === roomId) {
+        this.currentRoom = {
+          ...this.currentRoom,
+          status: 'ACTIVE',
+          startedAt: payload.startedAt,
+          matchSeed: payload.matchSeed
+        };
+        this.notifyRoomListeners();
+      }
+    });
+    this.broadcastCleanupFns.push(unStart);
+
+    // 5. Listen for MATCH_FINALIZED broadcast
+    const unFinalized = this.presenceService.onBroadcast<{
+      roomId: string;
+      winnerId: string | null;
+      hostScore: number;
+      guestScore: number;
+    }>('MATCH_FINALIZED', (payload) => {
+      if (this.currentRoom && this.currentRoom.roomId === roomId) {
+        this.currentRoom = {
+          ...this.currentRoom,
+          status: 'COMPLETED',
+          winnerId: payload.winnerId,
+          hostScore: payload.hostScore,
+          guestScore: payload.guestScore
+        };
+        this.notifyRoomListeners();
+      }
+    });
+    this.broadcastCleanupFns.push(unFinalized);
   }
 
   /**

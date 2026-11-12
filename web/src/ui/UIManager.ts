@@ -35,6 +35,7 @@ export class UIManager {
   private isAuthSubmitting: boolean = false;
   private lastPingLatency: number = 0;
   private personalHighScore: number = 0;
+  private mpCountdownTimer: number | null = null;
 
   // 19 Academic Course Outcomes across 4 subjects
   private readonly courseOutcomesData: Record<'PSOOP' | 'PL' | 'COA' | 'CGL', CourseOutcomeItem[]> = {
@@ -298,10 +299,15 @@ export class UIManager {
 
     // Game Over buttons
     document.getElementById('btn-play-again')?.addEventListener('click', () => {
-      this.engine.startNewGame();
+      if (this.engine.isMultiplayer) {
+        this.openMultiplayer();
+      } else {
+        this.engine.startNewGame();
+      }
     });
 
     document.getElementById('btn-menu-from-gameover')?.addEventListener('click', () => {
+      this.engine.isMultiplayer = false;
       this.engine.returnToMenu();
     });
 
@@ -854,8 +860,60 @@ export class UIManager {
     const killsElem = document.getElementById('gameover-kills');
     const timeAccElem = document.getElementById('gameover-time-acc');
     const syncElem = document.getElementById('gameover-sync-status');
+    const titleElem = document.querySelector('#gameover-overlay .game-title') as HTMLElement;
+    const subElem = document.querySelector('#gameover-overlay .game-subtitle') as HTMLElement;
+    const playAgainBtn = document.getElementById('btn-play-again') as HTMLButtonElement;
 
     this.updatePersonalRecord(summary.score);
+
+    if (this.engine.isMultiplayer) {
+      const opp = MultiplayerCombatSyncService.getInstance().getOpponentVitals();
+      const localScore = summary.score;
+      const oppScore = opp.score;
+      const delta = localScore - oppScore;
+
+      if (titleElem) titleElem.textContent = '1v1 SCORE ATTACK DEBRIEF';
+
+      if (subElem) {
+        if (delta > 0) {
+          subElem.textContent = `🏆 VICTORY! +25 RATING POINTS (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
+          subElem.style.color = '#10B981';
+          AnnouncerManager.getInstance().showBanner('Kya baat hai! Shandar jeet! Absolute dominance!', 'BOLLYWOOD', true);
+        } else if (delta < 0) {
+          subElem.textContent = `💀 DEFEAT! 0 RATING POINTS (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
+          subElem.style.color = '#EF4444';
+          AnnouncerManager.getInstance().showBanner('Chalo koi na, agle match me dekh lenge!', 'DESI_MEME', true);
+        } else {
+          subElem.textContent = `🤝 HONORABLE DRAW! +10 RATING POINTS (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
+          subElem.style.color = '#F59E0B';
+          AnnouncerManager.getInstance().showBanner('Tie ho gaya guru! Both pilots equally matched!', 'DESI_MEME', true);
+        }
+      }
+
+      if (scoreElem) scoreElem.textContent = `YOUR SCORE: ${localScore.toLocaleString()}`;
+      if (highscoreElem) highscoreElem.textContent = `${opp.callsign.toUpperCase()}: ${oppScore.toLocaleString()} PTS`;
+      if (sectorElem) sectorElem.textContent = `Sector ${summary.levelReached}`;
+      if (killsElem) killsElem.textContent = String(summary.enemiesDestroyed);
+      if (timeAccElem) {
+        const acc = summary.accuracy !== undefined ? summary.accuracy : 0;
+        timeAccElem.textContent = `${summary.durationSeconds}s / ${acc}% Acc`;
+      }
+      if (syncElem) {
+        syncElem.textContent = '● STARFLEET COMBAT ARCHIVES: 1v1 MATCH RESOLVED';
+        syncElem.style.color = '#22C55E';
+      }
+      if (playAgainBtn) {
+        playAgainBtn.textContent = '▶   MULTIPLAYER LOBBY  [R]';
+      }
+      return;
+    }
+
+    if (titleElem) titleElem.textContent = 'VESSEL DESTROYED';
+    if (subElem) {
+      subElem.textContent = 'TACTICAL ENVELOPE BREACHED  •  MISSION TERMINATED';
+      subElem.style.color = '#F87171';
+    }
+    if (playAgainBtn) playAgainBtn.textContent = '▶   REDEPLOY VESSEL  [R]';
 
     if (scoreElem) scoreElem.textContent = summary.score.toLocaleString();
     if (highscoreElem) highscoreElem.textContent = `${this.personalHighScore.toLocaleString()} PTS`;
@@ -1415,15 +1473,52 @@ export class UIManager {
 
     if (statusText) {
       if (room.status === 'WAITING') {
+        if (this.mpCountdownTimer) {
+          clearInterval(this.mpCountdownTimer);
+          this.mpCountdownTimer = null;
+        }
         statusText.textContent = `📡 Comms beacon active. Share room code [${room.roomCode}] with your opponent!`;
         statusText.style.color = 'var(--cyan-primary)';
       } else if (room.status === 'READY') {
+        if (this.mpCountdownTimer) {
+          clearInterval(this.mpCountdownTimer);
+          this.mpCountdownTimer = null;
+        }
         statusText.textContent = '⚡ Challenger connected! Both pilots must mark READY to initiate countdown.';
         statusText.style.color = '#F59E0B';
       } else if (room.status === 'COUNTDOWN') {
-        statusText.textContent = '🚀 BOTH PILOTS READY! Synchronized match countdown locked.';
-        statusText.style.color = '#22C55E';
+        if (!this.mpCountdownTimer) {
+          let count = 3;
+          statusText.textContent = `🚀 BOTH PILOTS READY! ENGAGING IN ${count}...`;
+          statusText.style.color = '#F59E0B';
+          this.mpCountdownTimer = window.setInterval(async () => {
+            count--;
+            if (count > 0) {
+              if (statusText) statusText.textContent = `🚀 BOTH PILOTS READY! ENGAGING IN ${count}...`;
+            } else {
+              if (this.mpCountdownTimer) {
+                clearInterval(this.mpCountdownTimer);
+                this.mpCountdownTimer = null;
+              }
+              if (statusText) statusText.textContent = '⚔ ENGAGE!';
+              if (room.isHost) {
+                await this.mpRoomService.startMatch(room.roomId);
+              }
+            }
+          }, 1000);
+        }
+      } else if (room.status === 'ACTIVE') {
+        if (this.mpCountdownTimer) {
+          clearInterval(this.mpCountdownTimer);
+          this.mpCountdownTimer = null;
+        }
+        this.closeModal('multiplayer-lobby-modal');
+        this.engine.startMultiplayerGame(room.matchSeed, room.startedAt || new Date().toISOString(), room);
       } else if (room.status === 'CANCELLED') {
+        if (this.mpCountdownTimer) {
+          clearInterval(this.mpCountdownTimer);
+          this.mpCountdownTimer = null;
+        }
         statusText.textContent = '⚠️ Room has been cancelled by a pilot.';
         statusText.style.color = 'var(--coral-danger)';
       }

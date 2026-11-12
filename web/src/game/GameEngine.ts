@@ -12,6 +12,9 @@ import { SoundService } from './../services/SoundService';
 import { AnnouncerManager } from '../announcer/AnnouncerManager';
 import { ChaosScheduler } from '../chaos/ChaosScheduler';
 import { Starfield } from './Starfield';
+import { DeterministicPRNG } from '../services/multiplayer/DeterministicPRNG';
+import { MultiplayerCombatSyncService } from '../services/multiplayer/MultiplayerCombatSyncService';
+import { MultiplayerRoomService } from '../services/multiplayer/MultiplayerRoomService';
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -31,6 +34,13 @@ export class GameEngine {
   public soundService: SoundService;
   public starfield: Starfield;
   public chaosScheduler: ChaosScheduler;
+
+  // Multiplayer 1v1 Score Attack Mode (Phase 12 Part 6)
+  public isMultiplayer: boolean = false;
+  public multiplayerMatchSeed: number = 0;
+  public multiplayerStartedAt: string = '';
+  public multiplayerRoom: any = null;
+  public multiplayerFinalized: boolean = false;
 
   private matchDuration: number = 0;
   private enemiesDestroyed: number = 0;
@@ -105,6 +115,10 @@ export class GameEngine {
   }
 
   public startNewGame(): void {
+    if (!this.isMultiplayer) {
+      this.waveManager.setPRNG(null);
+      this.chaosScheduler.setPRNG(null);
+    }
     this.player.reset();
     this.enemies = [];
     this.projectiles = [];
@@ -123,6 +137,96 @@ export class GameEngine {
     AnnouncerManager.getInstance().trigger('WAVE_START', false);
 
     this.setState(GameState.PLAYING);
+  }
+
+  public startMultiplayerGame(matchSeed: number, startedAtIso: string, room: any): void {
+    this.isMultiplayer = true;
+    this.multiplayerMatchSeed = matchSeed;
+    this.multiplayerStartedAt = startedAtIso;
+    this.multiplayerRoom = room;
+    this.multiplayerFinalized = false;
+
+    const prng = new DeterministicPRNG(matchSeed);
+    this.waveManager.setPRNG(prng);
+    this.chaosScheduler.setPRNG(prng);
+
+    this.player.reset();
+    this.player.lives = 2; // Strict 2 lives for multiplayer score attack
+    this.enemies = [];
+    this.projectiles = [];
+    this.powerUps = [];
+    this.particles.clear();
+    this.scoreCalc.reset();
+    this.waveManager.reset();
+    this.chaosScheduler.reset(this);
+
+    this.matchDuration = 0;
+    this.enemiesDestroyed = 0;
+    this.shotsFired = 0;
+    this.shotsHit = 0;
+
+    AnnouncerManager.getInstance().reset();
+    AnnouncerManager.getInstance().trigger('WAVE_START', false);
+
+    const localId = room.isHost ? room.hostId : (room.guestId || '');
+    const localCallsign = room.isHost ? room.hostUsername : (room.guestUsername || 'Pilot');
+
+    MultiplayerCombatSyncService.getInstance().startCombatSync(
+      room,
+      localId,
+      localCallsign,
+      startedAtIso,
+      () => ({
+        score: this.scoreCalc.getScore(),
+        health: this.player.health,
+        shield: this.player.shield,
+        lives: this.player.lives,
+        wave: this.waveManager.currentLevel,
+        combo: this.scoreCalc.getMultiplier(),
+        overheated: this.player.isOverheated
+      }),
+      () => {
+        this.finishMultiplayerMatch();
+      }
+    );
+
+    this.setState(GameState.PLAYING);
+  }
+
+  public async finishMultiplayerMatch(): Promise<void> {
+    if (this.multiplayerFinalized) return;
+    this.multiplayerFinalized = true;
+
+    // Send final vital telemetry burst
+    MultiplayerCombatSyncService.getInstance().sendLocalTelemetry();
+
+    this.setState(GameState.GAME_OVER);
+
+    const finalScore = this.scoreCalc.getScore();
+    const duration = 90;
+    const accuracy = this.shotsFired > 0
+      ? Math.min(100, Math.round(((this.enemiesDestroyed * 2) / Math.max(1, this.shotsFired)) * 100))
+      : 0;
+
+    if (this.multiplayerRoom) {
+      await MultiplayerRoomService.getInstance().finalizeMatch(
+        this.multiplayerRoom.roomId,
+        finalScore,
+        duration
+      );
+    }
+
+    if (this.onGameOverCallback) {
+      this.onGameOverCallback({
+        score: finalScore,
+        levelReached: this.waveManager.currentLevel,
+        durationSeconds: duration,
+        enemiesDestroyed: this.enemiesDestroyed,
+        accuracy: accuracy
+      });
+    }
+
+    MultiplayerCombatSyncService.getInstance().stopCombatSync();
   }
 
   public pauseGame(): void {
@@ -303,7 +407,12 @@ export class GameEngine {
       this.particles.update(dt);
 
       // 9. Check Game Over
-      if (!this.player.active && this.player.lives <= 0) {
+      if (this.isMultiplayer && !this.multiplayerFinalized) {
+        if (!this.player.active && this.player.lives <= 0) {
+          this.finishMultiplayerMatch();
+          return;
+        }
+      } else if (!this.player.active && this.player.lives <= 0) {
         this.setState(GameState.GAME_OVER);
         const accuracy = this.shotsFired > 0
           ? Math.min(100, Math.round(((this.enemiesDestroyed * 2) / Math.max(1, this.shotsFired)) * 100))
@@ -384,8 +493,14 @@ export class GameEngine {
     ctx.closePath();
   }
 
-  private renderHUD(ctx: CanvasRenderingContext2D, w: number, _h: number): void {
+  private renderHUD(ctx: CanvasRenderingContext2D, w: number, h: number): void {
     ctx.save();
+
+    if (this.isMultiplayer) {
+      this.renderMultiplayerHUD(ctx, w, h);
+      ctx.restore();
+      return;
+    }
 
     if (w < 600) {
       // --- MOBILE COMPACT DUAL POD HUD (Fits any phone width cleanly) ---
@@ -718,6 +833,136 @@ export class GameEngine {
     ctx.shadowColor = accentColor;
     ctx.fillText(text, w / 2, bannerY + bannerH / 2);
     ctx.restore();
+  }
+
+  private renderMultiplayerHUD(ctx: CanvasRenderingContext2D, w: number, _h: number): void {
+    const opp = MultiplayerCombatSyncService.getInstance().getOpponentVitals();
+    const remaining = MultiplayerCombatSyncService.getInstance().getRemainingSeconds();
+    const delta = MultiplayerCombatSyncService.getInstance().getScoreDelta();
+
+    const min = Math.floor(remaining / 60);
+    const sec = remaining % 60;
+    const timeStr = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+
+    const topY = 12;
+    const podW = Math.min(260, Math.floor((w - 180) / 2));
+    const podH = 68;
+    const leftX = 14;
+    const rightX = w - podW - 14;
+    const centerX = w / 2;
+
+    // 1. LEFT POD: LOCAL PILOT
+    ctx.fillStyle = 'rgba(13, 19, 33, 0.92)';
+    this.roundRect(ctx, leftX, topY, podW, podH, 8);
+    ctx.fill();
+    ctx.strokeStyle = delta >= 0 ? '#10B981' : 'rgba(0, 229, 255, 0.4)';
+    ctx.lineWidth = delta > 0 ? 1.5 : 1;
+    this.roundRect(ctx, leftX, topY, podW, podH, 8);
+    ctx.stroke();
+
+    const pilotName = (typeof window !== 'undefined' && (window as any).__PILOT_CALLSIGN__) || 'YOU';
+    ctx.font = 'bold 11px Rajdhani, sans-serif';
+    ctx.fillStyle = '#38BDF8';
+    ctx.textAlign = 'left';
+    ctx.fillText(`PILOT: ${String(pilotName).toUpperCase()}`, leftX + 10, topY + 16);
+
+    ctx.font = 'bold 16px Rajdhani, sans-serif';
+    ctx.fillStyle = '#FBBF24';
+    ctx.fillText(`${this.scoreCalc.getScore().toLocaleString()} PTS`, leftX + 10, topY + 36);
+
+    // Mini Hull
+    const miniBarW = Math.max(30, podW - 100);
+    const healthRatio = Math.max(0, Math.min(1, this.player.health / this.player.maxHealth));
+    ctx.fillStyle = '#161F38';
+    this.roundRect(ctx, leftX + podW - miniBarW - 10, topY + 14, miniBarW, 6, 2);
+    ctx.fill();
+    ctx.fillStyle = healthRatio > 0.35 ? '#10B981' : '#EF4444';
+    if (healthRatio > 0) {
+      this.roundRect(ctx, leftX + podW - miniBarW - 10, topY + 14, miniBarW * healthRatio, 6, 2);
+      ctx.fill();
+    }
+
+    ctx.font = 'bold 10px Rajdhani, sans-serif';
+    ctx.fillStyle = '#94A3B8';
+    ctx.fillText(`LIVES: ${this.player.lives}`, leftX + 10, topY + 54);
+    if (this.player.isOverheated) {
+      ctx.fillStyle = '#EF4444';
+      ctx.fillText('🔥 OVERHEAT', leftX + 80, topY + 54);
+    } else {
+      const mult = this.scoreCalc.getMultiplier();
+      ctx.fillStyle = '#10B981';
+      ctx.fillText(`${mult}x COMBO`, leftX + 80, topY + 54);
+    }
+
+    // 2. CENTER POD: 90s COUNTDOWN & LEADER BANNER
+    const centerW = 150;
+    const centerH = 68;
+    ctx.fillStyle = 'rgba(10, 15, 29, 0.95)';
+    this.roundRect(ctx, centerX - centerW / 2, topY, centerW, centerH, 8);
+    ctx.fill();
+    const isCriticalTime = remaining <= 10;
+    ctx.strokeStyle = isCriticalTime ? '#EF4444' : '#F59E0B';
+    ctx.lineWidth = isCriticalTime ? 2 : 1;
+    this.roundRect(ctx, centerX - centerW / 2, topY, centerW, centerH, 8);
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.font = isCriticalTime ? 'bold 22px Rajdhani, sans-serif' : 'bold 20px Rajdhani, sans-serif';
+    ctx.fillStyle = isCriticalTime ? '#EF4444' : '#F8FAFC';
+    ctx.fillText(timeStr, centerX, topY + 28);
+
+    // Leader indicator
+    ctx.font = 'bold 10px Rajdhani, sans-serif';
+    if (delta > 0) {
+      ctx.fillStyle = '#10B981';
+      ctx.fillText(`▲ LEADING (+${delta})`, centerX, topY + 50);
+    } else if (delta < 0) {
+      ctx.fillStyle = '#EF4444';
+      ctx.fillText(`▼ TRAILING (-${Math.abs(delta)})`, centerX, topY + 50);
+    } else {
+      ctx.fillStyle = '#F59E0B';
+      ctx.fillText('● TIED MATCH', centerX, topY + 50);
+    }
+
+    // 3. RIGHT POD: OPPONENT PILOT
+    ctx.fillStyle = 'rgba(13, 19, 33, 0.92)';
+    this.roundRect(ctx, rightX, topY, podW, podH, 8);
+    ctx.fill();
+    ctx.strokeStyle = delta < 0 ? '#10B981' : 'rgba(239, 68, 68, 0.4)';
+    ctx.lineWidth = delta < 0 ? 1.5 : 1;
+    this.roundRect(ctx, rightX, topY, podW, podH, 8);
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 11px Rajdhani, sans-serif';
+    ctx.fillStyle = opp.connected ? '#10B981' : '#EF4444';
+    ctx.fillText(`${opp.connected ? '●' : '○'} ${opp.callsign.toUpperCase()}`, rightX + 10, topY + 16);
+
+    ctx.font = 'bold 16px Rajdhani, sans-serif';
+    ctx.fillStyle = '#FBBF24';
+    ctx.fillText(`${opp.score.toLocaleString()} PTS`, rightX + 10, topY + 36);
+
+    // Opponent Mini Hull
+    const oppHealthRatio = Math.max(0, Math.min(1, opp.health / 100));
+    ctx.fillStyle = '#161F38';
+    this.roundRect(ctx, rightX + podW - miniBarW - 10, topY + 14, miniBarW, 6, 2);
+    ctx.fill();
+    ctx.fillStyle = oppHealthRatio > 0.35 ? '#10B981' : '#EF4444';
+    if (oppHealthRatio > 0) {
+      this.roundRect(ctx, rightX + podW - miniBarW - 10, topY + 14, miniBarW * oppHealthRatio, 6, 2);
+      ctx.fill();
+    }
+
+    ctx.font = 'bold 10px Rajdhani, sans-serif';
+    ctx.fillStyle = '#94A3B8';
+    ctx.fillText(`LIVES: ${opp.lives}`, rightX + 10, topY + 54);
+    if (!opp.connected) {
+      ctx.fillStyle = '#EF4444';
+      ctx.fillText('RECONNECTING...', rightX + 80, topY + 54);
+    } else {
+      ctx.fillStyle = '#38BDF8';
+      ctx.fillText(`WAVE ${opp.wave}`, rightX + 80, topY + 54);
+    }
   }
 
   public isBossActive(): boolean {
