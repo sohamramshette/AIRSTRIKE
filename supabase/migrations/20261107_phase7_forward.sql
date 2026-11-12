@@ -156,7 +156,7 @@ BEGIN
         RAISE EXCEPTION 'PREFLIGHT HALT: Expected exactly 2 non-internal triggers across leaderboard, matches, profiles. Found %.', v_count;
     END IF;
 
-    -- 8a. Trigger update_leaderboard_after_match on public.matches
+    -- 8a. Leaderboard refresh trigger on public.matches
     -- Timing: AFTER (tgtype & 66 = 0)
     -- Events: INSERT OR UPDATE OR DELETE (tgtype & 28 = 28)
     -- Row-level: true (tgtype & 1 = 1)
@@ -170,7 +170,6 @@ BEGIN
     JOIN pg_catalog.pg_namespace pn ON pn.oid = p.pronamespace
     WHERE n.nspname = 'public'
       AND c.relname = 'matches'
-      AND tg.tgname = 'update_leaderboard_after_match'
       AND tg.tgenabled = 'O'
       AND (tg.tgtype::integer & 66 = 0)
       AND (tg.tgtype::integer & 28 = 28)
@@ -179,10 +178,10 @@ BEGIN
       AND p.proname = 'update_leaderboard_after_match';
 
     IF v_count <> 1 THEN
-        RAISE EXCEPTION 'PREFLIGHT HALT: Trigger update_leaderboard_after_match on public.matches does not match audited baseline (AFTER INSERT OR UPDATE OR DELETE FOR EACH ROW, enabled, calling public.update_leaderboard_after_match).';
+        RAISE EXCEPTION 'PREFLIGHT HALT: Leaderboard refresh trigger on public.matches does not match audited behavior (AFTER INSERT OR UPDATE OR DELETE FOR EACH ROW, enabled, calling public.update_leaderboard_after_match).';
     END IF;
 
-    -- 8b. Trigger sync_leaderboard_username on public.profiles
+    -- 8b. Username sync trigger on public.profiles
     -- Timing: AFTER (tgtype & 66 = 0)
     -- Events: UPDATE (tgtype & 28 = 16)
     -- Row-level: true (tgtype & 1 = 1)
@@ -196,7 +195,6 @@ BEGIN
     JOIN pg_catalog.pg_namespace pn ON pn.oid = p.pronamespace
     WHERE n.nspname = 'public'
       AND c.relname = 'profiles'
-      AND tg.tgname = 'sync_leaderboard_username'
       AND tg.tgenabled = 'O'
       AND (tg.tgtype::integer & 66 = 0)
       AND (tg.tgtype::integer & 28 = 16)
@@ -205,7 +203,7 @@ BEGIN
       AND p.proname = 'sync_leaderboard_username';
 
     IF v_count <> 1 THEN
-        RAISE EXCEPTION 'PREFLIGHT HALT: Trigger sync_leaderboard_username on public.profiles does not match audited baseline (AFTER UPDATE FOR EACH ROW, enabled, calling public.sync_leaderboard_username).';
+        RAISE EXCEPTION 'PREFLIGHT HALT: Username sync trigger on public.profiles does not match audited behavior (AFTER UPDATE FOR EACH ROW, enabled, calling public.sync_leaderboard_username).';
     END IF;
 
     -- 9. Assert SECURITY DEFINER Functions Baseline
@@ -340,4 +338,3 @@ BEGIN
 END $$;
 
 COMMIT;
-

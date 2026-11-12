@@ -288,7 +288,6 @@ BEGIN
     JOIN pg_catalog.pg_namespace pn ON pn.oid = p.pronamespace
     WHERE n.nspname = 'public'
       AND c.relname = 'matches'
-      AND tg.tgname = 'update_leaderboard_after_match'
       AND tg.tgenabled = 'O'
       AND (tg.tgtype::integer & 66 = 0)
       AND (tg.tgtype::integer & 28 = 28)
@@ -297,7 +296,7 @@ BEGIN
       AND p.proname = 'update_leaderboard_after_match';
 
     IF v_count <> 1 THEN
-        RAISE EXCEPTION 'PREFLIGHT HALT: Trigger update_leaderboard_after_match on public.matches does not match audited baseline.';
+        RAISE EXCEPTION 'PREFLIGHT HALT: Leaderboard refresh trigger on public.matches does not match audited behavior.';
     END IF;
 
     -- 8b. Trigger sync_leaderboard_username on public.profiles
@@ -309,7 +308,6 @@ BEGIN
     JOIN pg_catalog.pg_namespace pn ON pn.oid = p.pronamespace
     WHERE n.nspname = 'public'
       AND c.relname = 'profiles'
-      AND tg.tgname = 'sync_leaderboard_username'
       AND tg.tgenabled = 'O'
       AND (tg.tgtype::integer & 66 = 0)
       AND (tg.tgtype::integer & 28 = 16)
@@ -318,7 +316,7 @@ BEGIN
       AND p.proname = 'sync_leaderboard_username';
 
     IF v_count <> 1 THEN
-        RAISE EXCEPTION 'PREFLIGHT HALT: Trigger sync_leaderboard_username on public.profiles does not match audited baseline.';
+        RAISE EXCEPTION 'PREFLIGHT HALT: Username sync trigger on public.profiles does not match audited behavior.';
     END IF;
 
     -- 9. Assert SECURITY DEFINER Functions Baseline

@@ -8,19 +8,42 @@ export class AuthService {
 
   private constructor() {
     this.initSession();
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const callsign = await this.resolveCallsign(
-          session.user.id,
-          session.user.email,
-          session.user.user_metadata
-        );
+        const userId = session.user.id;
+        const existingSession = this.currentSession?.userId === userId
+          ? this.currentSession
+          : null;
+        const rawCallsign = session.user.user_metadata?.callsign || session.user.user_metadata?.username;
+        const metadataCallsign = typeof rawCallsign === 'string' ? rawCallsign.trim() : '';
+        const email = session.user.email || '';
+        const fallbackCallsign = metadataCallsign ||
+          (email ? email.split('@')[0].toUpperCase() : `PILOT-${userId.substring(0, 4).toUpperCase()}`);
+        const shouldResolveCallsign = !existingSession;
+
         this.currentSession = {
-          userId: session.user.id,
-          email: session.user.email || '',
-          callsign,
+          userId,
+          email,
+          callsign: existingSession?.callsign || fallbackCallsign,
           accessToken: session.access_token
         };
+
+        if (shouldResolveCallsign) {
+          setTimeout(() => {
+            void this.resolveCallsign(userId, email, session.user.user_metadata)
+              .then((callsign) => {
+                if (!this.currentSession || this.currentSession.userId !== userId ||
+                    this.currentSession.callsign === callsign) {
+                  return;
+                }
+                this.currentSession = { ...this.currentSession, callsign };
+                this.notifyListeners();
+              })
+              .catch((err: unknown) => {
+                console.warn('Failed to resolve pilot callsign after auth state change:', err);
+              });
+          }, 0);
+        }
       } else {
         this.currentSession = null;
       }
