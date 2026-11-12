@@ -115,10 +115,12 @@ export class AuthService {
     }
 
     try {
+      const redirectUrl = (typeof window !== 'undefined' && window.location) ? `${window.location.origin}/` : 'http://localhost:3000/';
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             callsign: trimmedCallsign,
             username: trimmedCallsign
