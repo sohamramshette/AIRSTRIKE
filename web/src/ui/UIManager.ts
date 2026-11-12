@@ -10,6 +10,7 @@ import { AnnouncerSettingsManager } from '../announcer/AnnouncerSettingsManager'
 import { DialogueCategory, CommentaryFrequency } from '../announcer/types';
 import { MultiplayerRoomService } from '../services/multiplayer/MultiplayerRoomService';
 import { MultiplayerPresenceService } from '../services/multiplayer/MultiplayerPresenceService';
+import { MultiplayerCombatSyncService } from '../services/multiplayer/MultiplayerCombatSyncService';
 import { MultiplayerValidation } from '../services/multiplayer/MultiplayerValidation';
 import { MultiplayerRoomState, PilotPresenceState } from '../services/multiplayer/MultiplayerTypes';
 

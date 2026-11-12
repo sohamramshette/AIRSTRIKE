@@ -523,3 +523,4 @@ REVOKE ALL ON FUNCTION public.get_player_multiplayer_history(uuid, int) FROM pub
 GRANT EXECUTE ON FUNCTION public.get_player_multiplayer_history(uuid, int) TO authenticated, anon;
 
 COMMIT;
+

@@ -155,3 +155,4 @@ runPart7VisualQA().catch(err => {
   console.error('Web Part 7 Visual QA failed:', err);
   process.exit(1);
 });
+

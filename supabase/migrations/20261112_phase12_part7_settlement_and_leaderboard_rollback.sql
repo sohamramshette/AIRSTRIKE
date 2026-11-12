@@ -15,3 +15,4 @@ DROP FUNCTION IF EXISTS public.forfeit_multiplayer_match(uuid);
 -- (Will restore from 20261111_phase12_multiplayer_schema.sql if rollback is applied)
 
 COMMIT;
+

@@ -191,7 +191,7 @@ export class MultiplayerCombatSyncService {
       timestamp: Date.now()
     };
 
-    this.presenceService.broadcast<MultiplayerTelemetryPayload>('TELEMETRY', payload).catch(err => {
+    this.presenceService.broadcast<MultiplayerTelemetryPayload>('TELEMETRY', payload).catch(() => {
       // Ephemeral broadcast failures are silently ignored
     });
   }
@@ -308,7 +308,7 @@ export class MultiplayerCombatSyncService {
   }
 
   public removeSyncListener(listener: CombatSyncListener): void {
-    this.syncListeners.remove(listener);
+    this.syncListeners.delete(listener);
   }
 
   public addOvertakeListener(listener: OvertakeListener): void {
@@ -316,7 +316,7 @@ export class MultiplayerCombatSyncService {
   }
 
   public removeOvertakeListener(listener: OvertakeListener): void {
-    this.overtakeListeners.remove(listener);
+    this.overtakeListeners.delete(listener);
   }
 
   private notifySyncListeners(): void {

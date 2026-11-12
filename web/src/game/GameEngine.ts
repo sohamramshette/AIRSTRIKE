@@ -775,7 +775,7 @@ export class GameEngine {
     }
 
     // --- 5. Center Tactical Desi Announcer Banner ---
-    AnnouncerManager.getInstance().renderHUD(ctx, w, _h);
+    AnnouncerManager.getInstance().renderHUD(ctx, w, h);
 
     // --- 6. Top Chaos Protocol HUD Indicator (Phase 11) ---
     this.chaosScheduler.renderHUD(ctx, w);
