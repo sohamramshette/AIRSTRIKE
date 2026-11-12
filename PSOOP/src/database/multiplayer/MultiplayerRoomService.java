@@ -5,6 +5,7 @@ import database.SimpleJson;
 import database.SupabaseConfig;
 import database.SupabaseHttpClient;
 import database.UserSession;
+import database.multiplayer.MultiplayerModels.MultiplayerLeaderboardEntry;
 import database.multiplayer.MultiplayerModels.MultiplayerRoomState;
 import database.multiplayer.MultiplayerModels.PilotPresenceState;
 import database.multiplayer.MultiplayerModels.RoomOperationResult;
@@ -12,7 +13,9 @@ import database.multiplayer.MultiplayerModels.RoomStateListener;
 import database.multiplayer.MultiplayerModels.RoomStatus;
 
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -533,6 +536,84 @@ public class MultiplayerRoomService {
                     notifyRoomListeners(null);
                     return RoomOperationResult.ok(null);
                 });
+    }
+
+    /**
+     * Forfeits or concedes an active match.
+     */
+    public CompletableFuture<RoomOperationResult<Map<String, Object>>> forfeitMatch(String roomId) {
+        UserSession session = sessionManager.getCurrentSession();
+        if (session == null || !session.isAuthenticated()) {
+            return CompletableFuture.completedFuture(
+                    RoomOperationResult.fail("Authentication required.", "UNAUTHENTICATED")
+            );
+        }
+
+        String payload = SimpleJson.toJson(Map.of("p_room_id", roomId));
+        return httpClient.post("/rest/v1/rpc/forfeit_multiplayer_match", payload, session.getAccessToken())
+                .thenApply(response -> {
+                    if (response.statusCode() >= 400) {
+                        Map<String, Object> errMap = SimpleJson.parseObject(response.body());
+                        String msg = SimpleJson.getString(errMap, "message");
+                        return RoomOperationResult.<Map<String, Object>>fail(msg != null ? msg : "Failed to forfeit match", "RPC_ERROR");
+                    }
+                    Map<String, Object> data = SimpleJson.parseObject(response.body());
+                    MultiplayerRoomState current = stateManager.getCurrentRoom();
+                    if (current != null) {
+                        MultiplayerRoomState updated = new MultiplayerRoomState(
+                                current.getRoomId(), current.getRoomCode(), current.getHostId(), current.getHostUsername(),
+                                current.isHostReady(), current.getGuestId(), current.getGuestUsername(), current.isGuestReady(),
+                                current.getMatchSeed(), RoomStatus.COMPLETED, current.isHost(), current.isGuest(),
+                                current.getCreatedAt(), current.getExpiresAt()
+                        );
+                        stateManager.updateState(updated);
+                        notifyRoomListeners(updated);
+                    }
+                    return RoomOperationResult.ok(data);
+                })
+                .exceptionally(ex -> RoomOperationResult.fail("Network error forfeiting: " + ex.getMessage(), "NETWORK_ERROR"));
+    }
+
+    /**
+     * Fetches competitive 1v1 multiplayer leaderboard rankings.
+     */
+    public CompletableFuture<RoomOperationResult<List<MultiplayerLeaderboardEntry>>> getMultiplayerLeaderboard(String mode, int limit) {
+        UserSession session = sessionManager.getCurrentSession();
+        String token = (session != null && session.isAuthenticated()) ? session.getAccessToken() : "";
+
+        String payload = SimpleJson.toJson(Map.of("p_mode", mode != null ? mode : "provisional", "p_limit", limit));
+        return httpClient.post("/rest/v1/rpc/get_multiplayer_leaderboard", payload, token)
+                .thenApply(response -> {
+                    if (response.statusCode() >= 400) {
+                        return RoomOperationResult.<List<MultiplayerLeaderboardEntry>>fail("Failed to fetch multiplayer leaderboard (HTTP " + response.statusCode() + ")", "HTTP_ERROR");
+                    }
+                    Map<String, Object> body = SimpleJson.parseObject(response.body());
+                    Object rawList = body.get("leaderboard");
+                    List<MultiplayerLeaderboardEntry> entries = new ArrayList<>();
+                    if (rawList instanceof List) {
+                        for (Object o : (List<?>) rawList) {
+                            if (o instanceof Map) {
+                                @SuppressWarnings("unchecked")
+                                Map<String, Object> item = (Map<String, Object>) o;
+                                int rank = SimpleJson.getInt(item, "rank", 1);
+                                String userId = SimpleJson.getString(item, "user_id");
+                                String username = SimpleJson.getString(item, "username");
+                                int rating = SimpleJson.getInt(item, "rating_points", 1000);
+                                int wins = SimpleJson.getInt(item, "wins", 0);
+                                int losses = SimpleJson.getInt(item, "losses", 0);
+                                int draws = SimpleJson.getInt(item, "draws", 0);
+                                int total = SimpleJson.getInt(item, "total_matches", 0);
+                                double winRate = SimpleJson.getDouble(item, "win_rate", 0.0);
+                                int bestScore = SimpleJson.getInt(item, "best_score", 0);
+                                String tier = SimpleJson.getString(item, "ranking_tier");
+
+                                entries.add(new MultiplayerLeaderboardEntry(rank, userId, username, rating, wins, losses, draws, total, winRate, bestScore, tier));
+                            }
+                        }
+                    }
+                    return RoomOperationResult.ok(entries);
+                })
+                .exceptionally(ex -> RoomOperationResult.fail("Network error fetching leaderboard: " + ex.getMessage(), "NETWORK_ERROR"));
     }
 
     /**

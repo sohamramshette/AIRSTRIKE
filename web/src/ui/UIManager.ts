@@ -332,7 +332,15 @@ export class UIManager {
 
     // Leaderboard Modal
     document.getElementById('btn-open-leaderboard')?.addEventListener('click', () => {
-      this.openLeaderboard();
+      this.openLeaderboard('solo');
+    });
+
+    document.getElementById('tab-lb-solo')?.addEventListener('click', () => {
+      this.openLeaderboard('solo');
+    });
+
+    document.getElementById('tab-lb-multiplayer')?.addEventListener('click', () => {
+      this.openLeaderboard('multiplayer');
     });
 
     document.getElementById('leaderboard-modal-close')?.addEventListener('click', () => {
@@ -340,7 +348,8 @@ export class UIManager {
     });
 
     document.getElementById('btn-refresh-leaderboard')?.addEventListener('click', () => {
-      this.openLeaderboard();
+      const isMpActive = document.getElementById('tab-lb-multiplayer')?.classList.contains('active');
+      this.openLeaderboard(isMpActive ? 'multiplayer' : 'solo');
     });
 
     // Flight Log / History Modal
@@ -872,11 +881,11 @@ export class UIManager {
       const oppScore = opp.score;
       const delta = localScore - oppScore;
 
-      if (titleElem) titleElem.textContent = '1v1 SCORE ATTACK DEBRIEF';
+      if (titleElem) titleElem.textContent = '1v1 SCORE ATTACK DEBRIEF [PROVISIONAL]';
 
       if (subElem) {
         if (delta > 0) {
-          subElem.textContent = `🏆 VICTORY! +25 RATING POINTS (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
+          subElem.textContent = `🏆 VICTORY! +25 PROVISIONAL RATING (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
           subElem.style.color = '#10B981';
           AnnouncerManager.getInstance().showBanner('Kya baat hai! Shandar jeet! Absolute dominance!', 'BOLLYWOOD', true);
         } else if (delta < 0) {
@@ -884,7 +893,7 @@ export class UIManager {
           subElem.style.color = '#EF4444';
           AnnouncerManager.getInstance().showBanner('Chalo koi na, agle match me dekh lenge!', 'DESI_MEME', true);
         } else {
-          subElem.textContent = `🤝 HONORABLE DRAW! +10 RATING POINTS (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
+          subElem.textContent = `🤝 HONORABLE DRAW! +10 PROVISIONAL RATING (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
           subElem.style.color = '#F59E0B';
           AnnouncerManager.getInstance().showBanner('Tie ho gaya guru! Both pilots equally matched!', 'DESI_MEME', true);
         }
@@ -899,7 +908,7 @@ export class UIManager {
         timeAccElem.textContent = `${summary.durationSeconds}s / ${acc}% Acc`;
       }
       if (syncElem) {
-        syncElem.textContent = '● STARFLEET COMBAT ARCHIVES: 1v1 MATCH RESOLVED';
+        syncElem.textContent = '● STARFLEET ARCHIVES: PROVISIONAL PEER-REPORTED SETTLEMENT';
         syncElem.style.color = '#22C55E';
       }
       if (playAgainBtn) {
@@ -942,11 +951,56 @@ export class UIManager {
     }
   }
 
+  public openMultiplayer(): void {
+    const session = this.authService.getSession();
+    if (!session) {
+      this.showToast('Authentication required for competitive 1v1 multiplayer! Please log in.');
+      this.openModal('auth-modal');
+      return;
+    }
+    const callsignElem = document.getElementById('mp-menu-pilot-callsign');
+    if (callsignElem) {
+      callsignElem.textContent = session.callsign;
+    }
+    this.closeModal('gameover-overlay');
+    this.engine.returnToMenu();
+    this.switchMultiplayerView('mp-view-menu');
+    this.openModal('multiplayer-modal');
+  }
+
   // ---------------------------------------------------------------------------
-  // Leaderboard Modal
+  // Leaderboard Modal (Solo & 1v1 Multiplayer)
   // ---------------------------------------------------------------------------
-  private async openLeaderboard(): Promise<void> {
+  public async openLeaderboard(activeTab: 'solo' | 'multiplayer' = 'solo'): Promise<void> {
     this.openModal('leaderboard-modal');
+    
+    const tabSolo = document.getElementById('tab-lb-solo');
+    const tabMp = document.getElementById('tab-lb-multiplayer');
+    const soloTable = document.getElementById('solo-leaderboard-table');
+    const mpTable = document.getElementById('mp-leaderboard-table');
+    const mpNotice = document.getElementById('mp-leaderboard-notice');
+    const sourceNotice = document.getElementById('leaderboard-source-notice');
+
+    if (activeTab === 'solo') {
+      tabSolo?.classList.add('active');
+      tabMp?.classList.remove('active');
+      soloTable?.classList.remove('hidden');
+      mpTable?.classList.add('hidden');
+      if (mpNotice) mpNotice.style.display = 'none';
+      if (sourceNotice) sourceNotice.style.display = 'block';
+      await this.loadSoloLeaderboard();
+    } else {
+      tabMp?.classList.add('active');
+      tabSolo?.classList.remove('active');
+      mpTable?.classList.remove('hidden');
+      soloTable?.classList.add('hidden');
+      if (mpNotice) mpNotice.style.display = 'block';
+      if (sourceNotice) sourceNotice.style.display = 'none';
+      await this.loadMultiplayerLeaderboard();
+    }
+  }
+
+  private async loadSoloLeaderboard(): Promise<void> {
     const tbody = document.getElementById('leaderboard-table-body');
     const notice = document.getElementById('leaderboard-source-notice');
 
@@ -971,7 +1025,6 @@ export class UIManager {
 
       if (tbody) {
         if (result.entries.length === 0) {
-          // If error / RLS grant pending, check if current pilot is authenticated and has personal matches
           const session = this.authService.getSession();
           if (session) {
             const userMatches = await this.matchService.fetchMyMatches(5);
@@ -1026,6 +1079,59 @@ export class UIManager {
       }
       if (tbody) {
         tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #EF4444; padding: 20px;">Connection failed: ${this.escapeHtml(msg)}</td></tr>`;
+      }
+    }
+  }
+
+  private async loadMultiplayerLeaderboard(): Promise<void> {
+    const tbody = document.getElementById('mp-leaderboard-table-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">Accessing Starfleet 1v1 Combat Registry...</td></tr>';
+    }
+
+    try {
+      const res = await this.mpRoomService.getMultiplayerLeaderboard('provisional', 20);
+      if (!res.success || !res.data || res.data.length === 0) {
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px; line-height: 1.6;">
+              <span style="color: var(--purple-accent); font-weight: bold;">NO 1v1 COMBAT RECORDS ARCHIVED YET</span><br>
+              <span style="font-size: 11px;">Challenge a fellow cadet in ONLINE 1v1 BATTLE to establish the first combat rating!</span>
+            </td></tr>
+          `;
+        }
+        return;
+      }
+
+      if (tbody) {
+        tbody.innerHTML = res.data.map((entry, idx) => {
+          let rankClass = '';
+          let medal = `#${idx + 1}`;
+          if (idx === 0) { rankClass = 'rank-gold'; medal = '🥇 #1'; }
+          else if (idx === 1) { rankClass = 'rank-silver'; medal = '🥈 #2'; }
+          else if (idx === 2) { rankClass = 'rank-bronze'; medal = '🥉 #3'; }
+
+          const wld = `${entry.wins}W / ${entry.losses}L / ${entry.draws}D`;
+          const rateColor = entry.winRate >= 60 ? '#10B981' : (entry.winRate >= 40 ? '#F59E0B' : '#94A3B8');
+
+          return `
+            <tr>
+              <td class="${rankClass}">${medal}</td>
+              <td style="font-weight: 600; color: #FFFFFF;">
+                ${this.escapeHtml(entry.username)}
+                <span style="font-size: 9px; color: #FBBF24; border: 1px solid rgba(251,191,36,0.4); border-radius: 3px; padding: 1px 3px; margin-left: 4px;">PROV</span>
+              </td>
+              <td style="text-align: center; color: var(--purple-accent); font-weight: bold; font-family: var(--font-mono);">${entry.ratingPoints}</td>
+              <td style="text-align: center; font-size: 11px; color: var(--text-muted);">${wld}</td>
+              <td style="text-align: right; color: ${rateColor}; font-weight: bold;">${entry.winRate}%</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #EF4444; padding: 20px;">Failed to load 1v1 leaderboard: ${this.escapeHtml(msg)}</td></tr>`;
       }
     }
   }
@@ -1279,6 +1385,12 @@ export class UIManager {
 
     document.getElementById('multiplayer-modal-close')?.addEventListener('click', handleClose);
     document.getElementById('btn-mp-menu-close')?.addEventListener('click', handleClose);
+
+    // View 1v1 Leaderboard from Multiplayer Menu
+    document.getElementById('btn-mp-open-leaderboard')?.addEventListener('click', () => {
+      this.closeModal('multiplayer-modal');
+      this.openLeaderboard('multiplayer');
+    });
 
     // 3. Create Room Button
     document.getElementById('btn-mp-create-room')?.addEventListener('click', async () => {

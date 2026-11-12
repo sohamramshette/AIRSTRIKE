@@ -116,6 +116,52 @@ export interface GuestJoinedEventPayload {
   guestUsername: string;
 }
 
+export interface MultiplayerLeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  ratingPoints: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  totalMatches: number;
+  winRate: number;
+  bestScore: number;
+  rankingTier: 'VERIFIED' | 'PROVISIONAL';
+}
+
+export interface MultiplayerMatchHistoryEntry {
+  matchId: string;
+  roomId: string;
+  durationSeconds: number;
+  matchStatus: string;
+  isVerified: boolean;
+  verificationStatus: string;
+  completedAt: string;
+  playerScore: number;
+  opponentScore: number;
+  result: 'VICTORY' | 'DEFEAT' | 'DRAW';
+  opponentCallsign: string;
+}
+
+export interface MultiplayerFinalizeResponse {
+  success: boolean;
+  status: 'PENDING_OPPONENT' | 'RESOLVED' | 'ALREADY_FINALIZED';
+  roomId: string;
+  matchId?: string;
+  winnerId?: string | null;
+  isDraw?: boolean;
+  isVerified: boolean;
+  verificationStatus: string;
+  hostScore?: number;
+  hostProvDelta?: number;
+  hostVerifiedDelta?: number;
+  guestScore?: number;
+  guestProvDelta?: number;
+  guestVerifiedDelta?: number;
+  durationSeconds?: number;
+}
+
 export type RoomStateListener = (room: MultiplayerRoomState | null) => void;
 export type PresenceListener = (presences: Record<string, PilotPresenceState>) => void;
 

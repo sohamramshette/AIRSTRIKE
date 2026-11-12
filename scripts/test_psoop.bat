@@ -63,7 +63,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [TEST 7/7] Running Phase 12 Part 6 PRNG and Combat Synchronization Tests...
+echo [TEST 7/8] Running Phase 12 Part 6 PRNG and Combat Synchronization Tests...
 java -cp bin\java test.DeterministicPRNGTest
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] DeterministicPRNGTest failed!
@@ -72,6 +72,14 @@ if %ERRORLEVEL% NEQ 0 (
 java -cp bin\java test.MultiplayerCombatSyncTest
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] MultiplayerCombatSyncTest failed!
+    exit /b 1
+)
+
+echo.
+echo [TEST 8/8] Running Phase 12 Part 7 Two-Client E2E and Settlement Tests...
+java -cp bin\java test.MultiplayerTwoClientE2ETest
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] MultiplayerTwoClientE2ETest failed!
     exit /b 1
 )
 

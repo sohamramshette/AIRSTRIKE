@@ -66,3 +66,4 @@ public class DeterministicPRNG {
         return min + (int) Math.floor(nextFloat() * (max - min));
     }
 }
+

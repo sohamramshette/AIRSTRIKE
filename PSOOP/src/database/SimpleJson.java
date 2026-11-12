@@ -172,6 +172,16 @@ public final class SimpleJson {
         return def;
     }
 
+    public static double getDouble(Map<String, Object> map, String key, double def) {
+        if (map == null || key == null) return def;
+        Object val = map.get(key);
+        if (val instanceof Number) return ((Number) val).doubleValue();
+        if (val instanceof String) {
+            try { return Double.parseDouble((String) val); } catch (NumberFormatException ignored) {}
+        }
+        return def;
+    }
+
     public static long getLong(Map<String, Object> map, String key, long def) {
         if (map == null || key == null) return def;
         Object val = map.get(key);

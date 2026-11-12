@@ -1,6 +1,7 @@
 package ui;
 
 import database.SessionManager;
+import database.multiplayer.MultiplayerModels.MultiplayerLeaderboardEntry;
 import database.multiplayer.MultiplayerModels.MultiplayerRoomState;
 import database.multiplayer.MultiplayerModels.PilotPresenceState;
 import database.multiplayer.MultiplayerModels.RoomOperationResult;
@@ -27,6 +28,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.util.List;
 import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -36,9 +38,13 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 
 /**
  * ==============================================================================
@@ -189,8 +195,15 @@ public class MultiplayerDialog extends JDialog {
         });
         panel.add(joinBtn, gbc);
 
-        // Button 3: Return
+        // Button 3: View 1v1 Leaderboard
         gbc.gridy = 3;
+        gbc.insets = new Insets(4, 24, 8, 24);
+        CyberButton lbBtn = CyberButton.tactical("★   1v1 LEADERBOARD (PROVISIONAL)", Theme.GOLD_ACCENT, new Color(38, 28, 14));
+        lbBtn.addActionListener(e -> showMultiplayerLeaderboardDialog());
+        panel.add(lbBtn, gbc);
+
+        // Button 4: Return
+        gbc.gridy = 4;
         gbc.insets = new Insets(14, 24, 10, 24);
         CyberButton returnBtn = CyberButton.tactical("✕   RETURN TO MAIN MENU", Theme.TEXT_MUTED, new Color(20, 28, 44));
         returnBtn.addActionListener(e -> dispose());
@@ -715,6 +728,82 @@ public class MultiplayerDialog extends JDialog {
             guestPresenceLabel.setText("○ AWAITING GUEST");
             guestPresenceLabel.setForeground(Theme.TEXT_MUTED);
         }
+    }
+
+    private void showMultiplayerLeaderboardDialog() {
+        JDialog lbDialog = new JDialog(this, "STARFLEET 1v1 COMBAT LEADERBOARD (PROVISIONAL)", true);
+        lbDialog.setSize(580, 440);
+        lbDialog.setLocationRelativeTo(this);
+        lbDialog.getContentPane().setBackground(Theme.BG_DEEP);
+        lbDialog.setLayout(new BorderLayout(10, 10));
+
+        JPanel headerPanel = new JPanel(new BorderLayout(5, 5));
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(12, 16, 4, 16));
+
+        JLabel titleLbl = new JLabel("STARFLEET 1v1 PILOT RANKINGS");
+        titleLbl.setFont(Theme.HEADER_2);
+        titleLbl.setForeground(Theme.GOLD_ACCENT);
+
+        JLabel noticeLbl = new JLabel("<html><font color='#FBBF24'><b>⚠️ PROVISIONAL STATUS:</b></font> <font color='#94A3B8'>1v1 ratings are tracked as provisional peer-reported telemetry. Official verified rankings require dedicated server simulation.</font></html>");
+        noticeLbl.setFont(Theme.MONO_SMALL);
+
+        headerPanel.add(titleLbl, BorderLayout.NORTH);
+        headerPanel.add(noticeLbl, BorderLayout.SOUTH);
+        lbDialog.add(headerPanel, BorderLayout.NORTH);
+
+        String[] cols = {"RANK", "CALLSIGN", "RATING (MMR)", "W / L / D", "WIN RATE"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        JTable table = new JTable(model);
+        table.setBackground(Theme.BG_CARD);
+        table.setForeground(Color.WHITE);
+        table.setGridColor(Theme.BORDER_CYAN);
+        table.setRowHeight(26);
+        table.setFont(Theme.BODY);
+        table.getTableHeader().setBackground(new Color(15, 23, 42));
+        table.getTableHeader().setForeground(Theme.CYAN_PRIMARY);
+        table.getTableHeader().setFont(Theme.HEADER_2);
+
+        DefaultTableCellRenderer centerRender = new DefaultTableCellRenderer();
+        centerRender.setHorizontalAlignment(SwingConstants.CENTER);
+        table.getColumnModel().getColumn(0).setCellRenderer(centerRender);
+        table.getColumnModel().getColumn(2).setCellRenderer(centerRender);
+        table.getColumnModel().getColumn(3).setCellRenderer(centerRender);
+        table.getColumnModel().getColumn(4).setCellRenderer(centerRender);
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.getViewport().setBackground(Theme.BG_DEEP);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 16, 8, 16));
+        lbDialog.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        btnPanel.setOpaque(false);
+        CyberButton closeBtn = CyberButton.tactical("CLOSE", Theme.TEXT_MUTED, new Color(20, 28, 44));
+        closeBtn.addActionListener(e -> lbDialog.dispose());
+        btnPanel.add(closeBtn);
+        lbDialog.add(btnPanel, BorderLayout.SOUTH);
+
+        // Fetch data
+        roomService.getMultiplayerLeaderboard("provisional", 30).thenAccept(res -> {
+            SwingUtilities.invokeLater(() -> {
+                if (res.isSuccess() && res.getData() != null && !res.getData().isEmpty()) {
+                    model.setRowCount(0);
+                    for (MultiplayerLeaderboardEntry entry : res.getData()) {
+                        String rankStr = entry.getRank() == 1 ? "🥇 #1" : (entry.getRank() == 2 ? "🥈 #2" : (entry.getRank() == 3 ? "🥉 #3" : "#" + entry.getRank()));
+                        String wld = entry.getWins() + "W / " + entry.getLosses() + "L / " + entry.getDraws() + "D";
+                        model.addRow(new Object[]{rankStr, entry.getUsername() + " [PROV]", entry.getRatingPoints(), wld, entry.getWinRate() + "%"});
+                    }
+                } else {
+                    model.setRowCount(0);
+                    model.addRow(new Object[]{"-", "NO 1v1 MATCH RECORDS YET", "-", "-", "-"});
+                }
+            });
+        });
+
+        lbDialog.setVisible(true);
     }
 }
 

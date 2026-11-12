@@ -360,16 +360,26 @@
           <div class="modal-header">
             <div>
               <h3 class="modal-title" style="color: var(--gold-accent);">STARFLEET GLOBAL HALL OF FAME</h3>
-              <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Top 10 Ace Pilots Across the Cosmos – Synchronized via Supabase</p>
+              <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Top Ace Pilots Across the Cosmos – Synchronized via Supabase</p>
             </div>
             <button id="leaderboard-modal-close" class="modal-close-btn">&times;</button>
+          </div>
+
+          <!-- Leaderboard Mode Tabs -->
+          <div style="display: flex; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+            <button id="tab-lb-solo" class="pilot-pill-btn active" style="font-size: 11px;">SOLO ARCADE (HALL OF FAME)</button>
+            <button id="tab-lb-multiplayer" class="pilot-pill-btn" style="font-size: 11px; border-color: rgba(168,85,247,0.5);">⚔   1v1 MULTIPLAYER (PROVISIONAL)</button>
+          </div>
+
+          <div id="mp-leaderboard-notice" style="display: none; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 6px; padding: 8px 12px; font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+            <strong style="color: #FBBF24;">⚠️ PROVISIONAL STATUS:</strong> 1v1 matches run in peer-to-peer telemetry mode without authoritative server simulation. Ratings are tracked as <strong>PROVISIONAL</strong>. Official verified rankings require dedicated server simulation.
           </div>
 
           <p id="leaderboard-source-notice" style="font-size: 12px; font-family: var(--font-display); color: var(--text-muted); margin-bottom: 8px;">
             Supabase Cloud Telemetry
           </p>
 
-          <table class="cyber-table">
+          <table class="cyber-table" id="solo-leaderboard-table">
             <thead>
               <tr>
                 <th style="width: 20%;">RANK</th>
@@ -378,6 +388,21 @@
               </tr>
             </thead>
             <tbody id="leaderboard-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+
+          <table class="cyber-table hidden" id="mp-leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 12%;">RANK</th>
+                <th style="width: 32%;">CALLSIGN</th>
+                <th style="width: 18%; text-align: center;">RATING (MMR)</th>
+                <th style="width: 18%; text-align: center;">W / L / D</th>
+                <th style="width: 20%; text-align: right;">WIN RATE</th>
+              </tr>
+            </thead>
+            <tbody id="mp-leaderboard-table-body">
               <!-- Populated dynamically -->
             </tbody>
           </table>
@@ -498,6 +523,9 @@ CREATE POLICY "anon_select_leaderboard" ON public.leaderboard FOR SELECT TO anon
               </button>
               <button id="btn-mp-show-join" class="cyber-btn btn-tactical blue" style="justify-content: center; height: 42px; font-size: 13px;">
                 ◈   JOIN MISSION VIA ROOM CODE
+              </button>
+              <button id="btn-mp-open-leaderboard" class="cyber-btn btn-tactical gold" style="justify-content: center; height: 38px; font-size: 12px;">
+                ★   VIEW 1v1 LEADERBOARD (PROVISIONAL)
               </button>
               <button id="btn-mp-menu-close" class="cyber-btn btn-tactical" style="justify-content: center; height: 38px; color: var(--text-muted);">
                 ✕   RETURN TO MAIN MENU

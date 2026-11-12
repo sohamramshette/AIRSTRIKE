@@ -177,6 +177,7 @@ public class WaveManager {
     }
 
     public int getCurrentLevel() { return currentLevel; }
+    public int getTotalEnemiesForWave() { return totalEnemiesForWave; }
     public boolean isBossSpawned() { return bossSpawned; }
     public boolean isWaveClearNotice() { return waveClearNotice; }
 }

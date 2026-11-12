@@ -141,6 +141,14 @@ public class GameCanvas extends JPanel {
                 } else if (code == KeyEvent.VK_R) {
                     if (engine.isEnemyDemoMode()) {
                         engine.resetDemoFleet();
+                    } else if (engine.isMultiplayer()) {
+                        try {
+                            engine.setState(GameState.MENU);
+                            if (mainWindow != null) {
+                                mainWindow.showMainMenu();
+                                mainWindow.showMultiplayerDialog();
+                            }
+                        } catch (InvalidGameStateException ignored) {}
                     } else if (engine.getState() == GameState.GAME_OVER || engine.getState() == GameState.PLAYING) {
                         engine.startNewGame();
                     }

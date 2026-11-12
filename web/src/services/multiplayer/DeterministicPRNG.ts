@@ -55,3 +55,4 @@ export class DeterministicPRNG {
     return min + Math.floor(this.nextFloat() * (max - min));
   }
 }
+

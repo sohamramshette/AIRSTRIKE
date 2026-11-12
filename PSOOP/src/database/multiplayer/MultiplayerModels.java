@@ -325,6 +325,97 @@ public final class MultiplayerModels {
     }
 
     /**
+     * Competitive 1v1 Leaderboard entry model (Part 7).
+     */
+    public static class MultiplayerLeaderboardEntry {
+        private final int rank;
+        private final String userId;
+        private final String username;
+        private final int ratingPoints;
+        private final int wins;
+        private final int losses;
+        private final int draws;
+        private final int totalMatches;
+        private final double winRate;
+        private final int bestScore;
+        private final String rankingTier;
+
+        public MultiplayerLeaderboardEntry(int rank, String userId, String username, int ratingPoints,
+                                           int wins, int losses, int draws, int totalMatches,
+                                           double winRate, int bestScore, String rankingTier) {
+            this.rank = rank;
+            this.userId = userId != null ? userId : "";
+            this.username = username != null ? username : "Pilot";
+            this.ratingPoints = ratingPoints;
+            this.wins = wins;
+            this.losses = losses;
+            this.draws = draws;
+            this.totalMatches = totalMatches;
+            this.winRate = winRate;
+            this.bestScore = bestScore;
+            this.rankingTier = rankingTier != null ? rankingTier : "PROVISIONAL";
+        }
+
+        public int getRank() { return rank; }
+        public String getUserId() { return userId; }
+        public String getUsername() { return username; }
+        public int getRatingPoints() { return ratingPoints; }
+        public int getWins() { return wins; }
+        public int getLosses() { return losses; }
+        public int getDraws() { return draws; }
+        public int getTotalMatches() { return totalMatches; }
+        public double getWinRate() { return winRate; }
+        public int getBestScore() { return bestScore; }
+        public String getRankingTier() { return rankingTier; }
+    }
+
+    /**
+     * Individual player 1v1 match history record (Part 7).
+     */
+    public static class MultiplayerMatchHistoryEntry {
+        private final String matchId;
+        private final String roomId;
+        private final int durationSeconds;
+        private final String matchStatus;
+        private final boolean verified;
+        private final String verificationStatus;
+        private final String completedAt;
+        private final int playerScore;
+        private final int opponentScore;
+        private final String result;
+        private final String opponentCallsign;
+
+        public MultiplayerMatchHistoryEntry(String matchId, String roomId, int durationSeconds,
+                                           String matchStatus, boolean verified, String verificationStatus,
+                                           String completedAt, int playerScore, int opponentScore,
+                                           String result, String opponentCallsign) {
+            this.matchId = matchId;
+            this.roomId = roomId;
+            this.durationSeconds = durationSeconds;
+            this.matchStatus = matchStatus;
+            this.verified = verified;
+            this.verificationStatus = verificationStatus;
+            this.completedAt = completedAt;
+            this.playerScore = playerScore;
+            this.opponentScore = opponentScore;
+            this.result = result;
+            this.opponentCallsign = opponentCallsign;
+        }
+
+        public String getMatchId() { return matchId; }
+        public String getRoomId() { return roomId; }
+        public int getDurationSeconds() { return durationSeconds; }
+        public String getMatchStatus() { return matchStatus; }
+        public boolean isVerified() { return verified; }
+        public String getVerificationStatus() { return verificationStatus; }
+        public String getCompletedAt() { return completedAt; }
+        public int getPlayerScore() { return playerScore; }
+        public int getOpponentScore() { return opponentScore; }
+        public String getResult() { return result; }
+        public String getOpponentCallsign() { return opponentCallsign; }
+    }
+
+    /**
      * Observers for reactive UI updates on the Swing Event Dispatch Thread.
      */
     @FunctionalInterface

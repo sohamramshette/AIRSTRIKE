@@ -1002,7 +1002,7 @@ public class GameEngine {
         // Title
         g.setFont(new Font("SansSerif", Font.BOLD, 22));
         FontMetrics fmTitle = g.getFontMetrics();
-        String title = "1v1 SCORE ATTACK DEBRIEF";
+        String title = "1v1 SCORE ATTACK DEBRIEF [PROVISIONAL]";
         int tx = (screenWidth - fmTitle.stringWidth(title)) / 2;
         g.setColor(Color.WHITE);
         g.drawString(title, tx, cardY + 36);
@@ -1010,11 +1010,11 @@ public class GameEngine {
         // Subtitle Outcome
         String outcomeStr;
         if (delta > 0) {
-            outcomeStr = "🏆 VICTORY! +25 RATING POINTS";
+            outcomeStr = "🏆 VICTORY! +25 PROVISIONAL RATING PTS";
         } else if (delta < 0) {
             outcomeStr = "💀 DEFEAT! 0 RATING POINTS";
         } else {
-            outcomeStr = "🤝 HONORABLE DRAW! +10 RATING POINTS";
+            outcomeStr = "🤝 HONORABLE DRAW! +10 PROVISIONAL RATING PTS";
         }
         g.setFont(new Font("SansSerif", Font.BOLD, 12));
         FontMetrics fmSub = g.getFontMetrics();

@@ -3,7 +3,8 @@
 ![Status](https://img.shields.io/badge/status-complete__verified-brightgreen.svg)
 ![COs](https://img.shields.io/badge/Course%20Outcomes-19%20of%2019%20Verified-blue.svg)
 ![Enemies](https://img.shields.io/badge/Academic%20Enemies-20%20of%2020%20Verified-blueviolet.svg)
-![Tests](https://img.shields.io/badge/Automated%20Tests-418%20Passing%20(100%25)-success.svg)
+![Tests](https://img.shields.io/badge/Automated%20Tests-508%20Passing%20(100%25)-success.svg)
+![Multiplayer](https://img.shields.io/badge/Multiplayer-1v1%20Realtime%20Score%20Attack-purple.svg)
 ![Java](https://img.shields.io/badge/Java-26%20%7C%20Swing%20%7C%20AWT-orange.svg)
 ![C++](https://img.shields.io/badge/C++-17%20Standard-brightgreen.svg)
 ![Assembly](https://img.shields.io/badge/Assembly-80386%2032--bit-red.svg)
@@ -66,7 +67,42 @@
 
 ---
 
-## 4. System Requirements & Prerequisites
+## 4. Online 1v1 Competitive Multiplayer (Phase 12)
+
+AIRSTRIKE features a real-time, cross-platform competitive **1v1 SCORE ATTACK** mode enabling two authenticated students to compete simultaneously across separate computers.
+
+### Core Multiplayer Architecture:
+1. **Match Lifecycle**: `WAITING -> READY -> COUNTDOWN (3, 2, 1, ENGAGE) -> ACTIVE (90s) -> COMPLETED`.
+2. **Deterministic PRNG (Mulberry32)**: Both pilots encounter bitwise identical enemy wave spawns, archetype distributions, and chaos anomalies generated from the authoritative `match_seed`.
+3. **High-Frequency Telemetry Broadcast (~10 Hz)**: Streams live player vitals (health, shield, lives, score, combo, overheat state) over Supabase Realtime Phoenix WebSocket.
+4. **Competitive Cyber HUD**: Dual vital pods, authoritative 90-second countdown clock (turning pulsing crimson in final 10s), live score margin (`▲ LEADING`, `▼ TRAILING`, `● TIED`), and dynamic Hinglish commentary banners on lead changes.
+5. **Cross-Platform Permutations (4/4 Supported)**:
+   - Browser Cadet vs Browser Cadet
+   - Java Desktop Cadet vs Java Desktop Cadet
+   - Java Desktop Cadet vs Browser Cadet
+   - Browser Cadet vs Java Desktop Cadet
+6. **Competitive Integrity & Provisional Rankings**:
+   - Scores are submitted via atomic PostgreSQL RPCs (`finalize_multiplayer_match`) with server timestamp verification.
+   - In accordance with academic honesty, peer-reported client telemetry is classified as **PROVISIONAL** (unverified peer telemetry without authoritative headless physics simulation).
+   - Provisional MMR is tracked separately (`+25` Win, `0` Loss, `+10` Draw) without corrupting official verified rankings.
+
+### How to Launch Multiplayer:
+- **Browser Client**:
+  ```bash
+  cd web
+  npm install
+  npm run dev
+  # Navigate to http://localhost:3000 -> Click "⚔ ONLINE 1v1 BATTLE"
+  ```
+- **Java Desktop Client**:
+  ```cmd
+  scripts\run_java.bat
+  # In Main Menu -> Click "⚔ ONLINE 1v1 BATTLE (MULTIPLAYER)"
+  ```
+
+---
+
+## 5. System Requirements & Prerequisites
 
 - **Operating System**: Windows 10 or Windows 11 (64-bit or 32-bit).
 - **Java**: Java Development Kit (JDK) 11 or higher (verified on JDK 26.0.2).

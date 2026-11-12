@@ -12,7 +12,9 @@ import {
   RoomOperationResult,
   RoomStateListener,
   ReadyChangeEventPayload,
-  RoomCancelledEventPayload
+  RoomCancelledEventPayload,
+  MultiplayerLeaderboardEntry,
+  MultiplayerMatchHistoryEntry
 } from './MultiplayerTypes';
 
 export class MultiplayerRoomService {
@@ -617,6 +619,143 @@ export class MultiplayerRoomService {
     }
     this.broadcastCleanupFns = [];
     await this.presenceService.disconnect();
+  }
+
+  /**
+   * Forfeits or concedes an active match.
+   */
+  public async forfeitMatch(roomId: string): Promise<RoomOperationResult<any>> {
+    const session = this.authService.getSession();
+    if (!session) {
+      return { success: false, error: 'Authentication required.', errorCode: 'UNAUTHENTICATED' };
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('forfeit_multiplayer_match', {
+        p_room_id: roomId
+      });
+
+      if (error) {
+        return { success: false, error: error.message, errorCode: error.code };
+      }
+
+      if (this.currentRoom && this.currentRoom.roomId === roomId) {
+        this.currentRoom = {
+          ...this.currentRoom,
+          status: 'COMPLETED'
+        };
+        this.notifyRoomListeners();
+      }
+
+      return { success: true, data };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg, errorCode: 'RPC_ERROR' };
+    }
+  }
+
+  /**
+   * Fetches competitive 1v1 multiplayer leaderboard rankings.
+   */
+  public async getMultiplayerLeaderboard(
+    mode: 'provisional' | 'verified' = 'provisional',
+    limit: number = 50
+  ): Promise<RoomOperationResult<MultiplayerLeaderboardEntry[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_multiplayer_leaderboard', {
+        p_mode: mode,
+        p_limit: limit
+      });
+
+      if (error) {
+        // Fallback: query view directly if RPC not yet deployed
+        const { data: viewData, error: viewError } = await supabase
+          .from('v_multiplayer_leaderboard')
+          .select('*')
+          .limit(limit);
+
+        if (viewError) {
+          return { success: false, error: error.message || viewError.message, errorCode: error.code };
+        }
+
+        const entries: MultiplayerLeaderboardEntry[] = (viewData || []).map((r: any) => ({
+          rank: r.rank || 1,
+          userId: r.user_id,
+          username: r.username,
+          ratingPoints: mode === 'verified' ? r.verified_rating : r.provisional_rating,
+          wins: mode === 'verified' ? r.verified_wins : r.provisional_wins,
+          losses: mode === 'verified' ? r.verified_losses : r.provisional_losses,
+          draws: mode === 'verified' ? r.verified_draws : r.provisional_draws,
+          totalMatches: mode === 'verified' ? r.verified_matches : r.provisional_matches,
+          winRate: mode === 'verified' ? r.verified_win_rate : r.provisional_win_rate,
+          bestScore: mode === 'verified' ? r.best_verified_score : r.best_score,
+          rankingTier: mode === 'verified' ? 'VERIFIED' : 'PROVISIONAL'
+        }));
+
+        return { success: true, data: entries };
+      }
+
+      const res = data as { success: boolean; leaderboard: any[] };
+      const raw = res.leaderboard || [];
+      const entries: MultiplayerLeaderboardEntry[] = raw.map((r: any) => ({
+        rank: r.rank,
+        userId: r.user_id,
+        username: r.username,
+        ratingPoints: r.rating_points,
+        wins: r.wins,
+        losses: r.losses,
+        draws: r.draws,
+        totalMatches: r.total_matches,
+        winRate: r.win_rate || 0,
+        bestScore: r.best_score || 0,
+        rankingTier: r.ranking_tier || (mode === 'verified' ? 'VERIFIED' : 'PROVISIONAL')
+      }));
+
+      return { success: true, data: entries };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg, errorCode: 'QUERY_ERROR' };
+    }
+  }
+
+  /**
+   * Fetches an individual pilot's 1v1 match history.
+   */
+  public async getPlayerMatchHistory(
+    userId?: string,
+    limit: number = 20
+  ): Promise<RoomOperationResult<MultiplayerMatchHistoryEntry[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_player_multiplayer_history', {
+        p_user_id: userId || null,
+        p_limit: limit
+      });
+
+      if (error) {
+        return { success: false, error: error.message, errorCode: error.code };
+      }
+
+      const res = data as { success: boolean; history: any[] };
+      const raw = res.history || [];
+      const entries: MultiplayerMatchHistoryEntry[] = raw.map((r: any) => ({
+        matchId: r.match_id,
+        roomId: r.room_id,
+        durationSeconds: r.duration_seconds,
+        matchStatus: r.match_status,
+        isVerified: r.is_verified,
+        verificationStatus: r.verification_status,
+        completedAt: r.completed_at,
+        playerScore: r.player_score,
+        opponentScore: r.opponent_score,
+        result: r.result,
+        opponentCallsign: r.opponent_callsign
+      }));
+
+      return { success: true, data: entries };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg, errorCode: 'QUERY_ERROR' };
+    }
   }
 
   public getCurrentRoom(): MultiplayerRoomState | null {
