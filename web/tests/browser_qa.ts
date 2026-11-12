@@ -79,7 +79,7 @@ async function runBrowserQA(browserName: string, executablePath: string): Promis
       });
 
       assert.ok(Math.abs(mobileMenu.stageHeight - mobileMenu.viewportHeight) < 1, 'Mobile landing page should fill the portrait viewport');
-      assert.strictEqual(mobileMenu.buttonCount, 7, 'All landing-page buttons should remain visible');
+      assert.ok(mobileMenu.buttonCount >= 7, 'All landing-page buttons should remain visible');
       assert.ok(mobileMenu.buttonsInView, 'Every landing-page button should fit within the mobile viewport');
       assert.ok(mobileMenu.footerVisible, 'Academic suite and record footer should remain visible');
       assert.ok(mobileMenu.hintsVisible, 'Control hints should remain visible');

@@ -1258,13 +1258,7 @@ export class UIManager {
     const sessionEl = document.getElementById('diag-session');
     const latencyEl = document.getElementById('diag-latency');
 
-    if (endpointEl) {
-      if (typeof window !== 'undefined' && SUPABASE_URL === window.location.origin) {
-        endpointEl.textContent = `${SUPABASE_URL} (Port 3000 Unified -> Proxy 3002)`;
-      } else {
-        endpointEl.textContent = SUPABASE_URL;
-      }
-    }
+    if (endpointEl) endpointEl.textContent = SUPABASE_URL;
 
     const session = this.authService.getSession();
     if (sessionEl) {
