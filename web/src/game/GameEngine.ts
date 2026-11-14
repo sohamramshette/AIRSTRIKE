@@ -128,6 +128,7 @@ export class GameEngine {
     this.particles.clear();
     this.scoreCalc.reset();
     this.waveManager.reset();
+    this.starfield.reset();
     this.chaosScheduler.reset(this);
 
     this.matchDuration = 0;
@@ -161,6 +162,7 @@ export class GameEngine {
     this.particles.clear();
     this.scoreCalc.reset();
     this.waveManager.reset();
+    this.starfield.reset();
     this.chaosScheduler.reset(this);
 
     this.matchDuration = 0;
@@ -273,8 +275,13 @@ export class GameEngine {
   };
 
   private update(dt: number): void {
-    // Starfield animates in all states
-    this.starfield.update(dt);
+    // Starfield animates in all states with dynamic sector evolution (CGL-CO4 & CGL-CO6)
+    if (this.state === GameState.PLAYING || this.state === GameState.PAUSED) {
+      this.starfield.setSectorByWave(this.waveManager.currentLevel, this.waveManager.bossActive || this.waveManager.isBossWave);
+      this.starfield.update(dt, this.player.vx);
+    } else {
+      this.starfield.update(dt, 0);
+    }
 
     // Global shortcut handles
     if (this.inputManager.consumeMute()) {
