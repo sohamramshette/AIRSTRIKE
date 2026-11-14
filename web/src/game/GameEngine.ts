@@ -15,6 +15,7 @@ import { Starfield } from './Starfield';
 import { DeterministicPRNG } from '../services/multiplayer/DeterministicPRNG';
 import { MultiplayerCombatSyncService } from '../services/multiplayer/MultiplayerCombatSyncService';
 import { MultiplayerRoomService } from '../services/multiplayer/MultiplayerRoomService';
+import { MultiplayerFinalizeResponse, RoomOperationResult } from '../services/multiplayer/MultiplayerTypes';
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -41,6 +42,7 @@ export class GameEngine {
   public multiplayerStartedAt: string = '';
   public multiplayerRoom: any = null;
   public multiplayerFinalized: boolean = false;
+  public multiplayerFinalization: RoomOperationResult<MultiplayerFinalizeResponse> | null = null;
 
   private matchDuration: number = 0;
   private enemiesDestroyed: number = 0;
@@ -145,6 +147,7 @@ export class GameEngine {
     this.multiplayerStartedAt = startedAtIso;
     this.multiplayerRoom = room;
     this.multiplayerFinalized = false;
+    this.multiplayerFinalization = null;
 
     const prng = new DeterministicPRNG(matchSeed);
     this.waveManager.setPRNG(prng);
@@ -198,18 +201,19 @@ export class GameEngine {
     this.multiplayerFinalized = true;
 
     // Send final vital telemetry burst
-    MultiplayerCombatSyncService.getInstance().sendLocalTelemetry();
+    const combatSync = MultiplayerCombatSyncService.getInstance();
+    combatSync.sendLocalTelemetry();
 
     this.setState(GameState.GAME_OVER);
 
     const finalScore = this.scoreCalc.getScore();
-    const duration = 90;
+    const duration = Math.max(1, combatSync.getElapsedSeconds());
     const accuracy = this.shotsFired > 0
       ? Math.min(100, Math.round(((this.enemiesDestroyed * 2) / Math.max(1, this.shotsFired)) * 100))
       : 0;
 
     if (this.multiplayerRoom) {
-      await MultiplayerRoomService.getInstance().finalizeMatch(
+      this.multiplayerFinalization = await MultiplayerRoomService.getInstance().finalizeMatch(
         this.multiplayerRoom.roomId,
         finalScore,
         duration
@@ -979,4 +983,3 @@ export class GameEngine {
     };
   }
 }
-

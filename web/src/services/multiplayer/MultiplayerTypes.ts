@@ -144,15 +144,20 @@ export interface MultiplayerMatchHistoryEntry {
   opponentCallsign: string;
 }
 
+export interface MultiplayerMatchHistoryPage {
+  entries: MultiplayerMatchHistoryEntry[];
+  hasMore: boolean;
+}
+
 export interface MultiplayerFinalizeResponse {
-  success: boolean;
+  success?: boolean;
   status: 'PENDING_OPPONENT' | 'RESOLVED' | 'ALREADY_FINALIZED';
-  roomId: string;
+  roomId?: string;
   matchId?: string;
   winnerId?: string | null;
   isDraw?: boolean;
-  isVerified: boolean;
-  verificationStatus: string;
+  isVerified?: boolean;
+  verificationStatus?: string;
   hostScore?: number;
   hostProvDelta?: number;
   hostVerifiedDelta?: number;
@@ -160,8 +165,22 @@ export interface MultiplayerFinalizeResponse {
   guestProvDelta?: number;
   guestVerifiedDelta?: number;
   durationSeconds?: number;
+  room_id?: string;
+  match_id?: string;
+  winner_id?: string | null;
+  is_draw?: boolean;
+  is_verified?: boolean;
+  verification_status?: string;
+  host_id?: string;
+  guest_id?: string;
+  host_score?: number;
+  guest_score?: number;
+  player1_score?: number;
+  player2_score?: number;
+  submitted_score?: number;
+  message?: string;
+  completed_at?: string;
 }
 
 export type RoomStateListener = (room: MultiplayerRoomState | null) => void;
 export type PresenceListener = (presences: Record<string, PilotPresenceState>) => void;
-

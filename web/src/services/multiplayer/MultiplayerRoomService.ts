@@ -14,7 +14,9 @@ import {
   ReadyChangeEventPayload,
   RoomCancelledEventPayload,
   MultiplayerLeaderboardEntry,
-  MultiplayerMatchHistoryEntry
+  MultiplayerMatchHistoryEntry,
+  MultiplayerMatchHistoryPage,
+  MultiplayerFinalizeResponse
 } from './MultiplayerTypes';
 
 export class MultiplayerRoomService {
@@ -413,7 +415,7 @@ export class MultiplayerRoomService {
     roomId: string,
     submittedScore: number,
     durationSeconds: number = 90
-  ): Promise<RoomOperationResult<any>> {
+  ): Promise<RoomOperationResult<MultiplayerFinalizeResponse>> {
     const session = this.authService.getSession();
     if (!session) {
       return { success: false, error: 'Authentication required.', errorCode: 'UNAUTHENTICATED' };
@@ -430,28 +432,31 @@ export class MultiplayerRoomService {
         return { success: false, error: error.message, errorCode: error.code };
       }
 
-      const res = data as any;
-      if (res && res.status === 'RESOLVED') {
+      const res = data as MultiplayerFinalizeResponse;
+      if (res && (res.status === 'RESOLVED' || res.status === 'ALREADY_FINALIZED')) {
+        const hostScore = res.host_score ?? res.player1_score;
+        const guestScore = res.guest_score ?? res.player2_score;
         if (this.currentRoom && this.currentRoom.roomId === roomId) {
           this.currentRoom = {
             ...this.currentRoom,
             status: 'COMPLETED',
-            winnerId: res.winner_id,
-            hostScore: res.player1_score,
-            guestScore: res.player2_score
+            winnerId: res.winner_id ?? res.winnerId ?? null,
+            hostScore,
+            guestScore
           };
           this.notifyRoomListeners();
         }
 
-        // Broadcast MATCH_FINALIZED
-        await this.presenceService.broadcast('MATCH_FINALIZED', {
-          roomId,
-          winnerId: res.winner_id,
-          isDraw: res.is_draw,
-          hostScore: res.player1_score,
-          guestScore: res.player2_score,
-          completedAt: res.completed_at
-        });
+        if (res.status === 'RESOLVED') {
+          await this.presenceService.broadcast('MATCH_FINALIZED', {
+            roomId,
+            winnerId: res.winner_id ?? res.winnerId ?? null,
+            isDraw: res.is_draw ?? res.isDraw ?? false,
+            hostScore,
+            guestScore,
+            completedAt: res.completed_at
+          });
+        }
       }
 
       return {
@@ -672,14 +677,15 @@ export class MultiplayerRoomService {
         const { data: viewData, error: viewError } = await supabase
           .from('v_multiplayer_leaderboard')
           .select('*')
+          .order(mode === 'verified' ? 'verified_rating' : 'provisional_rating', { ascending: false })
           .limit(limit);
 
         if (viewError) {
           return { success: false, error: error.message || viewError.message, errorCode: error.code };
         }
 
-        const entries: MultiplayerLeaderboardEntry[] = (viewData || []).map((r: any) => ({
-          rank: r.rank || 1,
+        const entries: MultiplayerLeaderboardEntry[] = (viewData || []).map((r: any, index: number) => ({
+          rank: index + 1,
           userId: r.user_id,
           username: r.username,
           ratingPoints: mode === 'verified' ? r.verified_rating : r.provisional_rating,
@@ -695,8 +701,8 @@ export class MultiplayerRoomService {
         return { success: true, data: entries };
       }
 
-      const res = data as { success: boolean; leaderboard: any[] };
-      const raw = res.leaderboard || [];
+      const res = data as { success: boolean; leaderboard?: any[] } | null;
+      const raw = res?.leaderboard || [];
       const entries: MultiplayerLeaderboardEntry[] = raw.map((r: any) => ({
         rank: r.rank,
         userId: r.user_id,
@@ -752,6 +758,53 @@ export class MultiplayerRoomService {
       }));
 
       return { success: true, data: entries };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg, errorCode: 'QUERY_ERROR' };
+    }
+  }
+
+  public async getMyMultiplayerMatchHistory(
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<RoomOperationResult<MultiplayerMatchHistoryPage>> {
+    const session = this.authService.getSession();
+    if (!session) {
+      return { success: false, error: 'Authentication required.', errorCode: 'UNAUTHENTICATED' };
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('get_my_multiplayer_match_history', {
+        p_limit: Math.max(1, Math.min(100, Math.floor(limit))),
+        p_offset: Math.max(0, Math.floor(offset))
+      });
+
+      if (error) {
+        return { success: false, error: error.message, errorCode: error.code };
+      }
+
+      const res = data as { success: boolean; history: any[]; has_more: boolean };
+      const entries: MultiplayerMatchHistoryEntry[] = (res.history || []).map((r: any) => ({
+        matchId: r.match_id,
+        roomId: r.room_id,
+        durationSeconds: r.duration_seconds,
+        matchStatus: r.match_status,
+        isVerified: r.is_verified,
+        verificationStatus: r.verification_status,
+        completedAt: r.completed_at,
+        playerScore: r.player_score,
+        opponentScore: r.opponent_score,
+        result: r.result,
+        opponentCallsign: r.opponent_callsign
+      }));
+
+      return {
+        success: true,
+        data: {
+          entries,
+          hasMore: res.has_more
+        }
+      };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       return { success: false, error: msg, errorCode: 'QUERY_ERROR' };

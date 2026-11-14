@@ -34,6 +34,26 @@ export interface OpponentVitals {
 export type CombatSyncListener = (opponent: OpponentVitals, remainingSeconds: number, scoreDelta: number) => void;
 export type OvertakeListener = (leading: boolean, delta: number) => void;
 
+export function normalizeMultiplayerTimestamp(value: string): string | null {
+  const timestamp = value.trim();
+  if (!timestamp) return null;
+
+  const hasTimezone = /(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(timestamp);
+  const epoch = Date.parse(hasTimezone ? timestamp : `${timestamp}Z`);
+  return Number.isFinite(epoch) ? new Date(epoch).toISOString() : null;
+}
+
+export function calculateElapsedMatchSeconds(
+  startedAtEpoch: number,
+  nowEpoch: number = Date.now(),
+  durationLimit: number = 90
+): number {
+  if (!Number.isFinite(startedAtEpoch) || !Number.isFinite(nowEpoch) || !Number.isFinite(durationLimit)) {
+    return 0;
+  }
+  return Math.min(durationLimit, Math.max(0, Math.floor((nowEpoch - startedAtEpoch) / 1000)));
+}
+
 export class MultiplayerCombatSyncService {
   private static instance: MultiplayerCombatSyncService;
   private presenceService: MultiplayerPresenceService;
@@ -126,8 +146,8 @@ export class MultiplayerCombatSyncService {
     this.tenSecWarningFired = false;
     this.previousLeadState = 'TIED';
 
-    const parsedEpoch = startedAtIso ? Date.parse(startedAtIso) : NaN;
-    this.matchStartTimeEpoch = isNaN(parsedEpoch) ? Date.now() : parsedEpoch;
+    const normalizedStart = normalizeMultiplayerTimestamp(startedAtIso);
+    this.matchStartTimeEpoch = normalizedStart ? Date.parse(normalizedStart) : Date.now();
 
     const oppId = room.isHost ? (room.guestId || '') : room.hostId;
     const oppName = room.isHost ? (room.guestUsername || 'Challenger') : room.hostUsername;
@@ -292,6 +312,10 @@ export class MultiplayerCombatSyncService {
     if (this.matchStartTimeEpoch <= 0) return this.matchDurationSeconds;
     const elapsedSeconds = (Date.now() - this.matchStartTimeEpoch) / 1000.0;
     return Math.max(0, Math.ceil(this.matchDurationSeconds - elapsedSeconds));
+  }
+
+  public getElapsedSeconds(): number {
+    return calculateElapsedMatchSeconds(this.matchStartTimeEpoch, Date.now(), this.matchDurationSeconds);
   }
 
   public getOpponentVitals(): Readonly<OpponentVitals> {

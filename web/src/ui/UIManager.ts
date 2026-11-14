@@ -12,7 +12,12 @@ import { MultiplayerRoomService } from '../services/multiplayer/MultiplayerRoomS
 import { MultiplayerPresenceService } from '../services/multiplayer/MultiplayerPresenceService';
 import { MultiplayerCombatSyncService } from '../services/multiplayer/MultiplayerCombatSyncService';
 import { MultiplayerValidation } from '../services/multiplayer/MultiplayerValidation';
-import { MultiplayerRoomState, PilotPresenceState } from '../services/multiplayer/MultiplayerTypes';
+import {
+  MultiplayerRoomState,
+  PilotPresenceState,
+  MultiplayerMatchHistoryEntry,
+  MultiplayerFinalizeResponse
+} from '../services/multiplayer/MultiplayerTypes';
 
 interface CourseOutcomeItem {
   code: string;
@@ -37,6 +42,11 @@ export class UIManager {
   private lastPingLatency: number = 0;
   private personalHighScore: number = 0;
   private mpCountdownTimer: number | null = null;
+  private startedMultiplayerRoomId: string | null = null;
+  private readonly multiplayerHistoryPageSize = 50;
+  private multiplayerHistoryOffset = 0;
+  private multiplayerHistoryHasMore = false;
+  private multiplayerHistoryLoading = false;
 
   // 19 Academic Course Outcomes across 4 subjects
   private readonly courseOutcomesData: Record<'PSOOP' | 'PL' | 'COA' | 'CGL', CourseOutcomeItem[]> = {
@@ -351,6 +361,14 @@ export class UIManager {
     document.getElementById('btn-refresh-leaderboard')?.addEventListener('click', () => {
       const isMpActive = document.getElementById('tab-lb-multiplayer')?.classList.contains('active');
       this.openLeaderboard(isMpActive ? 'multiplayer' : 'solo');
+    });
+
+    document.getElementById('btn-mp-history-load-more')?.addEventListener('click', () => {
+      this.loadMyMultiplayerMatchHistory(false);
+    });
+
+    document.getElementById('btn-gameover-open-leaderboard')?.addEventListener('click', () => {
+      this.openLeaderboard('multiplayer');
     });
 
     // Flight Log / History Modal
@@ -878,30 +896,29 @@ export class UIManager {
 
     if (this.engine.isMultiplayer) {
       const opp = MultiplayerCombatSyncService.getInstance().getOpponentVitals();
-      const localScore = summary.score;
-      const oppScore = opp.score;
-      const delta = localScore - oppScore;
-
-      if (titleElem) titleElem.textContent = '1v1 SCORE ATTACK DEBRIEF [PROVISIONAL]';
-
-      if (subElem) {
-        if (delta > 0) {
-          subElem.textContent = `🏆 VICTORY! +25 PROVISIONAL RATING (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
-          subElem.style.color = '#10B981';
-          AnnouncerManager.getInstance().showBanner('Kya baat hai! Shandar jeet! Absolute dominance!', 'BOLLYWOOD', true);
-        } else if (delta < 0) {
-          subElem.textContent = `💀 DEFEAT! 0 RATING POINTS (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
-          subElem.style.color = '#EF4444';
-          AnnouncerManager.getInstance().showBanner('Chalo koi na, agle match me dekh lenge!', 'DESI_MEME', true);
-        } else {
-          subElem.textContent = `🤝 HONORABLE DRAW! +10 PROVISIONAL RATING (${localScore.toLocaleString()} vs ${oppScore.toLocaleString()})`;
-          subElem.style.color = '#F59E0B';
-          AnnouncerManager.getInstance().showBanner('Tie ho gaya guru! Both pilots equally matched!', 'DESI_MEME', true);
-        }
+      const room = this.engine.multiplayerRoom as MultiplayerRoomState | null;
+      const leaderboardSection = document.getElementById('gameover-mp-leaderboard');
+      const leaderboardStatus = document.getElementById('gameover-mp-leaderboard-status');
+      const leaderboardBody = document.getElementById('gameover-mp-leaderboard-body');
+      leaderboardSection?.classList.remove('hidden');
+      if (leaderboardStatus) {
+        leaderboardStatus.textContent = 'Submitting final score...';
+        leaderboardStatus.style.color = 'var(--text-muted)';
+      }
+      if (leaderboardBody) {
+        leaderboardBody.innerHTML = '<tr><td colspan="4" class="mp-gameover-message">Waiting for match settlement...</td></tr>';
       }
 
-      if (scoreElem) scoreElem.textContent = `YOUR SCORE: ${localScore.toLocaleString()}`;
-      if (highscoreElem) highscoreElem.textContent = `${opp.callsign.toUpperCase()}: ${oppScore.toLocaleString()} PTS`;
+      if (titleElem) titleElem.textContent = '1v1 MATCH DEBRIEF';
+      if (subElem) {
+        subElem.textContent = `YOUR SCORE: ${summary.score.toLocaleString()}  •  ${opp.callsign.toUpperCase()}: ${opp.score.toLocaleString()}`;
+        subElem.style.color = 'var(--text-muted)';
+      }
+      if (scoreElem) scoreElem.textContent = `YOUR SCORE: ${summary.score.toLocaleString()}`;
+      const opponentCallsign = room
+        ? (room.isHost ? room.guestUsername : room.hostUsername) || opp.callsign
+        : opp.callsign;
+      if (highscoreElem) highscoreElem.textContent = `${opponentCallsign.toUpperCase()}: ${opp.score.toLocaleString()} PTS`;
       if (sectorElem) sectorElem.textContent = `Sector ${summary.levelReached}`;
       if (killsElem) killsElem.textContent = String(summary.enemiesDestroyed);
       if (timeAccElem) {
@@ -909,14 +926,17 @@ export class UIManager {
         timeAccElem.textContent = `${summary.durationSeconds}s / ${acc}% Acc`;
       }
       if (syncElem) {
-        syncElem.textContent = '● STARFLEET ARCHIVES: PROVISIONAL PEER-REPORTED SETTLEMENT';
-        syncElem.style.color = '#22C55E';
+        syncElem.textContent = 'Submitting your result to the 1v1 registry...';
+        syncElem.style.color = 'var(--text-muted)';
       }
       if (playAgainBtn) {
         playAgainBtn.textContent = '▶   MULTIPLAYER LOBBY  [R]';
       }
+      await this.loadGameOverMultiplayerLeaderboard(summary, room);
       return;
     }
+
+    document.getElementById('gameover-mp-leaderboard')?.classList.add('hidden');
 
     if (titleElem) titleElem.textContent = 'VESSEL DESTROYED';
     if (subElem) {
@@ -952,6 +972,187 @@ export class UIManager {
     }
   }
 
+  private async loadGameOverMultiplayerLeaderboard(
+    summary: MatchSummary,
+    room: MultiplayerRoomState | null
+  ): Promise<void> {
+    const leaderboardStatus = document.getElementById('gameover-mp-leaderboard-status');
+    const leaderboardBody = document.getElementById('gameover-mp-leaderboard-body');
+    const syncElem = document.getElementById('gameover-sync-status');
+    const titleElem = document.querySelector('#gameover-overlay .game-title') as HTMLElement;
+    const subElem = document.querySelector('#gameover-overlay .game-subtitle') as HTMLElement;
+    const scoreElem = document.getElementById('gameover-score');
+    const highscoreElem = document.getElementById('gameover-highscore');
+    const finalization = this.engine.multiplayerFinalization;
+    let match: MultiplayerMatchHistoryEntry | undefined;
+    let historyError: string | undefined;
+
+    if (finalization?.success && finalization.data?.status === 'PENDING_OPPONENT' && room) {
+      if (leaderboardStatus) leaderboardStatus.textContent = 'Waiting for opponent to submit their final score...';
+      const session = this.authService.getSession();
+      if (session) {
+        const sync = MultiplayerCombatSyncService.getInstance();
+        const waitUntil = Date.now() + Math.max(15, sync.getRemainingSeconds() + 15) * 1000;
+        while (Date.now() < waitUntil) {
+          const historyResult = await this.mpRoomService.getPlayerMatchHistory(session.userId, 20);
+          if (!historyResult.success) {
+            historyError = historyResult.error || 'Unable to check match settlement.';
+          } else {
+            match = historyResult.data?.find((entry) => entry.roomId === room.roomId);
+            if (match) break;
+          }
+          await new Promise<void>((resolve) => window.setTimeout(resolve, 2000));
+        }
+      }
+    } else if (finalization?.success && room) {
+      const session = this.authService.getSession();
+      if (session) {
+        const historyResult = await this.mpRoomService.getPlayerMatchHistory(session.userId, 20);
+        if (historyResult.success) {
+          match = historyResult.data?.find((entry) => entry.roomId === room.roomId);
+        } else {
+          historyError = historyResult.error || 'Unable to load the settled match result.';
+        }
+      }
+    }
+
+    const response = finalization?.data as MultiplayerFinalizeResponse | undefined;
+    let resultLabel: string | undefined;
+    let resultColor = 'var(--text-muted)';
+    let localScore = summary.score;
+    let opponentScore = MultiplayerCombatSyncService.getInstance().getOpponentVitals().score;
+
+    if (match) {
+      localScore = match.playerScore;
+      opponentScore = match.opponentScore;
+      if (match.result === 'VICTORY') {
+        resultLabel = `VICTORY • ${localScore.toLocaleString()} – ${opponentScore.toLocaleString()}`;
+        resultColor = '#10B981';
+        AnnouncerManager.getInstance().showBanner('Kya baat hai! Shandar jeet! Absolute dominance!', 'BOLLYWOOD', true);
+      } else if (match.result === 'DEFEAT') {
+        resultLabel = `DEFEAT • ${localScore.toLocaleString()} – ${opponentScore.toLocaleString()}`;
+        resultColor = '#EF4444';
+        AnnouncerManager.getInstance().showBanner('Chalo koi na, agle match me dekh lenge!', 'DESI_MEME', true);
+      } else {
+        resultLabel = `DRAW • ${localScore.toLocaleString()} – ${opponentScore.toLocaleString()}`;
+        resultColor = '#F59E0B';
+        AnnouncerManager.getInstance().showBanner('Tie ho gaya guru! Both pilots equally matched!', 'DESI_MEME', true);
+      }
+    } else if (finalization?.success && response && response.status !== 'PENDING_OPPONENT') {
+      const hostScore = response.host_score ?? response.player1_score;
+      const guestScore = response.guest_score ?? response.player2_score;
+      if (hostScore !== undefined && guestScore !== undefined && room) {
+        localScore = room.isHost ? hostScore : guestScore;
+        opponentScore = room.isHost ? guestScore : hostScore;
+        const winnerId = response.winner_id ?? response.winnerId ?? null;
+        if (winnerId === null) {
+          resultLabel = `DRAW • ${localScore.toLocaleString()} – ${opponentScore.toLocaleString()}`;
+          resultColor = '#F59E0B';
+        } else if (winnerId === this.authService.getSession()?.userId) {
+          resultLabel = `VICTORY • ${localScore.toLocaleString()} – ${opponentScore.toLocaleString()}`;
+          resultColor = '#10B981';
+        } else {
+          resultLabel = `DEFEAT • ${localScore.toLocaleString()} – ${opponentScore.toLocaleString()}`;
+          resultColor = '#EF4444';
+        }
+      }
+    }
+
+    if (scoreElem) scoreElem.textContent = `YOUR SCORE: ${localScore.toLocaleString()}`;
+    if (highscoreElem && room) {
+      const opponentCallsign = (room.isHost ? room.guestUsername : room.hostUsername)
+        || MultiplayerCombatSyncService.getInstance().getOpponentVitals().callsign;
+      highscoreElem.textContent = `${opponentCallsign.toUpperCase()}: ${opponentScore.toLocaleString()} PTS`;
+    }
+    if (resultLabel) {
+      if (titleElem) titleElem.textContent = '1v1 MATCH DEBRIEF';
+      if (subElem) {
+        subElem.textContent = resultLabel;
+        subElem.style.color = resultColor;
+      }
+      if (syncElem) {
+        syncElem.textContent = '● MATCH SETTLED • PROVISIONAL 1v1 RATINGS UPDATED';
+        syncElem.style.color = '#22C55E';
+      }
+    } else if (!finalization?.success) {
+      const error = finalization?.error || 'Match result could not be submitted.';
+      if (subElem) {
+        subElem.textContent = 'MATCH RESULT NOT CONFIRMED';
+        subElem.style.color = '#EF4444';
+      }
+      if (syncElem) {
+        syncElem.textContent = `● RESULT SUBMISSION FAILED: ${error}`;
+        syncElem.style.color = '#EF4444';
+      }
+    } else {
+      if (subElem) {
+        subElem.textContent = 'Waiting for both pilots’ scores before confirming the result.';
+        subElem.style.color = '#F59E0B';
+      }
+      if (syncElem) {
+        syncElem.textContent = historyError
+          ? `● MATCH SETTLEMENT CHECK FAILED: ${historyError}`
+          : '● OPPONENT RESULT PENDING';
+        syncElem.style.color = '#F59E0B';
+      }
+    }
+
+    if (leaderboardStatus) leaderboardStatus.textContent = 'Loading current 1v1 rankings...';
+    const leaderboardResult = await this.mpRoomService.getMultiplayerLeaderboard('provisional', 20);
+    if (!leaderboardResult.success || !leaderboardResult.data) {
+      if (leaderboardStatus) {
+        leaderboardStatus.textContent = leaderboardResult.error
+          ? `Could not load standings: ${leaderboardResult.error}`
+          : 'Could not load standings.';
+        leaderboardStatus.style.color = '#EF4444';
+      }
+      if (leaderboardBody) {
+        leaderboardBody.innerHTML = '<tr><td colspan="4" class="mp-gameover-message">1v1 leaderboard unavailable. Use the full leaderboard button to retry.</td></tr>';
+      }
+      return;
+    }
+
+    const entries = [...leaderboardResult.data].sort((a, b) => a.rank - b.rank);
+    const visibleEntries = entries.slice(0, 5);
+    const userId = this.authService.getSession()?.userId;
+    const userEntry = userId ? entries.find((entry) => entry.userId === userId) : undefined;
+    if (userEntry && !visibleEntries.some((entry) => entry.userId === userEntry.userId)) {
+      visibleEntries.push(userEntry);
+    }
+
+    if (leaderboardStatus) {
+      if (resultLabel) {
+        leaderboardStatus.textContent = 'Match complete • updated provisional standings';
+        leaderboardStatus.style.color = '#22C55E';
+      } else if (!finalization?.success) {
+        leaderboardStatus.textContent = 'Standings unchanged • match result was not submitted';
+        leaderboardStatus.style.color = '#EF4444';
+      } else {
+        leaderboardStatus.textContent = 'Live provisional standings • match result pending';
+        leaderboardStatus.style.color = '#F59E0B';
+      }
+    }
+    if (leaderboardBody) {
+      if (visibleEntries.length === 0) {
+        leaderboardBody.innerHTML = '<tr><td colspan="4" class="mp-gameover-message">No 1v1 standings yet. This match will create the first ranking.</td></tr>';
+      } else {
+        leaderboardBody.innerHTML = visibleEntries.map((entry, index) => {
+          const isYou = entry.userId === userId;
+          const rankClass = entry.rank === 1 ? 'rank-gold' : entry.rank === 2 ? 'rank-silver' : entry.rank === 3 ? 'rank-bronze' : '';
+          const record = `${entry.wins} / ${entry.losses} / ${entry.draws}`;
+          return `
+            <tr class="${isYou ? 'is-you' : ''}">
+              <td class="${rankClass}">#${entry.rank || index + 1}</td>
+              <td>${this.escapeHtml(entry.username)}${isYou ? ' <strong>(YOU)</strong>' : ''}</td>
+              <td>${entry.ratingPoints.toLocaleString()}</td>
+              <td>${record}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+  }
+
   public openMultiplayer(): void {
     const session = this.authService.getSession();
     if (!session) {
@@ -979,6 +1180,8 @@ export class UIManager {
     const tabMp = document.getElementById('tab-lb-multiplayer');
     const soloTable = document.getElementById('solo-leaderboard-table');
     const mpTable = document.getElementById('mp-leaderboard-table');
+    const soloMpRankings = document.getElementById('solo-mp-rankings');
+    const mpHistory = document.getElementById('mp-match-history');
     const mpNotice = document.getElementById('mp-leaderboard-notice');
     const sourceNotice = document.getElementById('leaderboard-source-notice');
 
@@ -987,17 +1190,27 @@ export class UIManager {
       tabMp?.classList.remove('active');
       soloTable?.classList.remove('hidden');
       mpTable?.classList.add('hidden');
+      soloMpRankings?.classList.remove('hidden');
+      mpHistory?.classList.add('hidden');
       if (mpNotice) mpNotice.style.display = 'none';
       if (sourceNotice) sourceNotice.style.display = 'block';
-      await this.loadSoloLeaderboard();
+      await Promise.all([
+        this.loadSoloLeaderboard(),
+        this.loadMultiplayerLeaderboard()
+      ]);
     } else {
       tabMp?.classList.add('active');
       tabSolo?.classList.remove('active');
       mpTable?.classList.remove('hidden');
       soloTable?.classList.add('hidden');
+      soloMpRankings?.classList.add('hidden');
+      mpHistory?.classList.remove('hidden');
       if (mpNotice) mpNotice.style.display = 'block';
       if (sourceNotice) sourceNotice.style.display = 'none';
-      await this.loadMultiplayerLeaderboard();
+      await Promise.all([
+        this.loadMultiplayerLeaderboard(),
+        this.loadMyMultiplayerMatchHistory(true)
+      ]);
     }
   }
 
@@ -1085,55 +1298,156 @@ export class UIManager {
   }
 
   private async loadMultiplayerLeaderboard(): Promise<void> {
-    const tbody = document.getElementById('mp-leaderboard-table-body');
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">Accessing Starfleet 1v1 Combat Registry...</td></tr>';
-    }
+    const tableBodies = [
+      document.getElementById('mp-leaderboard-table-body'),
+      document.getElementById('solo-mp-leaderboard-table-body')
+    ].filter((tbody): tbody is HTMLElement => tbody !== null);
+    const loadingRow = '<tr><td colspan="5" class="leaderboard-message">Loading 1v1 rankings...</td></tr>';
+    for (const tbody of tableBodies) tbody.innerHTML = loadingRow;
 
     try {
-      const res = await this.mpRoomService.getMultiplayerLeaderboard('provisional', 20);
-      if (!res.success || !res.data || res.data.length === 0) {
-        if (tbody) {
-          tbody.innerHTML = `
-            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px; line-height: 1.6;">
-              <span style="color: var(--purple-accent); font-weight: bold;">NO 1v1 COMBAT RECORDS ARCHIVED YET</span><br>
-              <span style="font-size: 11px;">Challenge a fellow cadet in ONLINE 1v1 BATTLE to establish the first combat rating!</span>
-            </td></tr>
-          `;
-        }
+      const res = await this.mpRoomService.getMultiplayerLeaderboard('provisional', 100);
+      if (!res.success) {
+        const message = `<tr><td colspan="5" class="leaderboard-message is-error">1v1 leaderboard unavailable: ${this.escapeHtml(res.error || 'Unable to load current rankings.')}</td></tr>`;
+        for (const tbody of tableBodies) tbody.innerHTML = message;
         return;
       }
 
-      if (tbody) {
-        tbody.innerHTML = res.data.map((entry, idx) => {
-          let rankClass = '';
-          let medal = `#${idx + 1}`;
-          if (idx === 0) { rankClass = 'rank-gold'; medal = '🥇 #1'; }
-          else if (idx === 1) { rankClass = 'rank-silver'; medal = '🥈 #2'; }
-          else if (idx === 2) { rankClass = 'rank-bronze'; medal = '🥉 #3'; }
-
-          const wld = `${entry.wins}W / ${entry.losses}L / ${entry.draws}D`;
-          const rateColor = entry.winRate >= 60 ? '#10B981' : (entry.winRate >= 40 ? '#F59E0B' : '#94A3B8');
-
-          return `
-            <tr>
-              <td class="${rankClass}">${medal}</td>
-              <td style="font-weight: 600; color: #FFFFFF;">
-                ${this.escapeHtml(entry.username)}
-                <span style="font-size: 9px; color: #FBBF24; border: 1px solid rgba(251,191,36,0.4); border-radius: 3px; padding: 1px 3px; margin-left: 4px;">PROV</span>
-              </td>
-              <td style="text-align: center; color: var(--purple-accent); font-weight: bold; font-family: var(--font-mono);">${entry.ratingPoints}</td>
-              <td style="text-align: center; font-size: 11px; color: var(--text-muted);">${wld}</td>
-              <td style="text-align: right; color: ${rateColor}; font-weight: bold;">${entry.winRate}%</td>
-            </tr>
-          `;
-        }).join('');
+      if (!res.data || res.data.length === 0) {
+        const message = '<tr><td colspan="5" class="leaderboard-message">No 1v1 combat records yet.</td></tr>';
+        for (const tbody of tableBodies) tbody.innerHTML = message;
+        return;
       }
+
+      const sortedEntries = [...res.data].sort((a, b) => a.rank - b.rank);
+      const rows = sortedEntries.map((entry, idx) => {
+        let rankClass = '';
+        let medal = `#${entry.rank || idx + 1}`;
+        if (idx === 0) { rankClass = 'rank-gold'; medal = '🥇 #1'; }
+        else if (idx === 1) { rankClass = 'rank-silver'; medal = '🥈 #2'; }
+        else if (idx === 2) { rankClass = 'rank-bronze'; medal = '🥉 #3'; }
+
+        const wld = `${entry.wins}W / ${entry.losses}L / ${entry.draws}D`;
+        const rateColor = entry.winRate >= 60 ? '#10B981' : (entry.winRate >= 40 ? '#F59E0B' : '#94A3B8');
+
+        return `
+          <tr>
+            <td class="${rankClass}">${medal}</td>
+            <td class="leaderboard-pilot-name">
+              ${this.escapeHtml(entry.username)}
+              <span class="leaderboard-provisional-badge">PROV</span>
+            </td>
+            <td class="leaderboard-rating">${entry.ratingPoints.toLocaleString()}</td>
+            <td class="leaderboard-record">${wld}</td>
+            <td class="leaderboard-win-rate" style="color: ${rateColor};">${entry.winRate}%</td>
+          </tr>
+        `;
+      }).join('');
+      for (const tbody of tableBodies) tbody.innerHTML = rows;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #EF4444; padding: 20px;">Failed to load 1v1 leaderboard: ${this.escapeHtml(msg)}</td></tr>`;
+      const message = `<tr><td colspan="5" class="leaderboard-message is-error">Failed to load 1v1 leaderboard: ${this.escapeHtml(msg)}</td></tr>`;
+      for (const tbody of tableBodies) tbody.innerHTML = message;
+    }
+  }
+
+  private async loadMyMultiplayerMatchHistory(reset: boolean): Promise<void> {
+    const tbody = document.getElementById('mp-match-history-table-body');
+    const status = document.getElementById('mp-match-history-status');
+    const loadMoreButton = document.getElementById('btn-mp-history-load-more') as HTMLButtonElement | null;
+    if (!tbody || this.multiplayerHistoryLoading) return;
+
+    if (reset) {
+      this.multiplayerHistoryOffset = 0;
+      this.multiplayerHistoryHasMore = false;
+      tbody.innerHTML = '';
+    }
+
+    const session = this.authService.getSession();
+    if (!session) {
+      tbody.innerHTML = '<tr><td colspan="5" class="leaderboard-message is-error">Log in to view your 1v1 match history.</td></tr>';
+      if (status) status.textContent = 'Authentication required';
+      loadMoreButton?.classList.add('hidden');
+      return;
+    }
+
+    this.multiplayerHistoryLoading = true;
+    if (status) status.textContent = reset ? 'Loading your match history...' : 'Loading more matches...';
+    if (loadMoreButton) loadMoreButton.disabled = true;
+
+    try {
+      const result = await this.mpRoomService.getMyMultiplayerMatchHistory(
+        this.multiplayerHistoryPageSize,
+        this.multiplayerHistoryOffset
+      );
+      let entries: MultiplayerMatchHistoryEntry[];
+      let hasMore = false;
+      let usingLegacyHistory = false;
+      const historyError = result.error?.toLowerCase() ?? '';
+      const paginatedHistoryRpcMissing =
+        result.errorCode === 'PGRST202' ||
+        (historyError.includes('get_my_multiplayer_match_history') &&
+          (historyError.includes('schema cache') ||
+            historyError.includes('could not find the function') ||
+            historyError.includes('does not exist')));
+      if (result.success && result.data) {
+        entries = result.data.entries;
+        hasMore = result.data.hasMore;
+      } else if (paginatedHistoryRpcMissing && this.multiplayerHistoryOffset === 0) {
+        const legacyResult = await this.mpRoomService.getPlayerMatchHistory(session.userId, 50);
+        if (!legacyResult.success || !legacyResult.data) {
+          const message = legacyResult.error || result.error || 'Unable to load match history.';
+          tbody.innerHTML = `<tr><td colspan="5" class="leaderboard-message is-error">Match history unavailable: ${this.escapeHtml(message)}</td></tr>`;
+          if (status) status.textContent = `Match history unavailable: ${message}`;
+          loadMoreButton?.classList.add('hidden');
+          return;
+        }
+        entries = legacyResult.data;
+        usingLegacyHistory = true;
+      } else {
+        const message = result.error || 'Unable to load match history.';
+        if (this.multiplayerHistoryOffset === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="leaderboard-message is-error">Match history unavailable: ${this.escapeHtml(message)}</td></tr>`;
+        }
+        if (status) status.textContent = `Match history unavailable: ${message}`;
+        loadMoreButton?.classList.add('hidden');
+        return;
       }
+
+      if (this.multiplayerHistoryOffset === 0 && entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="leaderboard-message">No previous 1v1 matches found.</td></tr>';
+      } else {
+        tbody.insertAdjacentHTML('beforeend', entries.map((match) => {
+          const resultClass = match.result.toLowerCase();
+          const date = new Date(match.completedAt);
+          const dateText = Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
+          return `
+            <tr>
+              <td class="match-result ${resultClass}">${match.result}</td>
+              <td class="leaderboard-pilot-name">${this.escapeHtml(match.opponentCallsign)}</td>
+              <td class="match-score">${match.playerScore.toLocaleString()}</td>
+              <td class="match-score">${match.opponentScore.toLocaleString()}</td>
+              <td>${dateText}</td>
+            </tr>
+          `;
+        }).join(''));
+      }
+
+      this.multiplayerHistoryOffset += entries.length;
+      this.multiplayerHistoryHasMore = hasMore;
+      if (status) {
+        if (usingLegacyHistory) {
+          status.textContent = `Showing latest ${this.multiplayerHistoryOffset}. Apply the history migration to browse older matches.`;
+        } else {
+          status.textContent = this.multiplayerHistoryHasMore
+            ? `Showing ${this.multiplayerHistoryOffset} matches`
+            : `${this.multiplayerHistoryOffset} total match${this.multiplayerHistoryOffset === 1 ? '' : 'es'}`;
+        }
+      }
+      loadMoreButton?.classList.toggle('hidden', !this.multiplayerHistoryHasMore);
+    } finally {
+      this.multiplayerHistoryLoading = false;
+      if (loadMoreButton) loadMoreButton.disabled = false;
     }
   }
 
@@ -1406,6 +1720,7 @@ export class UIManager {
         return;
       }
 
+      this.startedMultiplayerRoomId = null;
       this.switchMultiplayerView('mp-view-lobby');
       this.renderMultiplayerLobbyState(res.data);
       this.showToast(`Combat room initialized! Share Code: ${res.data.roomCode}`);
@@ -1458,6 +1773,7 @@ export class UIManager {
         return;
       }
 
+      this.startedMultiplayerRoomId = null;
       this.switchMultiplayerView('mp-view-lobby');
       this.renderMultiplayerLobbyState(res.data);
       this.showToast('Joined sector combat room! Waiting for ready check.');
@@ -1614,8 +1930,14 @@ export class UIManager {
                 this.mpCountdownTimer = null;
               }
               if (statusText) statusText.textContent = '⚔ ENGAGE!';
-              if (room.isHost) {
-                await this.mpRoomService.startMatch(room.roomId);
+              const currentRoom = this.mpRoomService.getCurrentRoom();
+              if (!currentRoom || currentRoom.roomId !== room.roomId || currentRoom.status !== 'COUNTDOWN') {
+                return;
+              }
+
+              const result = await this.mpRoomService.startMatch(room.roomId);
+              if (!result.success) {
+                this.showToast(result.error || 'Unable to start the match. Please try again.');
               }
             }
           }, 1000);
@@ -1625,8 +1947,11 @@ export class UIManager {
           clearInterval(this.mpCountdownTimer);
           this.mpCountdownTimer = null;
         }
-        this.closeModal('multiplayer-lobby-modal');
-        this.engine.startMultiplayerGame(room.matchSeed, room.startedAt || new Date().toISOString(), room);
+        if (this.startedMultiplayerRoomId !== room.roomId) {
+          this.startedMultiplayerRoomId = room.roomId;
+          this.closeModal('multiplayer-modal');
+          this.engine.startMultiplayerGame(room.matchSeed, room.startedAt || new Date().toISOString(), room);
+        }
       } else if (room.status === 'CANCELLED') {
         if (this.mpCountdownTimer) {
           clearInterval(this.mpCountdownTimer);
@@ -1642,13 +1967,11 @@ export class UIManager {
       const isMyReady = room.isHost ? room.hostReady : (room.isGuest ? room.guestReady : false);
       if (isMyReady) {
         readyBtn.textContent = '✓   READY CONFIRMED';
-        readyBtn.style.background = '#22C55E';
-        readyBtn.style.borderColor = '#22C55E';
+        readyBtn.classList.add('is-confirmed');
         readyBtn.disabled = true;
       } else {
         readyBtn.textContent = '✓   MARK READY';
-        readyBtn.style.background = '';
-        readyBtn.style.borderColor = '';
+        readyBtn.classList.remove('is-confirmed');
         readyBtn.disabled = !room.guestId; // Can't ready if waiting for guest
       }
     }

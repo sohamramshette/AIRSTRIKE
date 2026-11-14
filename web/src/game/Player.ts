@@ -15,8 +15,8 @@ export class Player extends Entity {
   public weaponHeat: number = 0;
   public readonly maxHeat: number = 100;
   public isOverheated: boolean = false;
-  public heatPerShot: number = 11; // ~9 rapid consecutive rounds saturate thermal capacity
-  public heatCoolRate: number = 32; // Normal dissipation per second
+  public heatPerShot: number = 5;
+  public heatCoolRate: number = 12; // Sustained fire overheats in about 6 seconds
   public overheatCoolRate: number = 25; // Penalty recovery rate when weapon is fully overheated
 
   public shootCooldown: number = 0.18; // 180ms
@@ -411,4 +411,3 @@ export class Player extends Entity {
     ctx.restore();
   }
 }
-

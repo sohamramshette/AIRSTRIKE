@@ -158,26 +158,28 @@ describe('Player Spacecraft Unit Tests', () => {
     assert.strictEqual(player.speed, initialSpeed + 25);
   });
 
-  test('Weapon Overheat system enforces thermal cooldown and recovers (COA-CO4 / PSOOP-CO3)', () => {
+  test('Weapon overheats only after sustained firing and recovers after cooling', () => {
     const player = new Player();
     assert.strictEqual(player.weaponHeat, 0);
     assert.strictEqual(player.isOverheated, false);
 
-    // Fire 8 consecutive volleys -> accumulates heat
-    for (let i = 0; i < 8; i++) {
-      player.shootTimer = 0;
-      const bullets = player.fire();
-      assert.strictEqual(bullets.length > 0, true);
-    }
-    assert.strictEqual(player.weaponHeat, 88);
-    assert.strictEqual(player.isOverheated, false);
+    const simulateFire = (duration: number): void => {
+      const step = 0.02;
+      for (let elapsed = 0; elapsed < duration; elapsed += step) {
+        player.update(step);
+        if (player.shootTimer <= 0) player.fire();
+        if (player.isOverheated) return;
+      }
+    };
 
-    // Fire 9th and 10th volleys -> hits 100 maxHeat and triggers overheat lock
-    player.shootTimer = 0;
-    player.fire();
-    player.shootTimer = 0;
-    player.fire();
-    assert.strictEqual(player.weaponHeat, 100);
+    simulateFire(2);
+    assert.strictEqual(player.isOverheated, false);
+    assert.ok(player.weaponHeat > 0 && player.weaponHeat < player.maxHeat);
+
+    // Let a short burst cool before firing again.
+    player.update(3.1);
+    assert.strictEqual(player.weaponHeat, 0);
+    simulateFire(8);
     assert.strictEqual(player.isOverheated, true);
 
     // Cannot fire while overheated

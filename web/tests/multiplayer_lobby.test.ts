@@ -393,6 +393,27 @@ describe('AIRSTRIKE Phase 12 Part 3: Multiplayer Lobby & Presence Unit Tests', (
       assert.ok(migrationSql.includes('get_multiplayer_room'), 'Contains get_multiplayer_room function');
       assert.ok(migrationSql.includes('SECURITY DEFINER'), 'Enforces SECURITY DEFINER execution');
     });
+
+    test("adds authenticated paginated match history with both players' scores", async () => {
+      const fs = await import('node:fs');
+      const path = await import('node:path');
+      const migrationPath = path.resolve(process.cwd(), '../supabase/migrations/20261113_phase12_multiplayer_history_pagination.sql');
+      const rollbackPath = path.resolve(process.cwd(), '../supabase/migrations/20261113_phase12_multiplayer_history_pagination_rollback.sql');
+      const uiPath = path.resolve(process.cwd(), 'src/ui/UIManager.ts');
+
+      assert.ok(fs.existsSync(migrationPath), 'Match history migration must exist');
+      assert.ok(fs.existsSync(rollbackPath), 'Match history rollback must exist');
+
+      const migrationSql = fs.readFileSync(migrationPath, 'utf8');
+      const uiSource = fs.readFileSync(uiPath, 'utf8');
+      assert.ok(migrationSql.includes('get_my_multiplayer_match_history'), 'Adds the current pilot history RPC');
+      assert.ok(migrationSql.includes('player1_score'), 'Returns the first pilot score');
+      assert.ok(migrationSql.includes('player2_score'), 'Returns the second pilot score');
+      assert.ok(migrationSql.includes('OFFSET v_offset'), 'Supports loading all results in pages');
+      assert.ok(migrationSql.includes('GRANT EXECUTE ON FUNCTION public.get_my_multiplayer_match_history(integer, integer) TO authenticated'));
+      assert.ok(!migrationSql.includes('TO authenticated, anon'), 'Does not expose personal history to anonymous callers');
+      assert.ok(uiSource.includes("historyError.includes('schema cache')"), 'Falls back when PostgREST reports the missing RPC in its schema cache');
+      assert.ok(uiSource.includes("getPlayerMatchHistory(session.userId, 50)"), 'Uses the recent-history RPC while pagination is unavailable');
+    });
   });
 });
-

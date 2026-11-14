@@ -7,7 +7,9 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { DeterministicPRNG } from '../src/services/multiplayer/DeterministicPRNG';
 import {
+  calculateElapsedMatchSeconds,
   MultiplayerCombatSyncService,
+  normalizeMultiplayerTimestamp,
   OpponentVitals
 } from '../src/services/multiplayer/MultiplayerCombatSyncService';
 import {
@@ -16,6 +18,27 @@ import {
 } from '../src/services/multiplayer/MultiplayerTypes';
 
 describe('AIRSTRIKE Phase 12 Part 6: 1v1 Combat Synchronization & Telemetry Tests', () => {
+
+  it('interprets timezone-less Postgres timestamps as UTC while preserving explicit offsets', () => {
+    assert.strictEqual(
+      normalizeMultiplayerTimestamp('2026-11-13T00:00:00'),
+      '2026-11-13T00:00:00.000Z'
+    );
+    assert.strictEqual(
+      normalizeMultiplayerTimestamp('2026-11-13T05:30:00+05:30'),
+      '2026-11-13T00:00:00.000Z'
+    );
+    assert.strictEqual(normalizeMultiplayerTimestamp('not-a-timestamp'), null);
+  });
+
+  it('uses the real elapsed match time for finalization and caps it at the match limit', () => {
+    const startedAt = 1_000_000;
+
+    assert.strictEqual(calculateElapsedMatchSeconds(startedAt, startedAt + 12_999), 12);
+    assert.strictEqual(calculateElapsedMatchSeconds(startedAt, startedAt - 1000), 0);
+    assert.strictEqual(calculateElapsedMatchSeconds(startedAt, startedAt + 95_000), 90);
+    assert.strictEqual(calculateElapsedMatchSeconds(Number.NaN, startedAt + 1000), 0);
+  });
 
   it('1. PRNG: Guarantees exact reproducible pseudo-random sequence for identical match seeds', () => {
     const prngA = new DeterministicPRNG(987654321);
@@ -258,4 +281,3 @@ describe('AIRSTRIKE Phase 12 Part 6: 1v1 Combat Synchronization & Telemetry Test
     assert.ok(cheatScore > maxAllowed, 'Impossible cheated score must be caught by bound validation');
   });
 });
-
