@@ -328,12 +328,29 @@ export class UIManager {
       const isMuted = this.soundService.toggleMute();
       if (soundBtn) {
         soundBtn.textContent = isMuted ? '🔇' : '🔊';
+        soundBtn.classList.toggle('muted', isMuted);
       }
-      this.showToast(isMuted ? 'Audio Muted' : 'Audio Enabled');
+      this.showToast(isMuted ? 'Master Audio Muted' : 'Master Audio Enabled');
     });
 
+    const musicBtn = document.getElementById('btn-music-toggle');
+    if (musicBtn) {
+      const updateMusicBtn = () => {
+        const isMuted = this.soundService.isMusicMuted();
+        musicBtn.textContent = isMuted ? '🔇' : '🎵';
+        musicBtn.title = isMuted ? 'Unmute Music (B)' : 'Mute Music (B)';
+        musicBtn.classList.toggle('muted', isMuted);
+      };
+      updateMusicBtn();
+      musicBtn.addEventListener('click', () => {
+        const isMuted = this.soundService.toggleMusic();
+        updateMusicBtn();
+        this.showToast(isMuted ? 'Background Music: OFF' : 'Background Music: ON');
+      });
+    }
+
     document.getElementById('btn-fullscreen-toggle')?.addEventListener('click', () => {
-      const container = document.getElementById('viewport-container');
+      const container = (window.innerWidth >= 940 ? document.getElementById('app-container') : null) || document.getElementById('viewport-container');
       if (!document.fullscreenElement && container) {
         container.requestFullscreen().catch(() => {});
       } else {
@@ -451,9 +468,22 @@ export class UIManager {
   // Pilot Profile & System Settings Modal
   // ---------------------------------------------------------------------------
   private initProfileSettingsModal(): void {
+    const syncMusicCheckbox = () => {
+      const musicCheck = document.getElementById('settings-music-check') as HTMLInputElement | null;
+      if (musicCheck) {
+        musicCheck.checked = !this.soundService.isMusicMuted();
+      }
+    };
+
     document.getElementById('btn-open-profile')?.addEventListener('click', () => {
       this.updatePilotDossier();
       this.syncAnnouncerSettingsUI();
+      syncMusicCheckbox();
+      this.openModal('profile-settings-modal');
+    });
+
+    document.getElementById('btn-settings-from-pause')?.addEventListener('click', () => {
+      syncMusicCheckbox();
       this.openModal('profile-settings-modal');
     });
 
@@ -476,6 +506,16 @@ export class UIManager {
       const threatSelect = document.getElementById('settings-threat-level') as HTMLSelectElement;
       const sfxCheck = document.getElementById('settings-sfx-check') as HTMLInputElement;
       const musicCheck = document.getElementById('settings-music-check') as HTMLInputElement;
+
+      if (musicCheck) {
+        this.soundService.setMusicMuted(!musicCheck.checked);
+        const musicBtn = document.getElementById('btn-music-toggle');
+        if (musicBtn) {
+          musicBtn.textContent = !musicCheck.checked ? '🔇' : '🎵';
+          musicBtn.title = !musicCheck.checked ? 'Unmute Music (B)' : 'Mute Music (B)';
+          musicBtn.classList.toggle('muted', !musicCheck.checked);
+        }
+      }
 
       const preferences = {
         threatLevel: threatSelect ? threatSelect.value : '0',

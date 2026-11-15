@@ -70,6 +70,8 @@ html, body {
   justify-content: center;
   align-items: center;
   background: radial-gradient(circle at center, #0F172A 0%, #070A14 100%);
+  gap: clamp(10px, 1.6vw, 22px);
+  overflow: hidden;
 }
 
 /* Responsive Viewport Wrapper */
@@ -134,6 +136,16 @@ html, body {
 }
 
 /* Fullscreen support across desktop browsers: ALWAYS preserves 800:650 aspect ratio */
+:fullscreen #app-container,
+#app-container:fullscreen,
+:-webkit-full-screen #app-container {
+  width: 100vw !important;
+  height: 100vh !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
 @media (min-width: 769px) and (orientation: landscape), (min-width: 541px) and (orientation: landscape) {
   :fullscreen #viewport-container,
   :-webkit-full-screen #viewport-container,
@@ -1124,6 +1136,18 @@ html, body {
   box-shadow: 0 0 12px var(--cyan-glow);
 }
 
+.icon-btn.muted {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #EF4444;
+  opacity: 0.75;
+}
+
+.icon-btn.muted:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
 /* On-screen Touch Controls */
 #touch-controls {
   position: fixed;
@@ -2054,6 +2078,257 @@ html, body {
   .gameover-mp-leaderboard {
     padding: 10px 8px;
   }
+}
+
+/* ==============================================================================
+   EXTERNAL TACTICAL COCKPIT WINGS (Outside Game Box for Widescreen / Desktop)
+   ============================================================================== */
+.external-hud-wing {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: clamp(200px, 16vw, 260px);
+  max-height: min(650px, 94vh);
+  z-index: 50;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+.external-hud-wing.hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transform: translateY(6px);
+}
+
+.external-hud-wing.left {
+  order: 1;
+}
+
+#viewport-container {
+  order: 2;
+}
+
+.external-hud-wing.right {
+  order: 3;
+}
+
+@media (max-width: 939px), (max-height: 540px) {
+  .external-hud-wing {
+    display: none !important;
+  }
+}
+
+.hud-panel.cyber-panel {
+  background: rgba(13, 19, 33, 0.92);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(0, 229, 255, 0.04);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  position: relative;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.hud-panel.cyber-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan-primary), transparent);
+}
+
+.hud-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--cyan-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.hud-panel-header.chaos {
+  color: #FBBF24;
+  border-bottom-color: rgba(251, 191, 36, 0.25);
+}
+
+.hud-gauge-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hud-gauge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+}
+
+.hud-meter-track {
+  width: 100%;
+  height: 8px;
+  background: #161F38;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.hud-meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease;
+}
+
+.hud-meter-fill.hull {
+  background: linear-gradient(90deg, #10B981, #34D399);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
+}
+
+.hud-meter-fill.hull.critical {
+  background: linear-gradient(90deg, #DC2626, #EF4444);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+.hud-meter-fill.shield {
+  background: linear-gradient(90deg, #0284C7, #00E5FF);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+.hud-meter-fill.heat {
+  background: linear-gradient(90deg, #F59E0B, #EF4444);
+}
+
+.hud-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.hud-label {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.hud-val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  color: #F8FAFC;
+}
+
+.hud-val.gold {
+  color: var(--gold-accent);
+}
+
+.hud-val.cyan {
+  color: var(--cyan-primary);
+}
+
+.hud-val.emerald {
+  color: #34D399;
+}
+
+.hud-big-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 3px 0;
+}
+
+.hud-huge-number {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 800;
+  color: #FFFFFF;
+  text-shadow: 0 0 14px rgba(0, 229, 255, 0.5);
+  letter-spacing: 1px;
+  line-height: 1.1;
+}
+
+.hud-sector-subtitle {
+  font-size: 9.5px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+  margin-top: -3px;
+}
+
+.hud-alert-badge {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid var(--coral-danger);
+  color: #FCA5A5;
+  font-size: 9.5px;
+  font-weight: bold;
+  padding: 5px 8px;
+  border-radius: 4px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.hud-alert-badge.hidden {
+  display: none !important;
+}
+
+.hud-panel.chaos-panel {
+  background: rgba(24, 18, 10, 0.94);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15);
+}
+
+.hud-panel.chaos-panel.hidden {
+  display: none !important;
+}
+
+.chaos-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chaos-event-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 3px solid #00E5FF;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.chaos-event-item.warning {
+  border-left-color: #FBBF24;
+}
+
+.chaos-event-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  color: #F8FAFC;
+}
+
+.chaos-event-tag {
+  font-size: 8.5px;
+  color: var(--gold-accent);
+  font-family: var(--font-mono);
 }
 
 @media (prefers-reduced-motion: reduce) {

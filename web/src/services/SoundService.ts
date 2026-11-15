@@ -2,6 +2,9 @@ export class SoundService {
   private static instance: SoundService;
   private ctx: AudioContext | null = null;
   private muted: boolean = false;
+  private musicMuted: boolean = false;
+  private bgm: HTMLAudioElement | null = null;
+  private musicStarted: boolean = false;
 
   private constructor() {
     if (typeof localStorage !== 'undefined') {
@@ -10,8 +13,13 @@ export class SoundService {
         if (saved !== null) {
           this.muted = saved === 'true';
         }
+        const savedMusic = localStorage.getItem('airstrike_music_muted');
+        if (savedMusic !== null) {
+          this.musicMuted = savedMusic === 'true';
+        }
       } catch {}
     }
+    this.initBGM();
   }
 
   public static getInstance(): SoundService {
@@ -19,6 +27,99 @@ export class SoundService {
       SoundService.instance = new SoundService();
     }
     return SoundService.instance;
+  }
+
+  private initBGM(): void {
+    if (typeof Audio === 'undefined') return;
+    try {
+      this.bgm = new Audio('/audio/bgm.mp3');
+      this.bgm.loop = true;
+      this.bgm.volume = 0.45;
+      this.bgm.preload = 'auto';
+
+      // One-time interaction trigger to comply with modern browser autoplay policies
+      if (typeof window !== 'undefined') {
+        const unlockAudio = () => {
+          if (!this.musicStarted && !this.musicMuted && !this.muted) {
+            this.startMusic();
+          }
+          window.removeEventListener('click', unlockAudio);
+          window.removeEventListener('keydown', unlockAudio);
+          window.removeEventListener('touchstart', unlockAudio);
+          window.removeEventListener('pointerdown', unlockAudio);
+        };
+        window.addEventListener('click', unlockAudio, { passive: true });
+        window.addEventListener('keydown', unlockAudio, { passive: true });
+        window.addEventListener('touchstart', unlockAudio, { passive: true });
+        window.addEventListener('pointerdown', unlockAudio, { passive: true });
+      }
+    } catch {}
+  }
+
+  public startMusic(): void {
+    if (this.muted || this.musicMuted || !this.bgm) return;
+    try {
+      const p = this.bgm.play();
+      if (p !== undefined) {
+        p.then(() => {
+          this.musicStarted = true;
+        }).catch(() => {
+          // Handled upon subsequent user gesture
+        });
+      }
+    } catch {}
+  }
+
+  public pauseMusic(): void {
+    if (this.bgm && !this.bgm.paused) {
+      try {
+        this.bgm.pause();
+      } catch {}
+    }
+  }
+
+  public resumeMusic(): void {
+    if (this.muted || this.musicMuted) return;
+    if (this.bgm && this.bgm.paused) {
+      try {
+        this.bgm.play().catch(() => {});
+      } catch {}
+    }
+  }
+
+  public toggleMusic(): boolean {
+    this.musicMuted = !this.musicMuted;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('airstrike_music_muted', String(this.musicMuted));
+      }
+    } catch {}
+
+    if (this.musicMuted) {
+      this.pauseMusic();
+    } else {
+      this.startMusic();
+    }
+    return this.musicMuted;
+  }
+
+  public setMusicMuted(muted: boolean): void {
+    this.musicMuted = muted;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('airstrike_music_muted', String(this.musicMuted));
+      }
+    } catch {}
+
+    if (this.musicMuted) {
+      this.pauseMusic();
+    } else {
+      this.startMusic();
+    }
+  }
+
+  public isMusicMuted(): boolean {
+    return this.musicMuted;
   }
 
   private initCtx(): AudioContext | null {
@@ -37,8 +138,16 @@ export class SoundService {
   public toggleMute(): boolean {
     this.muted = !this.muted;
     try {
-      localStorage.setItem('airstrike_sound_muted', String(this.muted));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('airstrike_sound_muted', String(this.muted));
+      }
     } catch {}
+
+    if (this.muted) {
+      this.pauseMusic();
+    } else if (!this.musicMuted) {
+      this.startMusic();
+    }
     return this.muted;
   }
 

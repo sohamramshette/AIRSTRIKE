@@ -54,6 +54,28 @@ export class GameEngine {
   private onGameOverCallback?: (summary: MatchSummary) => void;
   private onStateChangeCallback?: (state: GameState) => void;
 
+  // External Tactical Cockpit Wings (Desktop / Widescreen outside-canvas HUD)
+  private extHudLeft: HTMLElement | null = null;
+  private extHudRight: HTMLElement | null = null;
+  private extHullBar: HTMLElement | null = null;
+  private extHullNum: HTMLElement | null = null;
+  private extShieldBar: HTMLElement | null = null;
+  private extShieldNum: HTMLElement | null = null;
+  private extVesselsVal: HTMLElement | null = null;
+  private extOrdnanceVal: HTMLElement | null = null;
+  private extHeatBar: HTMLElement | null = null;
+  private extHeatNum: HTMLElement | null = null;
+  private extEngineAlert: HTMLElement | null = null;
+  private extPilotCallsign: HTMLElement | null = null;
+  private extScoreVal: HTMLElement | null = null;
+  private extMultiplierVal: HTMLElement | null = null;
+  private extRecordVal: HTMLElement | null = null;
+  private extSectorVal: HTMLElement | null = null;
+  private extSectorName: HTMLElement | null = null;
+  private extChaosPanel: HTMLElement | null = null;
+  private extChaosEventsList: HTMLElement | null = null;
+  private extHudInitialized: boolean = false;
+
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     const context = canvas.getContext('2d');
@@ -114,6 +136,8 @@ export class GameEngine {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    if (this.extHudLeft) this.extHudLeft.classList.add('hidden');
+    if (this.extHudRight) this.extHudRight.classList.add('hidden');
   }
 
   public startNewGame(): void {
@@ -121,6 +145,7 @@ export class GameEngine {
       this.waveManager.setPRNG(null);
       this.chaosScheduler.setPRNG(null);
     }
+    this.soundService.startMusic();
     this.player.reset();
     this.enemies = [];
     this.projectiles = [];
@@ -256,6 +281,7 @@ export class GameEngine {
       AnnouncerManager.getInstance().trigger('GAME_OVER', true);
     }
     this.state = newState;
+    this.updateExternalHUD();
     if (this.onStateChangeCallback) {
       this.onStateChangeCallback(newState);
     }
@@ -275,6 +301,9 @@ export class GameEngine {
   };
 
   private update(dt: number): void {
+    // Keep external cockpit wings synced with live game telemetry
+    this.updateExternalHUD();
+
     // Starfield animates in all states with dynamic sector evolution (CGL-CO4 & CGL-CO6)
     if (this.state === GameState.PLAYING || this.state === GameState.PAUSED) {
       this.starfield.setSectorByWave(this.waveManager.currentLevel, this.waveManager.bossActive || this.waveManager.isBossWave);
@@ -285,7 +314,21 @@ export class GameEngine {
 
     // Global shortcut handles
     if (this.inputManager.consumeMute()) {
-      this.soundService.toggleMute();
+      const isMuted = this.soundService.toggleMute();
+      const soundBtn = document.getElementById('btn-sound-toggle');
+      if (soundBtn) {
+        soundBtn.textContent = isMuted ? '🔇' : '🔊';
+        soundBtn.classList.toggle('muted', isMuted);
+      }
+    }
+    if (this.inputManager.consumeMusic()) {
+      const isMuted = this.soundService.toggleMusic();
+      const musicBtn = document.getElementById('btn-music-toggle');
+      if (musicBtn) {
+        musicBtn.textContent = isMuted ? '🔇' : '🎵';
+        musicBtn.title = isMuted ? 'Unmute Music (B)' : 'Mute Music (B)';
+        musicBtn.classList.toggle('muted', isMuted);
+      }
     }
 
     if (this.state === GameState.PLAYING) {
@@ -504,6 +547,187 @@ export class GameEngine {
     ctx.closePath();
   }
 
+  public isExternalHUDActive(): boolean {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+    try {
+      const fsElem = document.fullscreenElement;
+      if (fsElem && fsElem.id === 'viewport-container') return false;
+      return window.innerWidth >= 940 && window.innerHeight >= 540;
+    } catch {
+      return false;
+    }
+  }
+
+  private initExternalHUDElements(): void {
+    if (typeof document === 'undefined') return;
+    this.extHudLeft = document.getElementById('external-hud-left');
+    this.extHudRight = document.getElementById('external-hud-right');
+    this.extHullBar = document.getElementById('ext-hull-bar');
+    this.extHullNum = document.getElementById('ext-hull-num');
+    this.extShieldBar = document.getElementById('ext-shield-bar');
+    this.extShieldNum = document.getElementById('ext-shield-num');
+    this.extVesselsVal = document.getElementById('ext-vessels-val');
+    this.extOrdnanceVal = document.getElementById('ext-ordnance-val');
+    this.extHeatBar = document.getElementById('ext-heat-bar');
+    this.extHeatNum = document.getElementById('ext-heat-num');
+    this.extEngineAlert = document.getElementById('ext-engine-alert');
+    this.extPilotCallsign = document.getElementById('ext-pilot-callsign');
+    this.extScoreVal = document.getElementById('ext-score-val');
+    this.extMultiplierVal = document.getElementById('ext-multiplier-val');
+    this.extRecordVal = document.getElementById('ext-record-val');
+    this.extSectorVal = document.getElementById('ext-sector-val');
+    this.extSectorName = document.getElementById('ext-sector-name');
+    this.extChaosPanel = document.getElementById('ext-chaos-panel');
+    this.extChaosEventsList = document.getElementById('ext-chaos-events-list');
+    this.extHudInitialized = true;
+  }
+
+  public updateExternalHUD(): void {
+    if (typeof document === 'undefined') return;
+    if (!this.extHudInitialized) {
+      this.initExternalHUDElements();
+    }
+
+    const isPlayingOrPaused = (this.state === GameState.PLAYING || this.state === GameState.PAUSED);
+    const shouldShow = isPlayingOrPaused && !this.isMultiplayer && this.isExternalHUDActive();
+
+    if (!shouldShow) {
+      if (this.extHudLeft && !this.extHudLeft.classList.contains('hidden')) {
+        this.extHudLeft.classList.add('hidden');
+      }
+      if (this.extHudRight && !this.extHudRight.classList.contains('hidden')) {
+        this.extHudRight.classList.add('hidden');
+      }
+      return;
+    }
+
+    // Ensure wings are visible
+    if (this.extHudLeft && this.extHudLeft.classList.contains('hidden')) {
+      this.extHudLeft.classList.remove('hidden');
+    }
+    if (this.extHudRight && this.extHudRight.classList.contains('hidden')) {
+      this.extHudRight.classList.remove('hidden');
+    }
+
+    // Left Wing: Vitals
+    const healthPct = Math.max(0, Math.min(1, this.player.health / this.player.maxHealth));
+    const shieldPct = Math.max(0, Math.min(1, this.player.shield / this.player.maxShield));
+    const healthInt = Math.round(healthPct * 100);
+    const shieldInt = Math.round(shieldPct * 100);
+
+    if (this.extHullBar) {
+      this.extHullBar.style.width = `${healthInt}%`;
+      if (healthPct <= 0.35) {
+        this.extHullBar.classList.add('critical');
+      } else {
+        this.extHullBar.classList.remove('critical');
+      }
+    }
+    if (this.extHullNum) {
+      this.extHullNum.textContent = `${healthInt}%`;
+    }
+
+    if (this.extShieldBar) {
+      this.extShieldBar.style.width = `${shieldInt}%`;
+    }
+    if (this.extShieldNum) {
+      this.extShieldNum.textContent = `${shieldInt}%`;
+    }
+
+    if (this.extVesselsVal) {
+      const lives = Math.max(0, this.player.lives);
+      this.extVesselsVal.textContent = '▲ '.repeat(lives).trim() || 'NONE (CRITICAL)';
+    }
+
+    if (this.extOrdnanceVal) {
+      if (this.player.isOverheated) {
+        this.extOrdnanceVal.textContent = '🔥 OVERHEATED';
+        this.extOrdnanceVal.className = 'hud-val text-danger';
+      } else {
+        const wpnTier = this.player.weaponLevel === 2 ? 'DUAL CANNONS' : this.player.weaponLevel >= 3 ? 'TRIPLE SPREAD' : 'SINGLE CANNON';
+        this.extOrdnanceVal.textContent = wpnTier;
+        this.extOrdnanceVal.className = 'hud-val cyan';
+      }
+    }
+
+    if (this.extHeatBar) {
+      this.extHeatBar.style.width = `${Math.min(100, Math.max(0, Math.round(this.player.weaponHeat)))}%`;
+    }
+    if (this.extHeatNum) {
+      this.extHeatNum.textContent = `${Math.round(this.player.weaponHeat)}%`;
+    }
+
+    if (this.extEngineAlert) {
+      if (healthPct <= 0.35) {
+        this.extEngineAlert.classList.remove('hidden');
+      } else {
+        this.extEngineAlert.classList.add('hidden');
+      }
+    }
+
+    // Right Wing: Mission Telemetry
+    if (this.extPilotCallsign) {
+      const pilotName = (typeof window !== 'undefined' && (window as any).__PILOT_CALLSIGN__) || 'CADET';
+      this.extPilotCallsign.textContent = `● ${String(pilotName).toUpperCase()}`;
+    }
+
+    if (this.extScoreVal) {
+      this.extScoreVal.textContent = this.scoreCalc.getScore().toLocaleString();
+    }
+
+    if (this.extMultiplierVal) {
+      const mult = this.scoreCalc.getMultiplier();
+      this.extMultiplierVal.textContent = mult > 1 ? `${mult.toFixed(1)}x STREAK` : '1.0x (NORMAL)';
+      this.extMultiplierVal.className = mult > 1 ? 'hud-val gold' : 'hud-val';
+    }
+
+    if (this.extRecordVal) {
+      this.extRecordVal.textContent = `${this.scoreCalc.getHighScore().toLocaleString()} PTS`;
+    }
+
+    if (this.extSectorVal) {
+      this.extSectorVal.textContent = `SECTOR ${this.waveManager.currentLevel}`;
+    }
+
+    if (this.extSectorName) {
+      const sectorNames = [
+        'ORION AZURE VEIL',
+        'CYGNUS VIOLET NEBULA',
+        'KEPLER SOLAR CORONA',
+        'EVENT HORIZON SINGULARITY'
+      ];
+      const sIndex = Math.min(sectorNames.length - 1, Math.max(0, this.waveManager.currentLevel - 1));
+      this.extSectorName.textContent = sectorNames[sIndex];
+    }
+
+    // External Chaos Anomaly Feed
+    if (this.extChaosPanel && this.extChaosEventsList) {
+      const activeEvents = this.chaosScheduler.activeEvents;
+      if (activeEvents && activeEvents.length > 0) {
+        this.extChaosPanel.classList.remove('hidden');
+        let html = '';
+        for (const ev of activeEvents) {
+          const isWarn = ev.isWarning();
+          const timerVal = isWarn ? ev.warningTimer.toFixed(1) : ev.durationRemaining.toFixed(1);
+          const name = ev.definition ? ev.definition.displayName : ev.type;
+          const co = ev.definition ? ev.definition.courseOutcome : 'CO-CHAOS';
+          html += `
+            <div class="chaos-event-item ${isWarn ? 'warning' : ''}">
+              <div class="chaos-event-header">
+                <span>${isWarn ? '⚠️ INCOMING: ' : '⚡ '}${name}</span>
+                <span>${timerVal}s</span>
+              </div>
+              <div class="chaos-event-tag">${co}</div>
+            </div>`;
+        }
+        this.extChaosEventsList.innerHTML = html;
+      } else {
+        this.extChaosPanel.classList.add('hidden');
+        this.extChaosEventsList.innerHTML = '';
+      }
+    }
+  }
+
   private renderHUD(ctx: CanvasRenderingContext2D, w: number, h: number): void {
     ctx.save();
 
@@ -513,7 +737,14 @@ export class GameEngine {
       return;
     }
 
-    if (w < 600) {
+    const isExternalActive = this.isExternalHUDActive();
+
+    if (isExternalActive) {
+      // Widescreen / Desktop Mode:
+      // Vitals, Mission Pod, and Chaos notifications are shifted outside the canvas
+      // into #external-hud-left and #external-hud-right.
+      // Inside canvas, ONLY meme comments and boss health bar appear!
+    } else if (w < 600) {
       // --- MOBILE COMPACT DUAL POD HUD (Fits any phone width cleanly) ---
       const topY = 10;
       const podW = Math.floor((w - 24) / 2);
@@ -786,10 +1017,12 @@ export class GameEngine {
     }
 
     // --- 5. Center Tactical Desi Announcer Banner ---
-    AnnouncerManager.getInstance().renderHUD(ctx, w, h);
+    AnnouncerManager.getInstance().renderHUD(ctx, w, h, isExternalActive);
 
     // --- 6. Top Chaos Protocol HUD Indicator (Phase 11) ---
-    this.chaosScheduler.renderHUD(ctx, w);
+    if (!isExternalActive) {
+      this.chaosScheduler.renderHUD(ctx, w);
+    }
 
     ctx.restore();
   }

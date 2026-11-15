@@ -12,6 +12,66 @@
 </head>
 <body>
   <div id="app-container">
+    <!-- Left Cockpit Wing: Vitals & Ship Systems (Outside Game Box) -->
+    <aside id="external-hud-left" class="external-hud-wing left hidden" aria-label="Ship Vitals">
+      <div class="hud-panel cyber-panel">
+        <div class="hud-panel-header">
+          <span class="hud-icon">⚡</span>
+          <span class="hud-title">SHIP SYSTEMS & VITALS</span>
+        </div>
+
+        <!-- Hull Integrity -->
+        <div class="hud-gauge-group">
+          <div class="hud-gauge-header">
+            <span class="hud-label">HULL INTEGRITY</span>
+            <span id="ext-hull-num" class="hud-val">100%</span>
+          </div>
+          <div class="hud-meter-track">
+            <div id="ext-hull-bar" class="hud-meter-fill hull" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Shield Capacitor -->
+        <div class="hud-gauge-group">
+          <div class="hud-gauge-header">
+            <span class="hud-label">SHIELD CAPACITOR</span>
+            <span id="ext-shield-num" class="hud-val">100%</span>
+          </div>
+          <div class="hud-meter-track">
+            <div id="ext-shield-bar" class="hud-meter-fill shield" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Vessels (Lives) -->
+        <div class="hud-stat-row">
+          <span class="hud-label">VESSELS REMAINING</span>
+          <span id="ext-vessels-val" class="hud-val gold">▲ ▲</span>
+        </div>
+
+        <!-- Weapon System / Ordnance -->
+        <div class="hud-stat-row">
+          <span class="hud-label">ORDNANCE TIER</span>
+          <span id="ext-ordnance-val" class="hud-val cyan">SINGLE CANNON</span>
+        </div>
+
+        <!-- Weapon Heat Meter -->
+        <div class="hud-gauge-group">
+          <div class="hud-gauge-header">
+            <span class="hud-label">WEAPON HEAT</span>
+            <span id="ext-heat-num" class="hud-val">0%</span>
+          </div>
+          <div class="hud-meter-track">
+            <div id="ext-heat-bar" class="hud-meter-fill heat" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Engine Status Alert -->
+        <div id="ext-engine-alert" class="hud-alert-badge hidden">
+          ⚠️ THRUSTERS CRITICAL (-30% SPD)
+        </div>
+      </div>
+    </aside>
+
     <div id="viewport-container">
       <canvas id="game-canvas" width="800" height="650"></canvas>
 
@@ -56,7 +116,8 @@
           <span><span class="key-badge">WASD / ARROWS</span> MOVE</span>
           <span><span class="key-badge">SPACE</span> FIRE</span>
           <span><span class="key-badge">P</span> PAUSE</span>
-          <span><span class="key-badge">M</span> MENU</span>
+          <span><span class="key-badge">M</span> SFX</span>
+          <span><span class="key-badge">B</span> MUSIC</span>
         </div>
       </div>
 
@@ -209,11 +270,11 @@
             <div class="settings-row">
               <span style="font-weight: bold; color: var(--text-white);">Audio Feedback:</span>
               <div style="display: flex; gap: 12px;">
-                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
                   <input type="checkbox" id="settings-sfx-check" checked /> Tactical SFX
                 </label>
-                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px;">
-                  <input type="checkbox" id="settings-music-check" checked /> Comm Audio
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                  <input type="checkbox" id="settings-music-check" checked /> Background Music (BGM)
                 </label>
               </div>
             </div>
@@ -312,7 +373,8 @@
             <ul style="color: var(--text-muted); margin-left: 20px; margin-bottom: 12px;">
               <li><b style="color: #FFFFFF;">Tactical Pause:</b> [P] or [ESCAPE]</li>
               <li><b style="color: #FFFFFF;">Quick Redeploy:</b> [R]</li>
-              <li><b style="color: #FFFFFF;">Return to Main Menu:</b> [M]</li>
+              <li><b style="color: #FFFFFF;">Toggle Master SFX:</b> [M]</li>
+              <li><b style="color: #FFFFFF;">Toggle Background Music:</b> [B]</li>
             </ul>
 
             <h4 style="color: var(--emerald-status); margin-bottom: 6px;">3. COMBAT SYSTEMS & ORDNANCE</h4>
@@ -658,6 +720,7 @@ CREATE POLICY "anon_select_leaderboard" ON public.leaderboard FOR SELECT TO anon
 
       <!-- Controls & Mute Bar -->
       <div class="control-bar">
+        <button id="btn-music-toggle" class="icon-btn" title="Toggle Music (B)">🎵</button>
         <button id="btn-sound-toggle" class="icon-btn" title="Toggle Audio (M)">🔊</button>
         <button id="btn-fullscreen-toggle" class="icon-btn" title="Fullscreen">⛶</button>
       </div>
@@ -683,7 +746,59 @@ CREATE POLICY "anon_select_leaderboard" ON public.leaderboard FOR SELECT TO anon
       </div>
     </div>
 
-    <!-- Notification Toast Container -->
+    <!-- Right Cockpit Wing: Mission Telemetry & Chaos Anomaly Alerts (Outside Game Box) -->
+    <aside id="external-hud-right" class="external-hud-wing right hidden" aria-label="Mission Telemetry">
+      <div class="hud-panel cyber-panel">
+        <div class="hud-panel-header">
+          <span class="hud-icon">★</span>
+          <span class="hud-title">MISSION TELEMETRY</span>
+        </div>
+
+        <!-- Pilot Callsign -->
+        <div class="hud-stat-row">
+          <span class="hud-label">CALLSIGN</span>
+          <span id="ext-pilot-callsign" class="hud-val emerald">● CADET</span>
+        </div>
+
+        <!-- Current Combat Score -->
+        <div class="hud-big-stat">
+          <span class="hud-label">COMBAT SCORE</span>
+          <span id="ext-score-val" class="hud-huge-number">0</span>
+        </div>
+
+        <!-- Kill Multiplier / Streak -->
+        <div class="hud-stat-row">
+          <span class="hud-label">KILL MULTIPLIER</span>
+          <span id="ext-multiplier-val" class="hud-val gold">1.0x STREAK</span>
+        </div>
+
+        <!-- Personal High Record -->
+        <div class="hud-stat-row">
+          <span class="hud-label">PERSONAL RECORD</span>
+          <span id="ext-record-val" class="hud-val">0 PTS</span>
+        </div>
+
+        <!-- Active Sector -->
+        <div class="hud-stat-row">
+          <span class="hud-label">ACTIVE SECTOR</span>
+          <span id="ext-sector-val" class="hud-val cyan">SECTOR 1</span>
+        </div>
+        <div id="ext-sector-name" class="hud-sector-subtitle">
+          ORION AZURE VEIL
+        </div>
+      </div>
+
+      <!-- External Chaos Protocol Anomaly Feed (Outside the Game Box!) -->
+      <div id="ext-chaos-panel" class="hud-panel chaos-panel hidden">
+        <div class="hud-panel-header chaos">
+          <span class="hud-icon">⚠️</span>
+          <span class="hud-title">CHAOS ANOMALIES</span>
+        </div>
+        <div id="ext-chaos-events-list" class="chaos-events-list">
+          <!-- Dynamically populated when active -->
+        </div>
+      </div>
+    </aside>
     <div id="toast-container"></div>
   </div>
 

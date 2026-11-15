@@ -4,6 +4,7 @@ export class InputManager {
   public pauseRequested: boolean = false;
   public restartRequested: boolean = false;
   public muteRequested: boolean = false;
+  public musicRequested: boolean = false;
 
   // Touch controls state
   private touchX: number = 0;
@@ -94,6 +95,8 @@ export class InputManager {
         this.restartRequested = true;
       } else if (e.code === 'KeyM' || e.key === 'm' || e.key === 'M') {
         this.muteRequested = true;
+      } else if (e.code === 'KeyB' || e.key === 'b' || e.key === 'B') {
+        this.musicRequested = true;
       }
     });
 
@@ -267,6 +270,12 @@ export class InputManager {
   public consumeMute(): boolean {
     const val = this.muteRequested;
     this.muteRequested = false;
+    return val;
+  }
+
+  public consumeMusic(): boolean {
+    const val = this.musicRequested;
+    this.musicRequested = false;
     return val;
   }
 }
