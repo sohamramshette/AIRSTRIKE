@@ -1,24 +1,28 @@
 # ==============================================================================
-# AIRSTRIKE 80386 Assembly Suite - Common I/O Utilities
-# GNU Assembler (GAS) - Intel Syntax (noprefix)
-# Target: 32-bit Intel 80386 (cdecl calling convention)
+# AIRSTRIKE 64-BIT ASSEMBLY SUITE — COMMON I/O UTILITIES
+# Implements Formatted String, Integer, Hexadecimal, and Binary Console Display
+# Satisfies Course Outcome: Cross-Module Common Support Library
+# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
+.align 8
 fmt_str:
     .asciz "%s"
-fmt_int:
-    .asciz "%d"
-fmt_uint:
-    .asciz "%u"
+fmt_int64:
+    .asciz "%lld"
+fmt_uint64:
+    .asciz "%llu"
 fmt_hex8:
-    .asciz "0x%02X"
+    .asciz "0x%02llX"
 fmt_hex16:
-    .asciz "0x%04X"
+    .asciz "0x%04llX"
 fmt_hex32:
-    .asciz "0x%08X"
+    .asciz "0x%08llX"
+fmt_hex64:
+    .asciz "0x%016llX"
 fmt_nl:
     .asciz "\n"
 fmt_prompt_pause:
@@ -29,301 +33,303 @@ bin_one:
     .asciz "1"
 
 .bss
-.lcomm input_buffer, 64
-.lcomm input_val, 4
+.align 8
+.lcomm input_buffer, 128
+.lcomm input_val_64, 8
 
 .text
 
-# ------------------------------------------------------------------------------
-# print_str: Prints null-terminated string
-# Prototype: void print_str(const char* str)
-# Parameter: [esp + 4] = pointer to string
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: print_str / _print_str
+# - Small Meaning: Prints a null-terminated string to stdout.
+# - Long Form    : Assembly 64-Bit Print String
+# - Why We Used It: Fast console string output conforming to Microsoft x64 ABI.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = const char* str (String pointer)
+# ==============================================================================
+.global print_str
 .global _print_str
+print_str:
 _print_str:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
-
-    push [ebp + 8]
-    push offset fmt_str
-    call _printf
-    add esp, 8
-
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32                 # 32 bytes caller shadow space
+    # --------------------------------------------------------------------------
+    # MOV RDX, RCX / LEA RCX, [RIP + FMT_STR]:
+    # - Small Meaning: Shift string pointer into 2nd argument (RDX) and load format string
+    # - Long Form    : Move Register C to D / Load Effective Address of Format String
+    # - Why We Used It: printf expects format in RCX, string argument in RDX.
+    # --------------------------------------------------------------------------
+    mov rdx, rcx
+    lea rcx, [rip + fmt_str]
+    call printf
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# print_int: Prints signed 32-bit integer
-# Prototype: void print_int(int val)
-# Parameter: [esp + 4] = integer value
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: print_int / _print_int
+# - Small Meaning: Prints signed 64-bit quadword integer.
+# - Long Form    : Assembly 64-Bit Print Signed Integer
+# - Why We Used It: Formats telemetry coordinates, score tallies, and health points.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = int64_t val
+# ==============================================================================
+.global print_int
 .global _print_int
+print_int:
 _print_int:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
-
-    push [ebp + 8]
-    push offset fmt_int
-    call _printf
-    add esp, 8
-
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov rdx, rcx
+    lea rcx, [rip + fmt_int64]
+    call printf
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# print_uint: Prints unsigned 32-bit integer
-# Prototype: void print_uint(unsigned int val)
-# Parameter: [esp + 4] = unsigned integer value
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: print_uint / _print_uint
+# - Small Meaning: Prints unsigned 64-bit integer.
+# - Long Form    : Assembly 64-Bit Print Unsigned Integer
+# - Why We Used It: Formats clock cycle counts, memory addresses, and bitmasks.
+# ==============================================================================
+.global print_uint
 .global _print_uint
+print_uint:
 _print_uint:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
-
-    push [ebp + 8]
-    push offset fmt_uint
-    call _printf
-    add esp, 8
-
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov rdx, rcx
+    lea rcx, [rip + fmt_uint64]
+    call printf
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# print_hex32: Prints 32-bit hex value (0xXXXXXXXX)
-# Prototype: void print_hex32(unsigned int val)
-# Parameter: [esp + 4] = value
-# ------------------------------------------------------------------------------
-.global _print_hex32
-_print_hex32:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
-
-    push [ebp + 8]
-    push offset fmt_hex32
-    call _printf
-    add esp, 8
-
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+# ==============================================================================
+# Routine: print_hex64 / _print_hex64
+# - Small Meaning: Prints 64-bit value in hexadecimal notation (0x%016llX).
+# - Long Form    : Assembly 64-Bit Print Hexadecimal Quadword
+# - Why We Used It: Displays 64-bit pointer registers (RAX, RSP, RIP) in clean hex.
+# ==============================================================================
+.global print_hex64
+.global _print_hex64
+print_hex64:
+_print_hex64:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov rdx, rcx
+    lea rcx, [rip + fmt_hex64]
+    call printf
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# print_hex8: Prints 8-bit hex value (0xXX)
-# Prototype: void print_hex8(unsigned int val)
-# Parameter: [esp + 4] = value
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: print_hex8 / _print_hex8
+# - Small Meaning: Prints 8-bit low-byte in hex (0x%02X).
+# - Long Form    : Assembly 64-Bit Print Hexadecimal Byte
+# - Why We Used It: Inspects sub-register byte values (AL, BL, CL, DL, R8B).
+# ==============================================================================
+.global print_hex8
 .global _print_hex8
+print_hex8:
 _print_hex8:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
-
-    mov eax, [ebp + 8]
-    and eax, 0xFF
-    push eax
-    push offset fmt_hex8
-    call _printf
-    add esp, 8
-
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    movzx rdx, cl
+    lea rcx, [rip + fmt_hex8]
+    call printf
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# print_bin8: Prints 8-bit binary representation (e.g. 01011010)
-# Prototype: void print_bin8(unsigned int val)
-# Parameter: [esp + 4] = 8-bit value in low byte
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: print_bin8 / _print_bin8
+# - Small Meaning: Prints 8-bit binary string (e.g. 01011010).
+# - Long Form    : Assembly 64-Bit Print Binary Byte
+# - Why We Used It: Visualizes condition flags, Booth table columns, and opcode masks.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = uint64_t val (Low 8 bits printed)
+# ==============================================================================
+.global print_bin8
 .global _print_bin8
+print_bin8:
 _print_bin8:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    push rbx
+    push rsi
 
-    mov bl, [ebp + 8]           # bl holds the 8-bit value
-    mov esi, 8                  # 8 bit counter (using callee-saved esi)
+    mov bl, cl                  # BL holds the 8-bit value
+    mov rsi, 8                  # 8-bit loop counter
 
 .L_bin8_loop:
-    shl bl, 1                   # shift MSB into Carry Flag (CF)
+    # --------------------------------------------------------------------------
+    # SHL BL, 1:
+    # - Small Meaning: Shift Most Significant Bit into Carry Flag (CF)
+    # - Long Form    : Shift Logical Left Byte by 1
+    # - Why We Used It: Tests bits sequentially from MSB (bit 7) down to LSB (bit 0).
+    # --------------------------------------------------------------------------
+    shl bl, 1
     jc .L_bin8_one
-    push '0'
-    call _putchar
-    add esp, 4
+    mov rcx, '0'
+    call putchar
     jmp .L_bin8_next
 
 .L_bin8_one:
-    push '1'
-    call _putchar
-    add esp, 4
+    mov rcx, '1'
+    call putchar
 
 .L_bin8_next:
-    dec esi
+    dec rsi
     jnz .L_bin8_loop
 
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# print_bin16: Prints 16-bit binary representation with space between bytes
-# Prototype: void print_bin16(unsigned int val)
-# Parameter: [esp + 4] = 16-bit value in low word
-# ------------------------------------------------------------------------------
-.global _print_bin16
-_print_bin16:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+# ==============================================================================
+# Routine: print_bin64 / _print_bin64
+# - Small Meaning: Prints 64-bit binary string with space delimiters every 8 bits.
+# - Long Form    : Assembly 64-Bit Print Binary Quadword
+# - Why We Used It: Visualizes full 64-bit status registers and subsystem bitmasks.
+# ==============================================================================
+.global print_bin64
+.global _print_bin64
+print_bin64:
+_print_bin64:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    push rbx
+    push rsi
 
-    mov bx, [ebp + 8]           # bx holds 16-bit value
-    mov esi, 16                 # 16 bit counter (using callee-saved esi)
+    mov rbx, rcx                # RBX holds the 64-bit value
+    mov rsi, 64                 # 64-bit loop counter
 
-.L_bin16_loop:
-    shl bx, 1                   # shift MSB into Carry Flag
-    jc .L_bin16_one
-    push '0'
-    call _putchar
-    add esp, 4
-    jmp .L_bin16_next
+.L_bin64_loop:
+    shl rbx, 1                  # Shift MSB into Carry Flag
+    jc .L_bin64_one
+    mov rcx, '0'
+    call putchar
+    jmp .L_bin64_sep
 
-.L_bin16_one:
-    push '1'
-    call _putchar
-    add esp, 4
+.L_bin64_one:
+    mov rcx, '1'
+    call putchar
 
-.L_bin16_next:
-    cmp esi, 9                  # after printing high byte (8 bits, when esi was 9 going to 8), print space separator
-    jne .L_bin16_skip_space
-    push ' '
-    call _putchar
-    add esp, 4
+.L_bin64_sep:
+    dec rsi
+    jz .L_bin64_done
 
-.L_bin16_skip_space:
-    dec esi
-    jnz .L_bin16_loop
+    # Print space separator every 8 bits
+    mov rax, rsi
+    test rax, 7
+    jnz .L_bin64_loop
 
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    mov rcx, ' '
+    call putchar
+    jmp .L_bin64_loop
+
+.L_bin64_done:
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# print_nl: Prints a single newline
-# Prototype: void print_nl()
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: print_nl / _print_nl
+# - Small Meaning: Prints a single newline character to stdout.
+# - Long Form    : Assembly 64-Bit Print Newline
+# - Why We Used It: Flushes current line and advances cursor.
+# ==============================================================================
+.global print_nl
 .global _print_nl
+print_nl:
 _print_nl:
-    push ebp
-    mov ebp, esp
-    push offset fmt_nl
-    call _printf
-    add esp, 4
-    mov esp, ebp
-    pop ebp
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    lea rcx, [rip + fmt_nl]
+    call printf
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# read_int: Reads a signed integer from stdin using scanf
-# Prototype: int read_int()
-# Returns: eax = integer value read
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: read_int / _read_int
+# - Small Meaning: Reads signed 64-bit integer from console stdin via scanf.
+# - Long Form    : Assembly 64-Bit Read Console Integer
+# - Why We Used It: Collects interactive menu choices and arithmetic operands.
+# Returns:
+#   RAX = 64-bit signed integer read, or -1 on EOF/error.
+# ==============================================================================
+.global read_int
 .global _read_int
+read_int:
 _read_int:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    push rbx
 
-    push offset input_val
-    push offset fmt_int
-    call _scanf
-    add esp, 8
+    lea rcx, [rip + fmt_int64]
+    lea rdx, [rip + input_val_64]
+    call scanf
 
-    cmp eax, 1                  # Check if 1 integer was successfully matched
+    cmp rax, 1
     je .L_read_valid
 
     # Failed or EOF reached
-    mov dword ptr [input_val], -1
-    mov eax, -1
+    mov qword ptr [rip + input_val_64], -1
+    mov rax, -1
     jmp .L_read_exit
 
 .L_read_valid:
-    # Consume trailing characters until newline or EOF
+    # Flush trailing characters in line buffer until newline or EOF
 .L_flush_loop:
-    call _getchar
-    cmp eax, 10                 # '\n'
+    call getchar
+    cmp rax, 10                 # '\n'
     je .L_flush_done
-    cmp eax, -1                 # EOF
+    cmp rax, -1                 # EOF
     je .L_flush_done
     jmp .L_flush_loop
 
 .L_flush_done:
-    mov eax, [input_val]
+    mov rax, [rip + input_val_64]
 
 .L_read_exit:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# pause_key: Displays prompt and waits for Enter key
-# Prototype: void pause_key()
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: pause_key / _pause_key
+# - Small Meaning: Displays prompt and waits for user to press ENTER.
+# - Long Form    : Assembly 64-Bit Console Pause Key Waiter
+# - Why We Used It: Halts screen execution between demonstration modules.
+# ==============================================================================
+.global pause_key
 .global _pause_key
+pause_key:
 _pause_key:
-    push ebp
-    mov ebp, esp
-    push offset fmt_prompt_pause
-    call _printf
-    add esp, 4
-
-    call _getchar
-
-    mov esp, ebp
-    pop ebp
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    lea rcx, [rip + fmt_prompt_pause]
+    call printf
+    call getchar
+    mov rsp, rbp
+    pop rbp
     ret

@@ -1,143 +1,150 @@
 # ==============================================================================
-# AIRSTRIKE 80386 Assembly Suite - CO4: Pipelined Railgun Dreadnought
+# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO4: PIPELINED RAILGUN DREADNOUGHT
 # Demonstrates 5-Stage Instruction Pipelining (IF, ID, EX, MEM, WB),
 # Read-After-Write (RAW) Data Hazards, Stall Bubbles, and Forwarding Dynamics.
-#
-# [ACADEMIC ARCHITECTURAL NOTICE]:
-# This is an educational pipeline simulation designed to teach classic 5-stage RISC
-# execution dynamics, hazards, and speedup metrics. It is an educational instructional
-# model and does not claim to represent the complex microcode-driven, non-RISC prefetch
-# queue and bus unit execution architecture of the physical Intel 80386 processor.
-#
-# GNU Assembler (GAS) - Intel Syntax (noprefix)
-# Target: Intel 80386 (32-bit Protected Mode, cdecl)
+# Satisfies Course Outcome: COA-CO4 (Applied Pipeline Combat Execution)
+# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
+.align 8
 railgun_title:
-    .asciz "\n==============================================================================\n      COA-CO4: PIPELINED RAILGUN DREADNOUGHT - 5-STAGE INSTRUCTION PIPELINE   \n==============================================================================\n  [Educational Model: Classic 5-Stage Execution (IF, ID, EX, MEM, WB)]\n  [Notice: Educational model illustrating hazards; not actual 80386 microarchitecture]\n"
+    .asciz "\n==============================================================================\n   COA-CO4: PIPELINED RAILGUN DREADNOUGHT - 5-STAGE INSTRUCTION PIPELINE (x64) \n==============================================================================\n  [Educational Model: Classic 5-Stage Execution (IF, ID, EX, MEM, WB)]\n  [Notice: Educational model illustrating hazards; not actual microarchitecture]\n"
 
 railgun_firing_seq:
-    .asciz "\n--- RAILGUN VOLLEY INSTRUCTION SEQUENCE ---\n  I1: CHARGE_CELL  EAX, EDX      (Writes capacitor energy to EAX in WB stage)\n  I2: AIM_MAGNETIC EBX, EAX      (Requires energy reading EAX in ID stage)\n  I3: IONIZE_GAS   ECX, 100      (Independent plasma ionization)\n  I4: DISCHARGE    ESI, EBX      (Requires magnetic vector in ID stage)\n"
+    .asciz "\n--- RAILGUN VOLLEY INSTRUCTION SEQUENCE ---\n  I1: CHARGE_CELL  RAX, RDX      (Writes capacitor energy to RAX in WB stage)\n  I2: AIM_MAGNETIC RBX, RAX      (Requires energy reading RAX in ID stage)\n  I3: IONIZE_GAS   RCX, 100      (Independent plasma ionization)\n  I4: DISCHARGE    RSI, RBX      (Requires magnetic vector in ID stage)\n"
 
 railgun_ideal_hdr:
     .asciz "\n[CASE 1: IDEAL PIPELINE EXECUTION - NO HAZARDS (8 CYCLES)]\n  Inst \\ Cycle | C1  | C2  | C3  | C4  | C5  | C6  | C7  | C8  |\n  -------------+-----+-----+-----+-----+-----+-----+-----+-----+\n  I1: CHARGE   | IF  | ID  | EX  | MEM | WB  |     |     |     |\n  I2: AIM      |     | IF  | ID  | EX  | MEM | WB  |     |     |\n  I3: IONIZE   |     |     | IF  | ID  | EX  | MEM | WB  |     |\n  I4: DISCHARGE|     |     |     | IF  | ID  | EX  | MEM | WB  |\n  -------------+-----+-----+-----+-----+-----+-----+-----+-----+\n  Total Volley Latency: 8 Cycles (T_seq = 20 Cycles -> Speedup: 2.50x)\n"
 
 railgun_raw_hdr:
-    .asciz "\n[CASE 2: RAW DATA HAZARD WITH STALL BUBBLES - NO FORWARDING (10 CYCLES)]\n  Hazard: I2 requires EAX at Cycle 3 (ID), but I1 does not write EAX until Cycle 5 (WB)!\n\n  Inst \\ Cycle | C1  | C2  | C3    | C4    | C5  | C6  | C7  | C8  | C9  | C10 |\n  -------------+-----+-----+-------+-------+-----+-----+-----+-----+-----+-----+\n  I1: CHARGE   | IF  | ID  | EX    | MEM   | WB  |     |     |     |     |     |\n  I2: AIM      |     | IF  | STALL | STALL | ID  | EX  | MEM | WB  |     |     |\n  I3: IONIZE   |     |     | STALL | STALL | IF  | ID  | EX  | MEM | WB  |     |\n  I4: DISCHARGE|     |     |   -   |   -   |     | IF  | ID  | EX  | MEM | WB  |\n  -------------+-----+-----+-------+-------+-----+-----+-----+-----+-----+-----+\n  Stall Penalty: 2 Bubble Cycles inserted -> Realized Volley Latency: 10 Cycles\n"
+    .asciz "\n[CASE 2: RAW DATA HAZARD WITH STALL BUBBLES - NO FORWARDING (10 CYCLES)]\n  Hazard: I2 requires RAX at Cycle 3 (ID), but I1 does not write RAX until Cycle 5 (WB)!\n\n  Inst \\ Cycle | C1  | C2  | C3    | C4    | C5  | C6  | C7  | C8  | C9  | C10 |\n  -------------+-----+-----+-------+-------+-----+-----+-----+-----+-----+-----+\n  I1: CHARGE   | IF  | ID  | EX    | MEM   | WB  |     |     |     |     |     |\n  I2: AIM      |     | IF  | STALL | STALL | ID  | EX  | MEM | WB  |     |     |\n  I3: IONIZE   |     |     | STALL | STALL | IF  | ID  | EX  | MEM | WB  |     |\n  I4: DISCHARGE|     |     |   -   |   -   |     | IF  | ID  | EX  | MEM | WB  |\n  -------------+-----+-----+-------+-------+-----+-----+-----+-----+-----+-----+\n  Stall Penalty: 2 Bubble Cycles inserted -> Realized Volley Latency: 10 Cycles\n"
 
 railgun_fwd_hdr:
-    .asciz "\n[CASE 3: OPERAND FORWARDING (EX/MEM -> ID/EX BYPASS - 8 CYCLES)]\n  Forwarding: Internal bypass wire routes ALU output directly from EX/MEM to EX.\n  I2 receives forward data without pipeline stalling!\n  Volley Latency Restored: 8 Cycles (Zero Stall Bubbles)\n==============================================================================\n"
+    .asciz "\n[CASE 3: OPERAND FORWARDING (EX/MEM -> ID/EX BYPASS - 8 CYCLES)]\n  Forwarding: Internal bypass wire routes ALU output directly from EX/MEM to EX.\n  I2 receives forwarded data without pipeline stalling!\n  Volley Latency Restored: 8 Cycles (Zero Stall Bubbles)\n==============================================================================\n"
 
 .text
 
-# ------------------------------------------------------------------------------
-# coa_railgun_pipeline_eval: Computes cycle metrics for Railgun firing sequence
-# Prototype: int coa_railgun_pipeline_eval(int numShots, int hazardMode, int* outCycles, int* outStalls)
-# Parameters:
-#   [ebp + 8]  = numShots (e.g. 4)
-#   [ebp + 12] = hazardMode (0 = Ideal, 1 = RAW with Stalls, 2 = RAW with Forwarding)
-#   [ebp + 16] = outCycles (pointer to int)
-#   [ebp + 20] = outStalls (pointer to int)
+# ==============================================================================
+# Routine: coa_railgun_pipeline_eval
+# - Small Meaning: Computes cycle metrics and stall bubbles for Railgun salvo.
+# - Long Form    : COA Railgun Pipeline Latency and Hazard Evaluator
+# - Why We Used It: Simulates weapon charging throughput with and without forwarding hardware.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = int64_t  numShots   (Number of projectile instructions, N)
+#   RDX = int64_t  hazardMode (0 = Ideal, 1 = RAW with Stalls, 2 = RAW with Forwarding)
+#   R8  = int64_t* outCycles  (Pointer to store total latency cycles)
+#   R9  = int64_t* outStalls  (Pointer to store stall bubbles count)
 # Returns:
-#   EAX = Total Execution Cycles
-# ------------------------------------------------------------------------------
+#   RAX = Total Execution Cycles
+# ==============================================================================
+.global coa_railgun_pipeline_eval
 .global _coa_railgun_pipeline_eval
+coa_railgun_pipeline_eval:
 _coa_railgun_pipeline_eval:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rsi
+    push rdi
+    push r12
+    push r13
 
-    mov ecx, [ebp + 8]          # ecx = numShots (N)
-    cmp ecx, 1
+    mov r12, r8                 # R12 = outCycles pointer
+    mov r13, r9                 # R13 = outStalls pointer
+
+    cmp rcx, 1
     jge .L_n_valid
-    mov ecx, 1
+    mov rcx, 1                  # Clamp minimum shot count to 1
 
 .L_n_valid:
-    # Base Ideal Latency: 5 + N - 1
-    mov eax, ecx
-    add eax, 4                  # eax = 5 + N - 1
+    # --------------------------------------------------------------------------
+    # Base Ideal Latency Formula: T_ideal = 5 + N - 1 = N + 4
+    # --------------------------------------------------------------------------
+    lea rax, [rcx + 4]          # RAX = 5 + N - 1
 
-    mov ebx, [ebp + 12]         # ebx = hazardMode
-    xor edx, edx                # edx = stall bubbles count
+    mov rbx, rdx                # RBX = hazardMode
+    xor rdx, rdx                # RDX = stall bubbles count = 0
 
-    cmp ebx, 1
+    cmp rbx, 1
     jne .L_check_fwd
 
 .L_mode_stall:
+    # --------------------------------------------------------------------------
     # Mode 1: RAW Data Hazard requires 2 stall bubbles
-    mov edx, 2
-    add eax, 2
+    # --------------------------------------------------------------------------
+    mov rdx, 2                  # 2 stall bubble cycles
+    add rax, 2                  # Total latency += 2
     jmp .L_calc_done
 
 .L_check_fwd:
-    cmp ebx, 2
+    cmp rbx, 2
     jne .L_calc_done
 
 .L_mode_fwd:
-    # Mode 2: Forwarding eliminates stalls (0 stalls)
-    mov edx, 0
+    # --------------------------------------------------------------------------
+    # Mode 2: Forwarding hardware bypasses stalls (0 bubbles)
+    # --------------------------------------------------------------------------
+    xor rdx, rdx
 
 .L_calc_done:
-    # Store into output pointers
-    mov edi, [ebp + 16]
-    test edi, edi
+    # Store results via output pointers
+    test r12, r12
     jz .L_no_cycles
-    mov [edi], eax
+    mov [r12], rax
 
 .L_no_cycles:
-    mov edi, [ebp + 20]
-    test edi, edi
+    test r13, r13
     jz .L_no_stalls
-    mov [edi], edx
+    mov [r13], rdx
 
 .L_no_stalls:
-    # Return total cycles in EAX
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop r13
+    pop r12
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# coa_demo_pipelined_railgun: Interactive demonstration of Railgun Pipeline
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: coa_demo_pipelined_railgun
+# - Small Meaning: Interactive demonstration of Railgun Dreadnought pipeline.
+# - Long Form    : CO4 Demonstration Driver for Pipelined Railgun
+# - Why We Used It: Displays visual ASCII timing diagrams for ideal, stall, and bypass cases.
+# ==============================================================================
+.global coa_demo_pipelined_railgun
 .global _coa_demo_pipelined_railgun
+coa_demo_pipelined_railgun:
 _coa_demo_pipelined_railgun:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    push rbx
+    push rsi
+    push rdi
 
-    push offset railgun_title
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + railgun_title]
+    call print_str
 
-    push offset railgun_firing_seq
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + railgun_firing_seq]
+    call print_str
 
-    push offset railgun_ideal_hdr
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + railgun_ideal_hdr]
+    call print_str
 
-    push offset railgun_raw_hdr
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + railgun_raw_hdr]
+    call print_str
 
-    push offset railgun_fwd_hdr
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + railgun_fwd_hdr]
+    call print_str
 
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret

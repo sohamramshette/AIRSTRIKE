@@ -167,11 +167,15 @@ _asm_div_x64:
     ret
 
 # ==============================================================================
-# Routine: demo_arithmetic_ops_x64
+# Routine: demo_arithmetic_ops_x64 / co2_demo_arithmetic
 # Interactive demonstration of 64-bit addition, subtraction, mul & div
 # ==============================================================================
 .global demo_arithmetic_ops_x64
 .global _demo_arithmetic_ops_x64
+.global co2_demo_arithmetic
+.global _co2_demo_arithmetic
+co2_demo_arithmetic:
+_co2_demo_arithmetic:
 demo_arithmetic_ops_x64:
 _demo_arithmetic_ops_x64:
     push rbp

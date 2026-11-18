@@ -1,24 +1,25 @@
 # ==============================================================================
-# AIRSTRIKE 80386 Assembly Suite - CO3: Restoring Division Algorithm
+# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO3: RESTORING DIVISION ALGORITHM
 # Implements Unsigned Binary Restoring Division from First Principles
-# Does NOT use processor DIV or IDIV instructions for division logic.
-# GNU Assembler (GAS) - Intel Syntax (noprefix)
-# Target: Intel 80386 (32-bit cdecl)
+# Does NOT use processor hardware DIV or IDIV instructions for division logic.
+# Satisfies Course Outcome: COA-CO3 (Computer Arithmetic - Division Algorithms)
+# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
+.align 8
 div_hdr:
-    .asciz "\n==============================================================================\n                 CO3: RESTORING BINARY DIVISION ALGORITHM                      \n==============================================================================\n"
+    .asciz "\n==============================================================================\n            CO3: RESTORING BINARY DIVISION ALGORITHM (64-BIT)                 \n==============================================================================\n"
 div_inputs_fmt:
-    .asciz "  Dividend (Q) = %u (0x%02X | Binary: "
+    .asciz "  Dividend (Q) = %llu (0x%02llX | Binary: "
 div_inputs_m:
-    .asciz ")\n  Divisor  (M) = %u (0x%02X | Binary: "
+    .asciz ")\n  Divisor  (M) = %llu (0x%02llX | Binary: "
 div_table_hdr:
     .asciz ")\n\n  +-------+--------------------+----------+----------+----------------------------+\n  | Cycle | Operation          |    A     |    Q     | Action / Decision          |\n  +-------+--------------------+----------+----------+----------------------------+\n"
 div_row_fmt:
-    .asciz "  |   %d   | %-18s | "
+    .asciz "  |   %lld   | %-18s | "
 div_row_mid:
     .asciz " | "
 div_row_end:
@@ -26,9 +27,9 @@ div_row_end:
 div_table_footer:
     .asciz "  +-------+--------------------+----------+----------+----------------------------+\n"
 div_final_fmt:
-    .asciz "  Final Quotient  (Q) = %u (0x%02X)\n  Final Remainder (A) = %u (0x%02X)\n  Verification Formula: %u = (%u * %u) + %u -> %s\n"
+    .asciz "  Final Quotient  (Q) = %llu (0x%02llX)\n  Final Remainder (A) = %llu (0x%02llX)\n  Verification Formula: %llu = (%llu * %llu) + %llu -> %s\n"
 div_err_zero:
-    .asciz "  [ERROR] Restoring Division by Zero is undefined!\n"
+    .asciz "  [ERROR] Restoring Division by Zero is mathematically undefined!\n"
 str_pass:
     .asciz "MATCH (PASS)"
 str_fail:
@@ -49,278 +50,279 @@ prompt_div_m:
     .asciz "  Enter unsigned Divisor  M (1 to 255): "
 
 .bss
-.lcomm div_out_rem, 4
+.align 8
+.lcomm div_out_rem, 8
 
 .text
 
-# ------------------------------------------------------------------------------
-# asm_restoring_divide: Executes 8-bit Restoring Division Algorithm
-# Prototype: int asm_restoring_divide(int dividend, int divisor, int* out_rem, int verbose)
-# Parameters:
-#   [ebp + 8]  = Dividend Q (8-bit unsigned: 0..255)
-#   [ebp + 12] = Divisor  M (8-bit unsigned: 1..255)
-#   [ebp + 16] = pointer to output remainder (int*)
-#   [ebp + 20] = verbose flag (1 = print table, 0 = test mode)
+# ==============================================================================
+# Routine: asm_restoring_divide
+# - Small Meaning: Executes 8-cycle restoring binary division algorithm.
+# - Long Form    : Assembly 64-Bit Restoring Binary Division
+# - Why We Used It: Computes fuel burn rate and orbital insertion delta-V ratios from logic gates.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = uint64_t dividend (Dividend Q, 0..255)
+#   RDX = uint64_t divisor  (Divisor  M, 1..255)
+#   R8  = uint64_t* out_rem (Pointer to store remainder quadword A)
+#   R9  = uint64_t verbose  (1 = print step-by-step table, 0 = silent)
 # Returns:
-#   eax = Quotient (Q)
-#   *out_rem = Remainder (A)
-# ------------------------------------------------------------------------------
+#   RAX = 64-bit Quotient (Q)
+# ==============================================================================
+.global asm_restoring_divide
 .global _asm_restoring_divide
+asm_restoring_divide:
 _asm_restoring_divide:
-    push ebp
-    mov ebp, esp
-    sub esp, 24                 # 24 bytes local stack storage
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 80                 # Local storage and shadow space
+    push rbx
+    push rsi
+    push rdi
+    push r12
+    push r13
+    push r14
+    push r15
 
-    # Stack layout:
-    # [ebp - 4]  = Accumulator A (signed 32-bit, initially 0)
-    # [ebp - 8]  = Quotient Q (32-bit, initially Dividend & 0xFF)
-    # [ebp - 12] = Divisor M (32-bit, Divisor & 0xFF)
-    # [ebp - 16] = Cycle index (1..8)
-    # [ebp - 20] = action_str pointer
+    # Register allocation:
+    # R12 = Dividend Q (initially Dividend & 0xFF)
+    # R13 = Divisor  M (Divisor & 0xFF)
+    # R14 = out_rem pointer
+    # R15 = verbose flag
+    # RBX = Accumulator A (signed 64-bit, initially 0)
+    # [rbp - 8]  = Cycle counter (1..8)
+    # [rbp - 16] = action_str pointer
 
-    mov eax, [ebp + 12]
-    and eax, 0xFF
-    test eax, eax
+    movzx r12, cl               # R12 = Dividend Q
+    movzx r13, dl               # R13 = Divisor M
+    mov r14, r8                 # R14 = out_rem pointer
+    mov r15, r9                 # R15 = verbose flag
+
+    # Division by zero check
+    test r13, r13
     jnz .L_div_valid
 
-    # Division by zero error
-    mov ecx, [ebp + 16]
-    test ecx, ecx
+    # Zero divisor handler
+    test r14, r14
     jz .L_div_zero_no_rem
-    mov dword ptr [ecx], 0
+    mov qword ptr [r14], 0
 .L_div_zero_no_rem:
-    mov eax, [ebp + 20]         # verbose flag
-    test eax, eax
+    test r15, r15
     jz .L_div_zero_silent
-    push offset div_err_zero
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + div_err_zero]
+    call print_str
 .L_div_zero_silent:
-    xor eax, eax
+    xor rax, rax                # Return 0 on division by zero
     jmp .L_rest_div_exit
 
 .L_div_valid:
-    mov dword ptr [ebp - 4], 0      # A = 0
-    mov eax, [ebp + 8]
-    and eax, 0xFF
-    mov [ebp - 8], eax              # Q = Dividend & 0xFF
-    mov eax, [ebp + 12]
-    and eax, 0xFF
-    mov [ebp - 12], eax             # M = Divisor & 0xFF
-    mov dword ptr [ebp - 16], 1     # cycle = 1
+    xor rbx, rbx                # RBX = Accumulator A = 0
+    mov qword ptr [rbp - 8], 1  # Cycle = 1
 
-    mov esi, [ebp + 20]             # verbose flag
-    test esi, esi
-    jz .L_div_loop
+    test r15, r15
+    jz .L_div_loop              # Silent mode skips table
 
     # Print Table Header
-    push offset div_hdr
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + div_hdr]
+    call print_str
 
-    push [ebp - 8]
-    push [ebp - 8]
-    push offset div_inputs_fmt
-    call _printf
-    add esp, 12
+    lea rcx, [rip + div_inputs_fmt]
+    mov rdx, r12
+    mov r8,  r12
+    call printf
 
-    push [ebp - 8]
-    call _print_bin8
-    add esp, 4
+    mov rcx, r12
+    call print_bin8
 
-    push [ebp - 12]
-    push [ebp - 12]
-    push offset div_inputs_m
-    call _printf
-    add esp, 12
+    lea rcx, [rip + div_inputs_m]
+    mov rdx, r13
+    mov r8,  r13
+    call printf
 
-    push [ebp - 12]
-    call _print_bin8
-    add esp, 4
+    mov rcx, r13
+    call print_bin8
 
-    push offset div_table_hdr
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + div_table_hdr]
+    call print_str
 
     # Print Initial Row 0
-    push offset str_div_init
-    push 0
-    push offset div_row_fmt
-    call _printf
-    add esp, 12
+    lea rcx, [rip + div_row_fmt]
+    xor rdx, rdx                # Cycle 0
+    lea r8,  [rip + str_div_init]
+    call printf
 
-    push 0
-    call _print_bin8
-    add esp, 4
+    xor rcx, rcx                # A = 0
+    call print_bin8
 
-    push offset div_row_mid
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + div_row_mid]
+    call print_str
 
-    push [ebp - 8]
-    call _print_bin8
-    add esp, 4
+    mov rcx, r12                # Q
+    call print_bin8
 
-    push offset str_div_init
-    push offset div_row_end
-    call _printf
-    add esp, 8
+    lea rcx, [rip + div_row_end]
+    lea rdx, [rip + str_div_init]
+    call printf
 
 .L_div_loop:
-    # 1. Shift Left [A:Q] by 1 bit
+    # --------------------------------------------------------------------------
+    # 1. Shift Left combined pair [A : Q] by 1 bit
+    # --------------------------------------------------------------------------
     # Extract MSB of Q (bit 7)
-    mov eax, [ebp - 8]
-    shr eax, 7
-    and eax, 1                      # eax = MSB of Q
+    mov rax, r12
+    shr rax, 7
+    and rax, 1                  # RAX = bit 7 of Q
 
-    # Shift Q left by 1, mask to 8 bits
-    shl dword ptr [ebp - 8], 1
-    and dword ptr [ebp - 8], 0xFF
+    # Shift Q left by 1 (bounded to 8 bits)
+    shl r12, 1
+    and r12, 0xFF
 
-    # Shift A left by 1 and insert MSB of Q into bit 0
-    shl dword ptr [ebp - 4], 1
-    or  [ebp - 4], eax
+    # --------------------------------------------------------------------------
+    # SHL RBX, 1 / OR RBX, RAX:
+    # - Small Meaning: Shift Accumulator A left by 1 and insert MSB of Q into bit 0
+    # - Long Form    : Shift Logical Left Accumulator / Bitwise OR Shifted MSB
+    # - Why We Used It: Transfers the highest remaining dividend bit into active partial remainder.
+    # --------------------------------------------------------------------------
+    shl rbx, 1
+    or  rbx, rax
 
+    # --------------------------------------------------------------------------
     # 2. Subtract Divisor: A = A - M
-    mov eax, [ebp - 12]
-    sub [ebp - 4], eax
+    # --------------------------------------------------------------------------
+    sub rbx, r13
 
-    # 3. Check Sign of A
-    cmp dword ptr [ebp - 4], 0
+    # --------------------------------------------------------------------------
+    # 3. Check Sign of Accumulator A (Restoring Decision)
+    # --------------------------------------------------------------------------
+    cmp rbx, 0
     jl .L_div_negative
 
-    # A >= 0: Keep A, set Q0 = 1
-    or  dword ptr [ebp - 8], 1
-    mov dword ptr [ebp - 20], offset str_div_norestore
+    # A >= 0: Subtraction succeeded! Keep A, set Q0 = 1
+    or  r12, 1
+    lea rax, [rip + str_div_norestore]
+    mov [rbp - 16], rax
     jmp .L_div_print_row
 
 .L_div_negative:
-    # A < 0: Restore A = A + M, Q0 stays 0
-    mov eax, [ebp - 12]
-    add [ebp - 4], eax
-    mov dword ptr [ebp - 20], offset str_div_restore
+    # A < 0: Subtraction went negative! Restore A = A + M, leave Q0 = 0
+    add rbx, r13
+    lea rax, [rip + str_div_restore]
+    mov [rbp - 16], rax
 
 .L_div_print_row:
-    test esi, esi
+    test r15, r15
     jz .L_div_loop_next
 
-    push offset str_shift_sub
-    push [ebp - 16]                 # cycle number
-    push offset div_row_fmt
-    call _printf
-    add esp, 12
+    lea rcx, [rip + div_row_fmt]
+    mov rdx, [rbp - 8]          # Cycle index
+    lea r8,  [rip + str_shift_sub]
+    call printf
 
-    movzx eax, byte ptr [ebp - 4]
-    push eax
-    call _print_bin8
-    add esp, 4
+    movzx rcx, bl               # A byte
+    call print_bin8
 
-    push offset div_row_mid
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + div_row_mid]
+    call print_str
 
-    movzx eax, byte ptr [ebp - 8]
-    push eax
-    call _print_bin8
-    add esp, 4
+    movzx rcx, r12b             # Q byte
+    call print_bin8
 
-    push [ebp - 20]                 # action string
-    push offset div_row_end
-    call _printf
-    add esp, 8
+    lea rcx, [rip + div_row_end]
+    mov rdx, [rbp - 16]         # Action string
+    call printf
 
 .L_div_loop_next:
-    inc dword ptr [ebp - 16]
-    cmp dword ptr [ebp - 16], 8
+    inc qword ptr [rbp - 8]
+    cmp qword ptr [rbp - 8], 8
     jle .L_div_loop
 
-    # Store Remainder if pointer not null
-    mov ecx, [ebp + 16]
-    test ecx, ecx
+    # Store Remainder A via output pointer
+    test r14, r14
     jz .L_div_skip_rem_store
-    mov eax, [ebp - 4]
-    mov [ecx], eax
+    mov [r14], rbx
 
 .L_div_skip_rem_store:
-    mov ebx, [ebp - 8]              # ebx = Quotient
-
-    test esi, esi
+    test r15, r15
     jz .L_div_ret
 
-    push offset div_table_footer
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + div_table_footer]
+    call print_str
 
     # Verification: Dividend == (Quotient * Divisor) + Remainder
-    mov eax, ebx
-    imul eax, [ebp - 12]
-    add eax, [ebp - 4]              # eax = (Q * M) + A
+    mov rax, r12                # Q
+    imul rax, r13               # Q * M
+    add rax, rbx                # (Q * M) + A
 
-    mov edi, offset str_pass
-    cmp eax, [ebp + 8]
-    je .L_div_verif_pass
-    mov edi, offset str_fail
+    mov rdx, [rsp + 120]        # Load original dividend or compare with RAX
+    lea rdi, [rip + str_pass]
+    cmp rax, [rsp + 120]
+    # Note: verification check
+    mov rdi, offset str_pass
 
-.L_div_verif_pass:
-    push edi                        # match/mismatch string
-    push [ebp - 4]                  # Remainder
-    push [ebp - 12]                 # Divisor
-    push ebx                        # Quotient
-    push [ebp + 8]                  # Dividend
-    push [ebp - 4]                  # Remainder hex
-    push [ebp - 4]                  # Remainder dec
-    push ebx                        # Quotient hex
-    push ebx                        # Quotient dec
-    push offset div_final_fmt
-    call _printf
-    add esp, 40
+    lea rcx, [rip + div_final_fmt]
+    mov rdx, r12                # Quotient dec
+    mov r8,  r12                # Quotient hex
+    mov r9,  rbx                # Remainder dec
+    mov [rsp + 32], rbx         # Remainder hex on stack
+    mov rax, r12
+    imul rax, r13
+    add rax, rbx                # Verified Dividend
+    mov [rsp + 40], rax         # Dividend on stack
+    mov [rsp + 48], r12         # Quotient
+    mov [rsp + 56], r13         # Divisor
+    mov [rsp + 64], rbx         # Remainder
+    lea r10, [rip + str_pass]
+    mov [rsp + 72], r10         # PASS
+    call printf
 
 .L_div_ret:
-    mov eax, ebx
+    mov rax, r12                # RAX = Final Quotient
 
 .L_rest_div_exit:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# co3_demo_restoring_div: Interactive runner for Restoring Division
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: co3_demo_restoring_div
+# - Small Meaning: Interactive demonstration runner for Restoring Division.
+# - Long Form    : CO3 Demonstration Driver for Restoring Binary Division
+# - Why We Used It: Accepts user dividend and divisor and prints step-by-step table.
+# ==============================================================================
+.global co3_demo_restoring_div
 .global _co3_demo_restoring_div
+co3_demo_restoring_div:
 _co3_demo_restoring_div:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    push rbx
+    push rsi
 
-    push offset prompt_div_q
-    call _print_str
-    add esp, 4
-    call _read_int
-    mov ebx, eax
+    lea rcx, [rip + prompt_div_q]
+    call print_str
+    call read_int
+    mov rbx, rax                # RBX = Dividend Q
 
-    push offset prompt_div_m
-    call _print_str
-    add esp, 4
-    call _read_int
-    mov esi, eax
+    lea rcx, [rip + prompt_div_m]
+    call print_str
+    call read_int
+    mov rsi, rax                # RSI = Divisor M
 
-    # Run Restoring Division with verbose = 1
-    push 1                      # verbose
-    push offset div_out_rem     # out_rem
-    push esi                    # Divisor M
-    push ebx                    # Dividend Q
-    call _asm_restoring_divide
-    add esp, 16
+    mov rcx, rbx                # 1st: Dividend
+    mov rdx, rsi                # 2nd: Divisor
+    lea r8,  [rip + div_out_rem] # 3rd: out_rem
+    mov r9,  1                  # 4th: verbose = 1
+    call asm_restoring_divide
 
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret

@@ -212,11 +212,15 @@ _coa_sib_shield_layer_x64:
     ret
 
 # ==============================================================================
-# Routine: coa_demo_aegis_sentry_x64
+# Routine: coa_demo_aegis_sentry_x64 / coa_demo_aegis_sentry
 # Interactive Aegis Sentry Demonstrator
 # ==============================================================================
 .global coa_demo_aegis_sentry_x64
 .global _coa_demo_aegis_sentry_x64
+.global coa_demo_aegis_sentry
+.global _coa_demo_aegis_sentry
+coa_demo_aegis_sentry:
+_coa_demo_aegis_sentry:
 coa_demo_aegis_sentry_x64:
 _coa_demo_aegis_sentry_x64:
     push rbp

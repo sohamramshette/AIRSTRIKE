@@ -84,11 +84,15 @@ sample_array_x64:
 .text
 
 # ==============================================================================
-# Routine: co1_run_all
+# Routine: co1_menu_loop / co1_run_all
 # Master dispatcher demonstrating all 6 CO1 architecture topics in 64-bit
 # ==============================================================================
+.global co1_menu_loop
+.global _co1_menu_loop
 .global co1_run_all
 .global _co1_run_all
+co1_menu_loop:
+_co1_menu_loop:
 co1_run_all:
 _co1_run_all:
     # --------------------------------------------------------------------------

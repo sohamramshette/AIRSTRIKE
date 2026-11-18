@@ -70,9 +70,10 @@ mp_score_table_x64:
 .text
 
 # ==============================================================================
-# COA-CO1: coa_mp_compare_scores_x64
-# Compares two 64-bit player scores and returns condition flags.
-#
+# Routine: coa_mp_compare_scores_x64
+# - Small Meaning: Compares two 64-bit scores and extracts RFLAGS condition bits (ZF, SF, CF, OF).
+# - Long Form    : COA Multiplayer 64-Bit Score Comparator and RFLAGS Extractor
+# - Why We Used It: Evaluates PvP leaderboard rankings and match winners in hardware registers.
 # Calling Convention (Microsoft x64 ABI):
 #   RCX = score1 (int64_t)
 #   RDX = score2 (int64_t)
@@ -155,10 +156,11 @@ _coa_mp_compare_scores_x64:
     ret
 
 # ==============================================================================
-# COA-CO1: coa_mp_sib_lookup_x64
-# Accesses 64-bit element using genuine 64-bit SIB: [RBX + RCX*8 + 16]
-#
-# Calling Convention:
+# Routine: coa_mp_sib_lookup_x64
+# - Small Meaning: Accesses 64-bit element using Scale-Index-Base (SIB) addressing.
+# - Long Form    : COA Multiplayer 64-Bit SIB Addressing Table Lookup
+# - Why We Used It: Fast single-cycle player state array lookup [RBX + RCX*8 + 16].
+# Calling Convention (Microsoft x64 ABI):
 #   RCX = arrayBase (const int64_t*)
 #   RDX = index     (int64_t)
 # Returns:
@@ -184,10 +186,11 @@ _coa_mp_sib_lookup_x64:
     ret
 
 # ==============================================================================
-# COA-CO2: coa_mp_fibonacci_interval_x64
-# Computes 64-bit Fibonacci F(n) using iterative 64-bit register loop (RCX LOOP)
-#
-# Calling Convention:
+# Routine: coa_mp_fibonacci_interval_x64
+# - Small Meaning: Computes 64-bit Fibonacci term F(n) using hardware LOOP instruction.
+# - Long Form    : COA Multiplayer 64-Bit Iterative Fibonacci Cadence Calculator
+# - Why We Used It: Generates dynamic weapon salvo intervals synchronized across multiplayer clients.
+# Calling Convention (Microsoft x64 ABI):
 #   RCX = n (int64_t)
 # Returns:
 #   RAX = F(n) as 64-bit integer
@@ -233,13 +236,11 @@ _coa_mp_fibonacci_interval_x64:
     ret
 
 # ==============================================================================
-# COA-CO3: coa_mp_booth_multiply_x64
-# Pure 64-bit Assembly implementation of Booth's Signed Multiplication Algorithm
-#
-# Formula: Product = Multiplicand (M) * Multiplier (Q)
-# Handles all 4 quadrants (positive*positive, positive*negative, negative*positive, negative*negative)
-#
-# Calling Convention:
+# Routine: coa_mp_booth_multiply_x64
+# - Small Meaning: Multiplies signed 32-bit operands into 64-bit product via Booth's algorithm.
+# - Long Form    : COA Multiplayer 64-Bit Signed Booth Multiplier
+# - Why We Used It: Deterministic combat damage multiplier without relying on processor IMUL hardware.
+# Calling Convention (Microsoft x64 ABI):
 #   RCX = M (int64_t multiplicand)
 #   RDX = Q (int64_t multiplier)
 # Returns:
@@ -314,10 +315,11 @@ _coa_mp_booth_multiply_x64:
     ret
 
 # ==============================================================================
-# COA-CO4: coa_mp_pipeline_stream_x64
-# 64-bit 5-Stage Instruction Pipeline Simulator (IF, ID, EX, MEM, WB)
-#
-# Calling Convention:
+# Routine: coa_mp_pipeline_stream_x64
+# - Small Meaning: Simulates 5-stage pipeline throughput and stall bubbles for packets.
+# - Long Form    : COA Multiplayer 64-Bit Instruction Pipeline Latency Simulator
+# - Why We Used It: Models network serialization lag and hardware forwarding speedup.
+# Calling Convention (Microsoft x64 ABI):
 #   RCX = packetCount (int64_t N)
 #   RDX = mode        (int64_t mode: 0=Ideal, 1=RAW Hazard, 2=Forwarding)
 #   R8  = outCycles   (int64_t*) 64-bit pointer
@@ -362,11 +364,17 @@ _coa_mp_pipeline_stream_x64:
     ret
 
 # ==============================================================================
-# Interactive 64-bit Demonstrator: coa_demo_multiplayer_x64
-# Formatted output displaying 64-bit registers, condition flags, and calculations
+# Routine: coa_demo_multiplayer_x64 / coa_demo_multiplayer
+# - Small Meaning: Interactive master runner demonstrating all CO1-CO4 modules in multiplayer context.
+# - Long Form    : COA Multiplayer Architecture Master Demonstrator
+# - Why We Used It: Validates complete end-to-end integration of 64-bit COA suite.
 # ==============================================================================
 .global coa_demo_multiplayer_x64
 .global _coa_demo_multiplayer_x64
+.global coa_demo_multiplayer
+.global _coa_demo_multiplayer
+coa_demo_multiplayer:
+_coa_demo_multiplayer:
 coa_demo_multiplayer_x64:
 _coa_demo_multiplayer_x64:
     push rbp

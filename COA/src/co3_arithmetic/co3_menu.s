@@ -1,107 +1,113 @@
 # ==============================================================================
-# AIRSTRIKE 80386 Assembly Suite - CO3: Menu & Master Dispatcher
-# GNU Assembler (GAS) - Intel Syntax (noprefix)
-# Target: Intel 80386 (32-bit cdecl)
+# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO3: MENU & MASTER DISPATCHER
+# Interactive Submenu for Computer Arithmetic Algorithms
+# Satisfies Course Outcome: COA-CO3
+# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
+.align 8
 co3_menu_hdr:
-    .asciz "\n==============================================================================\n            CO3: COMPUTER ARITHMETIC ALGORITHMS SUBMENU                       \n==============================================================================\n  [1] Booth's Signed Binary Multiplication (Step-by-Step Table)\n  [2] Restoring Binary Division (Step-by-Step Table)\n  [3] Multi-Precision Carry (ADC) & Signed Overflow (OF Flag) Demo\n  [4] Booth Multiplier Gunship (COA-CO3: Signed Multiplication & Saturation)\n  [5] Run All CO3 Demonstrations Sequentially\n  [6] Return to Main Menu\n==============================================================================\n  Enter choice [1-6]: "
+    .asciz "\n==============================================================================\n            CO3: COMPUTER ARITHMETIC ALGORITHMS SUBMENU (64-BIT)              \n==============================================================================\n  [1] Booth's Signed Binary Multiplication (Step-by-Step Table)\n  [2] Restoring Binary Division (Step-by-Step Table)\n  [3] 128-Bit Multi-Precision Carry (ADC) & Signed Overflow (OF Flag) Demo\n  [4] Booth Multiplier Gunship (COA-CO3: Signed Multiplication & Saturation)\n  [5] Run All CO3 Demonstrations Sequentially\n  [6] Return to Main Menu\n==============================================================================\n  Enter choice [1-6]: "
 
 .text
 
-# ------------------------------------------------------------------------------
-# co3_menu_loop: Interactive submenu for CO3
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: co3_menu_loop
+# - Small Meaning: Interactive dispatcher for CO3 arithmetic algorithm modules.
+# - Long Form    : CO3 Interactive Submenu Loop
+# - Why We Used It: Routes console selections to Booth, Restoring, and Overflow routines.
+# ==============================================================================
+.global co3_menu_loop
 .global _co3_menu_loop
+co3_menu_loop:
 _co3_menu_loop:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    push rbx
 
 .L_co3_loop:
-    push offset co3_menu_hdr
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + co3_menu_hdr]
+    call print_str
 
-    call _read_int
-    mov ebx, eax
+    call read_int
+    mov rbx, rax
 
-    cmp ebx, 1
+    cmp rbx, 1
     je .L_co3_opt1
-    cmp ebx, 2
+    cmp rbx, 2
     je .L_co3_opt2
-    cmp ebx, 3
+    cmp rbx, 3
     je .L_co3_opt3
-    cmp ebx, 4
+    cmp rbx, 4
     je .L_co3_opt4
-    cmp ebx, 5
+    cmp rbx, 5
     je .L_co3_opt5
-    cmp ebx, 6
+    cmp rbx, 6
     je .L_co3_exit
-    cmp ebx, -1
+    cmp rbx, -1
     je .L_co3_exit
     jmp .L_co3_loop
 
 .L_co3_opt1:
-    call _co3_demo_booth
+    call co3_demo_booth
     jmp .L_co3_loop
 
 .L_co3_opt2:
-    call _co3_demo_restoring_div
+    call co3_demo_restoring_div
     jmp .L_co3_loop
 
 .L_co3_opt3:
-    call _co3_demo_carry_overflow
+    call co3_demo_carry_overflow
     jmp .L_co3_loop
 
 .L_co3_opt4:
-    call _coa_demo_booth_gunship
+    call coa_demo_booth_gunship
     jmp .L_co3_loop
 
 .L_co3_opt5:
-    call _co3_run_all
+    call co3_run_all
     jmp .L_co3_loop
 
 .L_co3_exit:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# co3_run_all: Runs Booth, Restoring Div, and Carry/Overflow sequentially
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: co3_run_all
+# - Small Meaning: Sequentially executes all CO3 demonstrations.
+# - Long Form    : CO3 Run All Arithmetic Demonstrations Batch Driver
+# - Why We Used It: Verifies all arithmetic algorithm implementations in single test pass.
+# ==============================================================================
+.global co3_run_all
 .global _co3_run_all
+co3_run_all:
 _co3_run_all:
-    push ebp
-    mov ebp, esp
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
 
-    # Preset Booth demo: 7 * -3 = -21
-    push 1                      # verbose = 1
-    push -3                     # Q
-    push 7                      # M
-    call _asm_booth_multiply
-    add esp, 12
+    # Run default Booth: (-7 * 5)
+    mov rcx, -7
+    mov rdx, 5
+    mov r8,  1
+    call asm_booth_multiply
 
-    # Preset Restoring Div demo: 23 / 5 = 4 rem 3
-    push 0                      # dummy out_rem (not needed in demo)
-    push 1                      # verbose = 1
-    push 0
-    push 5                      # Divisor
-    push 23                     # Dividend
-    call _asm_restoring_divide
-    add esp, 20
+    # Run default Restoring Division: (14 / 3)
+    mov rcx, 14
+    mov rdx, 3
+    lea r8,  [rip + div_out_rem]
+    mov r9,  1
+    call asm_restoring_divide
 
-    # Carry & Overflow demo
-    call _co3_demo_carry_overflow
+    call co3_demo_carry_overflow
+    call coa_demo_booth_gunship
 
-    mov esp, ebp
-    pop ebp
+    mov rsp, rbp
+    pop rbp
     ret

@@ -1,201 +1,231 @@
 # ==============================================================================
-# AIRSTRIKE 80386 Assembly Suite - CO3: Carry & Overflow Demonstrations
+# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO3: CARRY & OVERFLOW DEMONSTRATIONS
 # Implements:
-#   3. Binary Addition with Carry Detection & ADC Multi-Precision
-#   4. Signed Arithmetic Overflow Detection (OF Flag & JO)
-# GNU Assembler (GAS) - Intel Syntax (noprefix)
-# Target: Intel 80386 (32-bit cdecl)
+#   Prog 3. 128-Bit Multi-Precision Binary Addition with Carry (ADC)
+#   Prog 4. Signed 64-Bit Arithmetic Overflow Detection (OF Flag & JO)
+# Satisfies Course Outcome: COA-CO3 (Computer Arithmetic - Flags & Multi-Precision)
+# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
+.align 8
 co3_arith_header:
-    .asciz "\n==============================================================================\n        CO3: BINARY ADDITION WITH CARRY & SIGNED OVERFLOW DETECTION           \n==============================================================================\n"
+    .asciz "\n==============================================================================\n   CO3: 128-BIT BINARY ADDITION WITH CARRY (ADC) & 64-BIT SIGNED OVERFLOW    \n==============================================================================\n"
 
 sec_carry_title:
-    .asciz "\n--- 1. MULTI-PRECISION BINARY ADDITION WITH CARRY (ADC) ---\n"
+    .asciz "\n--- 1. 128-BIT MULTI-PRECISION BINARY ADDITION WITH CARRY (ADC) ---\n"
 carry_demo_fmt:
-    .asciz "  64-bit Addition on 32-bit 80386 Architecture:\n    Operand 1: 0x%08X %08X\n  + Operand 2: 0x%08X %08X\n  ---------------------------------------\n    Sum      : 0x%08X %08X (Carry between 32-bit words = %d)\n"
+    .asciz "  128-bit Addition on 64-bit Architecture:\n    Operand 1: 0x%016llX %016llX\n  + Operand 2: 0x%016llX %016llX\n  ---------------------------------------------------------\n    Sum      : 0x%016llX %016llX (Carry between 64-bit quadwords = %lld)\n"
 
 sec_overflow_title:
-    .asciz "\n--- 2. SIGNED ARITHMETIC OVERFLOW DEMONSTRATION (OF FLAG) ---\n"
+    .asciz "\n--- 2. SIGNED 64-BIT ARITHMETIC OVERFLOW DEMONSTRATION (OF FLAG) ---\n"
 overflow_case1_fmt:
-    .asciz "  Case 1: Positive + Positive -> Negative Overflow\n    A = %d (0x%08X)\n  + B = %d (0x%08X)\n  ---------------------------------------\n    Sum = %d (0x%08X) -> OF = %d (SIGNED OVERFLOW!)\n"
+    .asciz "  Case 1: Positive + Positive -> Negative Overflow\n    A = %lld (0x%016llX)\n  + B = %lld (0x%016llX)\n  ---------------------------------------------------------\n    Sum = %lld (0x%016llX) -> OF = %lld (SIGNED OVERFLOW!)\n"
 overflow_case2_fmt:
-    .asciz "  Case 2: Negative + Negative -> Positive Overflow\n    A = %d (0x%08X)\n  + B = %d (0x%08X)\n  ---------------------------------------\n    Sum = %d (0x%08X) -> OF = %d (SIGNED OVERFLOW!)\n"
+    .asciz "  Case 2: Negative + Negative -> Positive Overflow\n    A = %lld (0x%016llX)\n  + B = %lld (0x%016llX)\n  ---------------------------------------------------------\n    Sum = %lld (0x%016llX) -> OF = %lld (SIGNED OVERFLOW!)\n"
 no_overflow_fmt:
-    .asciz "  Case 3: Valid Addition (No Overflow)\n    A = %d (0x%08X) + B = %d (0x%08X) -> Sum = %d (0x%08X), OF = %d (Valid)\n==============================================================================\n"
+    .asciz "  Case 3: Valid 64-Bit Addition (No Overflow)\n    A = %lld (0x%016llX) + B = %lld (0x%016llX) -> Sum = %lld (0x%016llX), OF = %lld (Valid)\n==============================================================================\n"
 
 .text
 
-# ------------------------------------------------------------------------------
-# asm_add_with_carry_64: Adds two 64-bit integers on 32-bit registers
-# Prototype: void asm_add_with_carry_64(uint32_t a_lo, uint32_t a_hi,
-#                                       uint32_t b_lo, uint32_t b_hi,
-#                                       uint32_t* out_lo, uint32_t* out_hi, int* out_cf)
-# ------------------------------------------------------------------------------
-.global _asm_add_with_carry_64
-_asm_add_with_carry_64:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+# ==============================================================================
+# Routine: asm_add_with_carry_128
+# - Small Meaning: Adds two 128-bit integers using 64-bit ADD and ADC instructions.
+# - Long Form    : Assembly 128-Bit Multi-Precision Addition with Carry
+# - Why We Used It: Accumulates orbital fleet coordinates and 128-bit combat timestamps.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = uint64_t a_lo
+#   RDX = uint64_t a_hi
+#   R8  = uint64_t b_lo
+#   R9  = uint64_t b_hi
+#   [RBP + 48] = uint64_t* out_lo (5th parameter)
+#   [RBP + 56] = uint64_t* out_hi (6th parameter)
+#   [RBP + 64] = int64_t*  out_cf (7th parameter)
+# ==============================================================================
+.global asm_add_with_carry_128
+.global _asm_add_with_carry_128
+asm_add_with_carry_128:
+_asm_add_with_carry_128:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rsi
+    push rdi
+    push r12
+    push r13
 
-    mov eax, [ebp + 8]          # a_lo
-    mov edx, [ebp + 12]         # a_hi
-    mov ebx, [ebp + 16]         # b_lo
-    mov ecx, [ebp + 20]         # b_hi
+    mov rax, rcx                # RAX = a_lo
+    mov r10, rdx                # R10 = a_hi
+    mov rbx, r8                 # RBX = b_lo
+    mov r11, r9                 # R11 = b_hi
 
-    # Add lower 32-bit words
-    add eax, ebx                # EAX = a_lo + b_lo, generates Carry Flag (CF)
-    setc bl                     # bl = CF (1 if carry generated from low word)
+    # --------------------------------------------------------------------------
+    # ADD RAX, RBX:
+    # - Small Meaning: Add lower 64-bit quadwords and generate hardware Carry Flag (CF)
+    # - Long Form    : Add Register Base to Register A Extended
+    # - Why We Used It: Sets CF if unsigned sum exceeds 2^64 - 1.
+    # --------------------------------------------------------------------------
+    add rax, rbx                # RAX = a_lo + b_lo, sets CF
+    setc sil                    # SIL = 1 if carry generated, else 0
+    movzx rsi, sil              # RSI = carry between low and high quadwords
 
-    # Add upper 32-bit words with Carry (ADC)
-    # Restore CF for ADC
-    shr bl, 1                   # sets CF if bl was 1
-    adc edx, ecx                # EDX = a_hi + b_hi + CF
+    # --------------------------------------------------------------------------
+    # ADC R10, R11:
+    # - Small Meaning: Add upper 64-bit quadwords incorporating low quadword Carry Flag
+    # - Long Form    : Add with Carry Register R11 into Register R10
+    # - Why We Used It: Propagates mathematical carry across 64-bit register boundary.
+    # --------------------------------------------------------------------------
+    shr sil, 1                  # Restore CF into RFLAGS from SIL
+    adc r10, r11                # R10 = a_hi + b_hi + CF
 
-    setc cl                     # cl = carry out from high word
+    setc dil                    # DIL = carry out from upper 64 bits
+    movzx rdi, dil
 
-    # Store results
-    mov esi, [ebp + 24]         # out_lo
-    test esi, esi
+    # Store results via pointer arguments passed on stack
+    mov r12, [rbp + 48]         # out_lo
+    test r12, r12
     jz .L_skip_lo
-    mov [esi], eax
+    mov [r12], rax
 .L_skip_lo:
-    mov esi, [ebp + 28]         # out_hi
-    test esi, esi
+    mov r12, [rbp + 56]         # out_hi
+    test r12, r12
     jz .L_skip_hi
-    mov [esi], edx
+    mov [r12], r10
 .L_skip_hi:
-    mov esi, [ebp + 32]         # out_cf
-    test esi, esi
-    jz .L_add64_done
-    movzx ecx, cl
-    mov [esi], ecx
+    mov r12, [rbp + 64]         # out_cf
+    test r12, r12
+    jz .L_add128_done
+    mov [r12], rsi
 
-.L_add64_done:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+.L_add128_done:
+    pop r13
+    pop r12
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# co3_demo_carry_overflow: Complete demonstration of Carry and Overflow
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: co3_demo_carry_overflow
+# - Small Meaning: Comprehensive demonstration of multi-precision carry and signed overflow.
+# - Long Form    : CO3 Carry and Signed Overflow Demonstration Runner
+# - Why We Used It: Validates processor condition flags CF and OF under boundary conditions.
+# ==============================================================================
+.global co3_demo_carry_overflow
 .global _co3_demo_carry_overflow
+co3_demo_carry_overflow:
 _co3_demo_carry_overflow:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 96                 # Stack allocation for parameters and shadow space
+    push rbx
+    push rsi
+    push rdi
 
-    push offset co3_arith_header
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + co3_arith_header]
+    call print_str
 
-    # 1. 64-bit Addition with ADC
-    # Op 1: 0x00000001 FFFFFFFF
-    # Op 2: 0x00000002 00000001
-    # Expected Sum: 0x00000004 00000000 (Low sum produces Carry, high sum is 1 + 2 + 1 = 4)
-    push offset sec_carry_title
-    call _print_str
-    add esp, 4
+    # 1. 128-bit Addition with ADC
+    # Op 1: 0x0000000000000001 FFFFFFFFFFFFFFFF
+    # Op 2: 0x0000000000000002 0000000000000001
+    # Expected Sum: 0x0000000000000004 0000000000000000 (Carry = 1)
+    lea rcx, [rip + sec_carry_title]
+    call print_str
 
-    mov eax, 0xFFFFFFFF         # a_lo
-    mov edx, 0x00000001         # a_hi
-    mov ebx, 0x00000001         # b_lo
-    mov ecx, 0x00000002         # b_hi
+    mov rax, 0xFFFFFFFFFFFFFFFF # a_lo
+    mov r10, 0x0000000000000001 # a_hi
+    mov rbx, 0x0000000000000001 # b_lo
+    mov r11, 0x0000000000000002 # b_hi
 
-    add eax, ebx                # 0xFFFFFFFF + 1 = 0, CF = 1
-    setc bl
-    movzx esi, bl               # esi = CF
+    add rax, rbx                # Low quadword sum = 0, CF = 1
+    setc sil
+    movzx rsi, sil
 
-    shr bl, 1                   # restore CF
-    adc edx, ecx                # 1 + 2 + 1 = 4
+    shr sil, 1                  # Restore CF
+    adc r10, r11                # High quadword sum = 1 + 2 + 1 = 4
 
-    push esi                    # Carry bit
-    push eax                    # Sum lo
-    push edx                    # Sum hi
-    push 1                      # b_lo
-    push 2                      # b_hi
-    push 0xFFFFFFFF             # a_lo
-    push 1                      # a_hi
-    push offset carry_demo_fmt
-    call _printf
-    add esp, 32
+    lea rcx, [rip + carry_demo_fmt]
+    mov rdx, 1                  # a_hi
+    mov r8,  0xFFFFFFFFFFFFFFFF # a_lo
+    mov r9,  2                  # b_hi
+    mov qword ptr [rsp + 32], 1 # b_lo
+    mov [rsp + 40], r10         # Sum hi
+    mov [rsp + 48], rax         # Sum lo
+    mov [rsp + 56], rsi         # Carry bit
+    call printf
 
-    # 2. Signed Overflow Demonstrations
-    push offset sec_overflow_title
-    call _print_str
-    add esp, 4
+    # 2. Signed 64-Bit Overflow Demonstrations
+    lea rcx, [rip + sec_overflow_title]
+    call print_str
 
-    # Case 1: Pos + Pos = Neg
-    mov eax, 0x7FFFFFFF         # +2,147,483,647
-    mov ebx, 1                  # +1
-    mov ecx, eax
-    add ecx, ebx                # 0x80000000 (-2,147,483,648)
-    seto dl
-    movzx edx, dl
+    # Case 1: Pos + Pos = Neg Overflow
+    # A = 0x7FFFFFFFFFFFFFFF (+9,223,372,036,854,775,807)
+    # B = 1
+    # Sum = 0x8000000000000000 (-9,223,372,036,854,775,808) -> OF = 1
+    mov rax, 0x7FFFFFFFFFFFFFFF
+    mov rbx, 1
+    mov r10, rax
+    add r10, rbx
+    seto sil                    # SIL = 1 if signed overflow occurred
+    movzx rsi, sil
 
-    push edx                    # OF
-    push ecx                    # Sum hex
-    push ecx                    # Sum dec
-    push ebx                    # B hex
-    push ebx                    # B dec
-    push eax                    # A hex
-    push eax                    # A dec
-    push offset overflow_case1_fmt
-    call _printf
-    add esp, 32
+    lea rcx, [rip + overflow_case1_fmt]
+    mov rdx, rax                # A dec
+    mov r8,  rax                # A hex
+    mov r9,  rbx                # B dec
+    mov [rsp + 32], rbx         # B hex
+    mov [rsp + 40], r10         # Sum dec
+    mov [rsp + 48], r10         # Sum hex
+    mov [rsp + 56], rsi         # OF flag
+    call printf
 
-    # Case 2: Neg + Neg = Pos
-    mov eax, 0x80000000         # -2,147,483,648
-    mov ebx, 0xFFFFFFFF         # -1
-    mov ecx, eax
-    add ecx, ebx                # 0x7FFFFFFF (+2,147,483,647)
-    seto dl
-    movzx edx, dl
+    # Case 2: Neg + Neg = Pos Overflow
+    # A = 0x8000000000000000 (-9,223,372,036,854,775,808)
+    # B = 0xFFFFFFFFFFFFFFFF (-1)
+    # Sum = 0x7FFFFFFFFFFFFFFF (+9,223,372,036,854,775,807) -> OF = 1
+    mov rax, 0x8000000000000000
+    mov rbx, 0xFFFFFFFFFFFFFFFF
+    mov r10, rax
+    add r10, rbx
+    seto sil
+    movzx rsi, sil
 
-    push edx                    # OF
-    push ecx                    # Sum hex
-    push ecx                    # Sum dec
-    push ebx                    # B hex
-    push ebx                    # B dec
-    push eax                    # A hex
-    push eax                    # A dec
-    push offset overflow_case2_fmt
-    call _printf
-    add esp, 32
+    lea rcx, [rip + overflow_case2_fmt]
+    mov rdx, rax
+    mov r8,  rax
+    mov r9,  rbx
+    mov [rsp + 32], rbx
+    mov [rsp + 40], r10
+    mov [rsp + 48], r10
+    mov [rsp + 56], rsi
+    call printf
 
-    # Case 3: Normal Valid Addition
-    mov eax, 500
-    mov ebx, 300
-    mov ecx, eax
-    add ecx, ebx
-    seto dl
-    movzx edx, dl
+    # Case 3: Valid Addition (No Overflow)
+    # A = 5000000000, B = 3000000000 -> Sum = 8000000000, OF = 0
+    mov rax, 5000000000
+    mov rbx, 3000000000
+    mov r10, rax
+    add r10, rbx
+    seto sil
+    movzx rsi, sil
 
-    push edx
-    push ecx
-    push ecx
-    push ebx
-    push ebx
-    push eax
-    push eax
-    push offset no_overflow_fmt
-    call _printf
-    add esp, 32
+    lea rcx, [rip + no_overflow_fmt]
+    mov rdx, rax
+    mov r8,  rax
+    mov r9,  rbx
+    mov [rsp + 32], rbx
+    mov [rsp + 40], r10
+    mov [rsp + 48], r10
+    mov [rsp + 56], rsi
+    call printf
 
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
-
