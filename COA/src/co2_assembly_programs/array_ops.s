@@ -1,442 +1,488 @@
 # ==============================================================================
-# AIRSTRIKE 80386 Assembly Suite - CO2: Array Programs
+# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO2: ARRAY OPERATIONS
 # Implements:
-#   3. Largest and Smallest in an array
-#   4. Sum of array elements
-#   7. Linear Search in an array
-#   8. Reversing an array in-place
-#   9. Counting Positive, Negative, and Zero elements
-# GNU Assembler (GAS) - Intel Syntax (noprefix)
-# Target: Intel 80386 (32-bit cdecl)
+#   Prog 3. Largest and Smallest Quadword in an Array
+#   Prog 4. Sum and Average of 64-bit Array Elements
+#   Prog 7. Linear Search in 64-bit Scaled-Index Array
+#   Prog 8. Reversing a 64-bit Quadword Array In-Place
+#   Prog 9. Counting Positive, Negative, and Zero Quadwords
+# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
+.align 8
 array_demo_title:
-    .asciz "\n--- CO2 Programs 3, 4, 7, 8, 9: Array Operations Demonstration ---\n"
+    .asciz "\n--- CO2 Programs 3, 4, 7, 8, 9: 64-Bit Array Operations Demonstration ---\n"
 arr_initial_msg:
-    .asciz "  Initial Array Elements (Size %d): [ "
+    .asciz "  Initial Array Elements (Size %lld): [ "
 arr_item_fmt:
-    .asciz "%d "
+    .asciz "%lld "
 arr_close_fmt:
     .asciz "]\n"
 
 min_max_fmt:
-    .asciz "  3. Largest and Smallest: Minimum = %d, Maximum = %d\n"
+    .asciz "  3. Largest and Smallest: Minimum = %lld, Maximum = %lld\n"
 sum_fmt:
-    .asciz "  4. Array Sum           : Total Sum = %d (Average = %d)\n"
+    .asciz "  4. Array Sum           : Total Sum = %lld (Average = %lld)\n"
 search_prompt:
-    .asciz "  Enter integer to linearly search in array: "
+    .asciz "  Enter 64-bit integer to linearly search in array: "
 search_found_fmt:
-    .asciz "  7. Linear Search Result: Target %d FOUND at index %d!\n"
+    .asciz "  7. Linear Search Result: Target %lld FOUND at index %lld!\n"
 search_notfound_fmt:
-    .asciz "  7. Linear Search Result: Target %d NOT FOUND (Index -1).\n"
+    .asciz "  7. Linear Search Result: Target %lld NOT FOUND (Index -1).\n"
 rev_msg:
     .asciz "  8. Reversed Array      : [ "
 counts_fmt:
-    .asciz "  9. Element Counts      : Positive = %d, Negative = %d, Zeros = %d\n"
+    .asciz "  9. Element Counts      : Positive = %lld, Negative = %lld, Zeros = %lld\n"
 
-# Preset test array for demonstration
+# Preset 64-bit test array for telemetry and combat coordinate simulation
 demo_arr:
-    .long 45, -12, 88, 0, -34, 102, -5, 23
+    .quad 45, -12, 88, 0, -34, 102, -5, 23
 demo_arr_size:
-    .long 8
+    .quad 8
 
 .bss
-.lcomm min_val, 4
-.lcomm max_val, 4
-.lcomm pos_cnt, 4
-.lcomm neg_cnt, 4
-.lcomm zero_cnt, 4
+.align 8
+.lcomm min_val, 8
+.lcomm max_val, 8
+.lcomm pos_cnt, 8
+.lcomm neg_cnt, 8
+.lcomm zero_cnt, 8
 
 .text
 
-# ------------------------------------------------------------------------------
-# asm_find_min_max: Finds smallest and largest 32-bit signed integer in array
-# Prototype: void asm_find_min_max(const int* arr, int size, int* out_min, int* out_max)
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: asm_find_min_max
+# - Small Meaning: Locates the minimum and maximum 64-bit quadwords in an array.
+# - Long Form    : Assembly Find Minimum and Maximum (64-Bit Mode)
+# - Why We Used It: Evaluates mission telemetry extreme boundaries (e.g., peak shield vs critical hull).
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = const int64_t* arr (Base pointer to 64-bit quadword array)
+#   RDX = int64_t size        (Number of elements)
+#   R8  = int64_t* out_min    (Pointer to store minimum quadword)
+#   R9  = int64_t* out_max    (Pointer to store maximum quadword)
+# ==============================================================================
+.global asm_find_min_max
 .global _asm_find_min_max
+asm_find_min_max:
 _asm_find_min_max:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    # --------------------------------------------------------------------------
+    # PUSH RBP / MOV RBP, RSP:
+    # - Small Meaning: Set up 64-bit stack frame base pointer
+    # - Long Form    : Push Register Base Pointer / Move Stack Pointer to Base Pointer
+    # - Why We Used It: Establishes standard ABI frame record for debugging and unwinding.
+    # --------------------------------------------------------------------------
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rsi
+    push rdi
 
-    mov esi, [ebp + 8]          # esi = array pointer
-    mov ecx, [ebp + 12]         # ecx = size
-
-    cmp ecx, 0
+    # Validate size > 0
+    cmp rdx, 0
     jle .L_minmax_exit
 
-    mov eax, [esi]              # eax = current min
-    mov edx, [esi]              # edx = current max
-    add esi, 4
-    dec ecx
+    mov rsi, rcx                # RSI = array pointer (Source Index)
+    mov rcx, rdx                # RCX = element loop counter
+    mov rax, [rsi]              # RAX = current minimum candidate (first element)
+    mov rbx, [rsi]              # RBX = current maximum candidate (first element)
+    add rsi, 8                  # Advance pointer to next 64-bit quadword
+    dec rcx                     # Decrement count
     jz .L_minmax_store
 
 .L_minmax_loop:
-    mov ebx, [esi]
-    cmp ebx, eax
+    mov r10, [rsi]              # R10 = load next 64-bit quadword from memory
+    cmp r10, rax
     jge .L_not_min
-    mov eax, ebx                # update min
+    mov rax, r10                # Update minimum
 .L_not_min:
-    cmp ebx, edx
+    cmp r10, rbx
     jle .L_not_max
-    mov edx, ebx                # update max
+    mov rbx, r10                # Update maximum
 .L_not_max:
-    add esi, 4
-    dec ecx
+    add rsi, 8                  # Advance pointer by 8 bytes (64-bit quadword step)
+    dec rcx
     jnz .L_minmax_loop
 
 .L_minmax_store:
-    mov edi, [ebp + 16]         # edi = out_min
-    test edi, edi
+    # --------------------------------------------------------------------------
+    # Store outputs via 64-bit output pointer registers R8 and R9
+    # --------------------------------------------------------------------------
+    test r8, r8
     jz .L_skip_min
-    mov [edi], eax
+    mov [r8], rax               # *out_min = RAX
 .L_skip_min:
-    mov edi, [ebp + 20]         # edi = out_max
-    test edi, edi
+    test r9, r9
     jz .L_minmax_exit
-    mov [edi], edx
+    mov [r9], rbx               # *out_max = RBX
 
 .L_minmax_exit:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# asm_array_sum: Computes sum of 32-bit signed integers in array
-# Prototype: int asm_array_sum(const int* arr, int size)
-# Returns: eax = total sum
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: asm_array_sum
+# - Small Meaning: Computes the 64-bit cumulative sum of array elements.
+# - Long Form    : Assembly 64-Bit Array Sum Accumulator
+# - Why We Used It: Aggregates total combat squadron damage and orbital battery outputs.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = const int64_t* arr (Pointer to array)
+#   RDX = int64_t size       (Count of elements)
+# Returns:
+#   RAX = 64-bit signed total sum
+# ==============================================================================
+.global asm_array_sum
 .global _asm_array_sum
+asm_array_sum:
 _asm_array_sum:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
+    push rbp
+    mov rbp, rsp
+    push rsi
 
-    mov esi, [ebp + 8]          # esi = array pointer
-    mov ecx, [ebp + 12]         # ecx = count
-    xor eax, eax                # eax = sum accumulator
+    mov rsi, rcx                # RSI = array pointer
+    mov rcx, rdx                # RCX = loop counter
+    xor rax, rax                # RAX = 0 (Clear 64-bit sum accumulator)
 
-    test ecx, ecx
+    test rcx, rcx
     jle .L_sum_done
 
 .L_sum_loop:
-    add eax, [esi]
-    add esi, 4
-    dec ecx
+    # --------------------------------------------------------------------------
+    # ADD RAX, [RSI]:
+    # - Small Meaning: Add 64-bit memory quadword into accumulator
+    # - Long Form    : Add memory content to Register A Extended
+    # - Why We Used It: High-throughput 64-bit accumulation without register spill.
+    # --------------------------------------------------------------------------
+    add rax, [rsi]
+    add rsi, 8                  # Advance pointer by 8 bytes (64 bits)
+    dec rcx
     jnz .L_sum_loop
 
 .L_sum_done:
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rsi
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# asm_linear_search: Searches for target integer in array
-# Prototype: int asm_linear_search(const int* arr, int size, int target)
-# Returns: eax = index if found, or -1 if not found
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: asm_linear_search
+# - Small Meaning: Performs linear scan for a 64-bit target key in array.
+# - Long Form    : Assembly 64-Bit Linear Search
+# - Why We Used It: Scans active squadron radar targets to match enemy craft UID.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = const int64_t* arr (Pointer to array)
+#   RDX = int64_t size       (Number of elements)
+#   R8  = int64_t target     (Target value to locate)
+# Returns:
+#   RAX = Index of target (0-based) if found, or -1 if absent.
+# ==============================================================================
+.global asm_linear_search
 .global _asm_linear_search
+asm_linear_search:
 _asm_linear_search:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
 
-    mov esi, [ebp + 8]          # esi = array pointer
-    mov ecx, [ebp + 12]         # ecx = size
-    mov edx, [ebp + 16]         # edx = target
-    xor ebx, ebx                # ebx = current index
+    xor rax, rax                # RAX = 0 (Loop index counter i)
 
 .L_search_loop:
-    cmp ebx, ecx
-    jge .L_search_not_found
-    cmp [esi + ebx*4], edx
-    je .L_search_found
-    inc ebx
+    cmp rax, rdx
+    jge .L_search_not_found     # Reached end of array without match
+
+    # --------------------------------------------------------------------------
+    # CMP [RCX + RAX*8], R8:
+    # - Small Meaning: Compare target with element using 64-bit SIB addressing
+    # - Long Form    : Compare Scale-Index-Base [Base:RCX + Index:RAX * Scale:8]
+    # - Why We Used It: Single-cycle memory operand fetch scaled by 8 bytes per quadword.
+    # --------------------------------------------------------------------------
+    cmp [rcx + rax*8], r8
+    je .L_search_found          # Match found! RAX contains index.
+
+    inc rax
     jmp .L_search_loop
 
 .L_search_found:
-    mov eax, ebx
-    jmp .L_search_exit
-
-.L_search_not_found:
-    mov eax, -1
-
-.L_search_exit:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# asm_reverse_array: Reverses an array in-place using two-pointer swap
-# Prototype: void asm_reverse_array(int* arr, int size)
-# ------------------------------------------------------------------------------
+.L_search_not_found:
+    mov rax, -1                 # Sentinel return -1 (Not found)
+    mov rsp, rbp
+    pop rbp
+    ret
+
+# ==============================================================================
+# Routine: asm_reverse_array
+# - Small Meaning: Inverts array element order in-place using two-pointer swap.
+# - Long Form    : Assembly 64-Bit In-Place Array Reversal
+# - Why We Used It: Reverses flight trajectory history and time-series replay frames.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = int64_t* arr (Pointer to start of array)
+#   RDX = int64_t size (Number of elements)
+# ==============================================================================
+.global asm_reverse_array
 .global _asm_reverse_array
+asm_reverse_array:
 _asm_reverse_array:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rsi
+    push rdi
 
-    mov esi, [ebp + 8]          # esi = left pointer (&arr[0])
-    mov ecx, [ebp + 12]         # ecx = size
-    cmp ecx, 1
-    jle .L_rev_done
+    cmp rdx, 1
+    jle .L_rev_done             # Arrays of size 0 or 1 are already reversed
 
-    lea edi, [esi + ecx*4 - 4]  # edi = right pointer (&arr[size-1])
+    mov rsi, rcx                # RSI = Left pointer (&arr[0])
+    # --------------------------------------------------------------------------
+    # LEA RDI, [RCX + RDX*8 - 8]:
+    # - Small Meaning: Calculate memory address of last quadword in array
+    # - Long Form    : Load Effective Address of right boundary pointer
+    # - Why We Used It: Calculates &arr[size - 1] in one clock cycle without multiplication.
+    # --------------------------------------------------------------------------
+    lea rdi, [rcx + rdx*8 - 8]  # RDI = Right pointer (&arr[size - 1])
 
 .L_rev_loop:
-    cmp esi, edi
-    jge .L_rev_done
+    cmp rsi, rdi
+    jge .L_rev_done             # Pointers met or crossed in middle
 
-    mov eax, [esi]
-    mov ebx, [edi]
-    mov [esi], ebx              # swap
-    mov [edi], eax
+    # Swap 64-bit elements using RAX and R10
+    mov rax, [rsi]              # RAX = *left
+    mov r10, [rdi]              # R10 = *right
+    mov [rsi], r10              # *left = *right
+    mov [rdi], rax              # *right = *left
 
-    add esi, 4
-    sub edi, 4
+    add rsi, 8                  # Advance left pointer rightward (+8 bytes)
+    sub rdi, 8                  # Advance right pointer leftward (-8 bytes)
     jmp .L_rev_loop
 
 .L_rev_done:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# asm_count_pos_neg: Counts positive (>0), negative (<0), and zero elements
-# Prototype: void asm_count_pos_neg(const int* arr, int size, int* pos, int* neg, int* zero)
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: asm_count_pos_neg
+# - Small Meaning: Classifies and counts positive, negative, and zero quadwords.
+# - Long Form    : Assembly 64-Bit Positive, Negative, and Zero Partition Counter
+# - Why We Used It: Evaluates thruster vectors (forward positive, reverse negative, stationary zero).
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = const int64_t* arr (Array pointer)
+#   RDX = int64_t size       (Array size)
+#   R8  = int64_t* pos       (Pointer to positive counter)
+#   R9  = int64_t* neg       (Pointer to negative counter)
+#   [RBP + 48] = int64_t* zero (5th parameter passed on stack)
+# ==============================================================================
+.global asm_count_pos_neg
 .global _asm_count_pos_neg
+asm_count_pos_neg:
 _asm_count_pos_neg:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rsi
+    push rdi
 
-    mov esi, [ebp + 8]          # esi = arr
-    mov ecx, [ebp + 12]         # ecx = size
+    mov rsi, rcx                # RSI = array pointer
+    mov rcx, rdx                # RCX = element counter
+    xor rax, rax                # RAX = positive counter = 0
+    xor rbx, rbx                # RBX = negative counter = 0
+    xor r10, r10                # R10 = zero counter = 0
 
-    xor eax, eax                # eax = pos count
-    xor ebx, ebx                # ebx = neg count
-    xor edx, edx                # edx = zero count
-
-    test ecx, ecx
+    test rcx, rcx
     jle .L_cnt_store
 
 .L_cnt_loop:
-    mov edi, [esi]
-    cmp edi, 0
+    mov r11, [rsi]              # Load 64-bit quadword
+    cmp r11, 0
     jg .L_cnt_pos
     jl .L_cnt_neg
-    inc edx                     # zero
+    inc r10                     # Is zero
     jmp .L_cnt_next
 
 .L_cnt_pos:
-    inc eax
+    inc rax                     # Increment positive count
     jmp .L_cnt_next
 
 .L_cnt_neg:
-    inc ebx
+    inc rbx                     # Increment negative count
 
 .L_cnt_next:
-    add esi, 4
-    dec ecx
+    add rsi, 8                  # Advance by 8 bytes
+    dec rcx
     jnz .L_cnt_loop
 
 .L_cnt_store:
-    mov edi, [ebp + 16]         # out pos
-    test edi, edi
+    test r8, r8
     jz .L_skip_p
-    mov [edi], eax
+    mov [r8], rax               # Store positive count
 .L_skip_p:
-    mov edi, [ebp + 20]         # out neg
-    test edi, edi
+    test r9, r9
     jz .L_skip_n
-    mov [edi], ebx
+    mov [r9], rbx               # Store negative count
 .L_skip_n:
-    mov edi, [ebp + 24]         # out zero
-    test edi, edi
+    mov rdi, [rbp + 48]         # Load 5th parameter from stack shadow frame
+    test rdi, rdi
     jz .L_cnt_exit
-    mov [edi], edx
+    mov [rdi], r10              # Store zero count
 
 .L_cnt_exit:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# co2_demo_arrays: Master demonstration for array operations
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: co2_demo_arrays
+# - Small Meaning: Interactive master runner demonstrating all 5 array routines.
+# - Long Form    : CO2 Demonstration Driver for 64-Bit Array Operations
+# - Why We Used It: Executes comprehensive educational vivas and test suites.
+# ==============================================================================
+.global co2_demo_arrays
 .global _co2_demo_arrays
+co2_demo_arrays:
 _co2_demo_arrays:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64                 # Shadow space (32) + parameter alignment (32)
+    push rbx
+    push rsi
+    push rdi
 
-    push offset array_demo_title
-    call _print_str
-    add esp, 4
+    # Print title
+    lea rcx, [rip + array_demo_title]
+    call print_str
 
     # Print initial array
-    push [demo_arr_size]
-    push offset arr_initial_msg
-    call _printf
-    add esp, 8
+    lea rcx, [rip + arr_initial_msg]
+    mov rdx, [rip + demo_arr_size]
+    call printf
 
-    xor ebx, ebx
+    xor rbx, rbx
 .L_print_init_loop:
-    cmp ebx, [demo_arr_size]
+    cmp rbx, [rip + demo_arr_size]
     jge .L_print_init_done
-    push [demo_arr + ebx*4]
-    push offset arr_item_fmt
-    call _printf
-    add esp, 8
-    inc ebx
+    lea rcx, [rip + arr_item_fmt]
+    lea r10, [rip + demo_arr]
+    mov rdx, [r10 + rbx*8]
+    call printf
+    inc rbx
     jmp .L_print_init_loop
 
 .L_print_init_done:
-    push offset arr_close_fmt
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + arr_close_fmt]
+    call print_str
 
     # 3. Find Min and Max
-    push offset max_val
-    push offset min_val
-    push [demo_arr_size]
-    push offset demo_arr
-    call _asm_find_min_max
-    add esp, 16
+    lea rcx, [rip + demo_arr]
+    mov rdx, [rip + demo_arr_size]
+    lea r8, [rip + min_val]
+    lea r9, [rip + max_val]
+    call asm_find_min_max
 
-    push [max_val]
-    push [min_val]
-    push offset min_max_fmt
-    call _printf
-    add esp, 12
+    lea rcx, [rip + min_max_fmt]
+    mov rdx, [rip + min_val]
+    mov r8,  [rip + max_val]
+    call printf
 
     # 4. Array Sum & Average
-    push [demo_arr_size]
-    push offset demo_arr
-    call _asm_array_sum
-    add esp, 8
-    mov ebx, eax                # ebx = sum
+    lea rcx, [rip + demo_arr]
+    mov rdx, [rip + demo_arr_size]
+    call asm_array_sum
+    mov rbx, rax                # RBX = sum
 
-    mov eax, ebx
-    cdq
-    idiv dword ptr [demo_arr_size] # eax = average
+    mov rax, rbx
+    cqo                         # Sign-extend RAX into RDX:RAX for 64-bit IDIV
+    idiv qword ptr [rip + demo_arr_size] # RAX = average, RDX = remainder
 
-    push eax
-    push ebx
-    push offset sum_fmt
-    call _printf
-    add esp, 12
+    lea rcx, [rip + sum_fmt]
+    mov rdx, rbx
+    mov r8,  rax
+    call printf
 
     # 7. Linear Search
-    push offset search_prompt
-    call _print_str
-    add esp, 4
-    call _read_int
-    mov ebx, eax                # ebx = target to search
+    lea rcx, [rip + search_prompt]
+    call print_str
+    call read_int               # Returns 64-bit int in RAX
+    mov rbx, rax                # RBX = target to search
 
-    push ebx
-    push [demo_arr_size]
-    push offset demo_arr
-    call _asm_linear_search
-    add esp, 12
+    lea rcx, [rip + demo_arr]
+    mov rdx, [rip + demo_arr_size]
+    mov r8,  rbx
+    call asm_linear_search
 
-    cmp eax, -1
+    cmp rax, -1
     je .L_demo_search_miss
-    push eax
-    push ebx
-    push offset search_found_fmt
-    call _printf
-    add esp, 12
+    lea rcx, [rip + search_found_fmt]
+    mov rdx, rbx
+    mov r8,  rax
+    call printf
     jmp .L_demo_do_rev
 
 .L_demo_search_miss:
-    push ebx
-    push offset search_notfound_fmt
-    call _printf
-    add esp, 8
+    lea rcx, [rip + search_notfound_fmt]
+    mov rdx, rbx
+    call printf
 
 .L_demo_do_rev:
     # 8. Reversing Array
-    push [demo_arr_size]
-    push offset demo_arr
-    call _asm_reverse_array
-    add esp, 8
+    lea rcx, [rip + demo_arr]
+    mov rdx, [rip + demo_arr_size]
+    call asm_reverse_array
 
-    push offset rev_msg
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + rev_msg]
+    call print_str
 
-    xor ebx, ebx
+    xor rbx, rbx
 .L_print_rev_loop:
-    cmp ebx, [demo_arr_size]
+    cmp rbx, [rip + demo_arr_size]
     jge .L_print_rev_done
-    push [demo_arr + ebx*4]
-    push offset arr_item_fmt
-    call _printf
-    add esp, 8
-    inc ebx
+    lea rcx, [rip + arr_item_fmt]
+    lea r10, [rip + demo_arr]
+    mov rdx, [r10 + rbx*8]
+    call printf
+    inc rbx
     jmp .L_print_rev_loop
 
 .L_print_rev_done:
-    push offset arr_close_fmt
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + arr_close_fmt]
+    call print_str
 
-    # Restore original array order
-    push [demo_arr_size]
-    push offset demo_arr
-    call _asm_reverse_array
-    add esp, 8
+    # Restore array order
+    lea rcx, [rip + demo_arr]
+    mov rdx, [rip + demo_arr_size]
+    call asm_reverse_array
 
     # 9. Count Positive, Negative, Zero
-    push offset zero_cnt
-    push offset neg_cnt
-    push offset pos_cnt
-    push [demo_arr_size]
-    push offset demo_arr
-    call _asm_count_pos_neg
-    add esp, 20
+    lea rcx, [rip + demo_arr]
+    mov rdx, [rip + demo_arr_size]
+    lea r8,  [rip + pos_cnt]
+    lea r9,  [rip + neg_cnt]
+    lea r10, [rip + zero_cnt]
+    mov [rsp + 32], r10         # 5th parameter on stack
+    call asm_count_pos_neg
 
-    push [zero_cnt]
-    push [neg_cnt]
-    push [pos_cnt]
-    push offset counts_fmt
-    call _printf
-    add esp, 16
+    lea rcx, [rip + counts_fmt]
+    mov rdx, [rip + pos_cnt]
+    mov r8,  [rip + neg_cnt]
+    mov r9,  [rip + zero_cnt]
+    call printf
 
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
-

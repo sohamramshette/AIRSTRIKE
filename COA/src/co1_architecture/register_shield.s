@@ -1,273 +1,277 @@
 # ==============================================================================
-# AIRSTRIKE 80386 Assembly Suite - CO1: Sub-Register Aegis Sentry
-# Demonstrates 80386 Register Partitioning (EAX -> AX -> AH/AL),
-# SIB Addressing Mode [Base + Index*4 + Disp], and Condition Code Flags (CF, ZF, SF, OF)
-# GNU Assembler (GAS) - Intel Syntax (noprefix)
-# Target: Intel 80386 (32-bit Protected Mode, cdecl)
+# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO1: SUB-REGISTER AEGIS SENTRY
+# Demonstrates 64-bit Register Partitioning (RAX -> EAX -> AX -> AH / AL, R8 -> R8D -> R8W -> R8B),
+# 64-bit Scale-Index-Base (SIB) Addressing [RBX + RSI*8 + 16], and 64-bit RFLAGS
+# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
+.align 8
 aegis_title:
-    .asciz "\n==============================================================================\n        COA-CO1: SUB-REGISTER AEGIS SENTRY - 80386 REGISTER PARTITIONING      \n==============================================================================\n"
+    .asciz "\n==============================================================================\n      COA-CO1: SUB-REGISTER AEGIS SENTRY - 64-BIT REGISTER PARTITIONING        \n==============================================================================\n"
 
 aegis_init_fmt:
-    .asciz "  [INITIAL STATE] Full Aegis Shield Barrier Initialized:\n    EAX (32-bit Composite) = 0x%08X\n    AX  (16-bit Mid-Layer) = 0x%04X\n    AH  (8-bit High Damper)= 0x%02X\n    AL  (8-bit Low Barrier)= 0x%02X\n"
+    .asciz "  [INITIAL STATE] Full Aegis Shield Barrier Initialized:\n    RAX (64-bit Full Quadword) = 0x%016llX\n    EAX (32-bit Doubleword)    = 0x%08X\n    AX  (16-bit Mid-Layer)     = 0x%04X\n    AH  (8-bit High Damper)    = 0x%02X\n    AL  (8-bit Low Barrier)    = 0x%02X\n"
 
 aegis_damage_al_fmt:
-    .asciz "\n  [EVENT 1] Laser Damage Inflicted on Low-Byte Polarizer (AL -= 0x%02X):\n    EAX After Subtraction  = 0x%08X (Bits 7..0 modified)\n    AX  After Subtraction  = 0x%04X\n    AH  Unchanged Layer    = 0x%02X (Bits 15..8 preserved)\n    AL  Remaining Health   = 0x%02X\n"
+    .asciz "\n  [EVENT 1] Laser Damage Inflicted on Low-Byte Polarizer (AL -= 0x%02X):\n    RAX After Subtraction      = 0x%016llX (Bits 7..0 modified)\n    EAX After Subtraction      = 0x%08X\n    AX  After Subtraction      = 0x%04X\n    AH  Unchanged Damper       = 0x%02X (Bits 15..8 preserved)\n    AL  Remaining Low Barrier  = 0x%02X\n"
 
 aegis_recharge_ah_fmt:
-    .asciz "\n  [EVENT 2] Kinetic Capacitor Boost Applied to High-Byte Damper (AH += 0x%02X):\n    EAX After Boost        = 0x%08X (Bits 15..8 modified)\n    AX  After Boost        = 0x%04X\n    AH  Recharged Value    = 0x%02X\n    AL  Preserved Value    = 0x%02X (Bits 7..0 preserved)\n"
+    .asciz "\n  [EVENT 2] Kinetic Capacitor Boost Applied to High-Byte Damper (AH += 0x%02X):\n    RAX After Boost            = 0x%016llX (Bits 15..8 modified)\n    EAX After Boost            = 0x%08X\n    AX  After Boost            = 0x%04X\n    AH  Recharged Damper Value = 0x%02X\n    AL  Preserved Low Barrier  = 0x%02X (Bits 7..0 preserved)\n"
 
 aegis_flags_fmt:
     .asciz "\n  [EVENT 3] Condition Code Flags Under Combat Depletion:\n    Zero Flag (ZF)     = %d (Hull/Shield reduced to exactly 0)\n    Sign Flag (SF)     = %d (Hull over-penetrated, negative value)\n    Carry Flag (CF)    = %d (Unsigned underflow/borrow occurred)\n    Overflow Flag (OF) = %d (Signed two's complement boundary exceeded)\n"
 
 aegis_sib_fmt:
-    .asciz "\n  [EVENT 4] Scaled-Index-Base (SIB) Shield Layer Access [EBX + ESI*4 + 8]:\n    Layer Index %d -> Value = 0x%08X\n==============================================================================\n"
+    .asciz "\n  [EVENT 4] 64-bit Scaled-Index-Base (SIB) Shield Layer Access [RBX + RSI*8 + 16]:\n    Layer Index %lld -> Telemetry Value = 0x%016llX\n==============================================================================\n"
 
-# Dummy SIB buffer for demo
-aegis_layers:
-    .long 0x11111111        # Header offset (+0)
-    .long 0x22222222        # Header offset (+4)
-    .long 0xAAAA0001        # Layer 0 (Offset +8)
-    .long 0xBBBB0002        # Layer 1 (Offset +12)
-    .long 0xCCCC0003        # Layer 2 (Offset +16)
-    .long 0xDDDD0004        # Layer 3 (Offset +20)
+# 64-bit SIB Shield Barrier Telemetry Buffer
+.align 8
+aegis_layers_x64:
+    .quad 0x1111111122222222    # Header offset (+0)
+    .quad 0x3333333344444444    # Header offset (+8)
+    .quad 0xAAAA000000000001    # Layer 0 (Offset +16)
+    .quad 0xBBBB000000000002    # Layer 1 (Offset +24)
+    .quad 0xCCCC000000000003    # Layer 2 (Offset +32)
+    .quad 0xDDDD000000000004    # Layer 3 (Offset +40)
 
 .text
 
-# ------------------------------------------------------------------------------
-# coa_init_aegis_shield: Returns 32-bit initial composite shield in EAX
-# Prototype: unsigned int coa_init_aegis_shield(void)
-# ------------------------------------------------------------------------------
-.global _coa_init_aegis_shield
-_coa_init_aegis_shield:
-    mov eax, 0xA5B6C7D8     # High Word: 0xA5B6, AX: 0xC7D8, AH: 0xC7, AL: 0xD8
+# ==============================================================================
+# Routine: coa_init_aegis_shield_x64
+# - Small Meaning: Initialize 64-bit composite shield state
+# - Long Form    : Computer Organization Architecture Initialize Aegis Shield
+# - Why We Used It: Sets up a distinct 64-bit hex value to prove sub-register partitions.
+# Returns: RAX = 0xFEDCBA98A5B6C7D8
+# ==============================================================================
+.global coa_init_aegis_shield_x64
+.global _coa_init_aegis_shield_x64
+coa_init_aegis_shield_x64:
+_coa_init_aegis_shield_x64:
+    # --------------------------------------------------------------------------
+    # MOV RAX, 0xFEDCBA98A5B6C7D8:
+    # - Small Meaning: Load 64-bit quadword immediate into RAX
+    # - Long Form    : Move 64-bit Constant into Register A Extended
+    # - Why We Used It: Higher 32 bits = 0xFEDCBA98, EAX = 0xA5B6C7D8,
+    #                  AX = 0xC7D8, AH = 0xC7, AL = 0xD8
+    # --------------------------------------------------------------------------
+    mov rax, 0xFEDCBA98A5B6C7D8
     ret
 
-# ------------------------------------------------------------------------------
-# coa_damage_al_layer: Subtracts damage from AL and returns modified EAX
-# Prototype: unsigned int coa_damage_al_layer(unsigned int currentShield, unsigned char dmg)
-# ------------------------------------------------------------------------------
-.global _coa_damage_al_layer
-_coa_damage_al_layer:
-    push ebp
-    mov ebp, esp
-
-    mov eax, [ebp + 8]      # Current shield in EAX
-    mov dl, byte ptr [ebp + 12] # Damage amount
-    sub al, dl              # Subtraction alters AL, AX, and EAX low byte!
-
-    mov esp, ebp
-    pop ebp
-    ret
-
-# ------------------------------------------------------------------------------
-# coa_recharge_ah_layer: Adds recharge to AH and returns modified EAX
-# Prototype: unsigned int coa_recharge_ah_layer(unsigned int currentShield, unsigned char boost)
-# ------------------------------------------------------------------------------
-.global _coa_recharge_ah_layer
-_coa_recharge_ah_layer:
-    push ebp
-    mov ebp, esp
-
-    mov eax, [ebp + 8]      # Current shield in EAX
-    mov dl, byte ptr [ebp + 12] # Boost amount
-    add ah, dl              # Addition alters AH, AX, and EAX bits 15..8!
-
-    mov esp, ebp
-    pop ebp
-    ret
-
-# ------------------------------------------------------------------------------
-# coa_evaluate_shield_flags: Evaluates combat arithmetic flags on 8-bit layer
-# Prototype: unsigned int coa_evaluate_shield_flags(unsigned char val1, unsigned char val2, int isSub)
-# Returns:
-#   EAX = (OF << 3) | (SF << 2) | (ZF << 1) | CF
-# ------------------------------------------------------------------------------
-.global _coa_evaluate_shield_flags
-_coa_evaluate_shield_flags:
-    push ebp
-    mov ebp, esp
-    push ebx
-
-    mov al, byte ptr [ebp + 8]  # val1
-    mov dl, byte ptr [ebp + 12] # val2
-    mov ecx, [ebp + 16]         # isSub flag (1 = SUB, 0 = ADD)
-
-    test ecx, ecx
-    jz .L_eval_add
-
-.L_eval_sub:
+# ==============================================================================
+# Routine: coa_damage_al_layer_x64
+# - Small Meaning: Inflict damage specifically on lowest 8 bits (AL)
+# - Long Form    : Damage Accumulator Low Layer
+# - Why We Used It: Proves that altering AL (bits 0..7) modifies RAX and AX
+#                  while leaving AH (bits 8..15) completely untouched.
+# Calling Convention:
+#   RCX = currentShield (uint64_t)
+#   RDX = damageAmount  (uint8_t)
+# Returns: RAX = modified 64-bit shield state
+# ==============================================================================
+.global coa_damage_al_layer_x64
+.global _coa_damage_al_layer_x64
+coa_damage_al_layer_x64:
+_coa_damage_al_layer_x64:
+    mov rax, rcx                # RAX = current composite shield
+    # SUB AL, DL:
+    # - Small Meaning: Subtract 8-bit damage from AL
+    # - Long Form    : Subtract byte from Accumulator Low
+    # - Why We Used It: In-place byte subtraction modifying only bits 0..7.
     sub al, dl
-    jmp .L_collect_flags
-
-.L_eval_add:
-    add al, dl
-
-.L_collect_flags:
-    # Capture flags: CF, ZF, SF, OF
-    setc bl                 # bl = CF (0 or 1)
-    setz cl                 # cl = ZF (0 or 1)
-    sets dl                 # dl = SF (0 or 1)
-    seto al                 # al = OF (0 or 1)
-
-    movzx eax, al           # eax = OF
-    shl eax, 1
-    movzx edx, dl
-    or eax, edx             # eax = (OF << 1) | SF
-    shl eax, 1
-    movzx ecx, cl
-    or eax, ecx             # eax = (OF << 2) | (SF << 1) | ZF
-    shl eax, 1
-    movzx ebx, bl
-    or eax, ebx             # eax = (OF << 3) | (SF << 2) | (ZF << 1) | CF
-
-    pop ebx
-    mov esp, ebp
-    pop ebp
     ret
 
-# ------------------------------------------------------------------------------
-# coa_sib_shield_layer_access: Scaled-Index-Base addressing mode demonstration
-# Prototype: unsigned int coa_sib_shield_layer_access(const unsigned int* basePtr, int layerIndex)
-# Implements: [ebx + esi*4 + 8]
-# ------------------------------------------------------------------------------
-.global _coa_sib_shield_layer_access
-_coa_sib_shield_layer_access:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-
-    mov ebx, [ebp + 8]      # Base pointer
-    mov esi, [ebp + 12]     # Index (0..3)
-
-    # Genuine 80386 SIB instruction: [Base + Index*4 + Disp8]
-    mov eax, [ebx + esi * 4 + 8]
-
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+# ==============================================================================
+# Routine: coa_recharge_ah_layer_x64
+# - Small Meaning: Add capacitor recharge specifically to bits 8..15 (AH)
+# - Long Form    : Recharge Accumulator High Layer
+# - Why We Used It: Proves that altering AH alters AX and RAX while preserving AL.
+# Calling Convention:
+#   RCX = currentShield (uint64_t)
+#   RDX = boostAmount   (uint8_t)
+# Returns: RAX = modified 64-bit shield state
+# ==============================================================================
+.global coa_recharge_ah_layer_x64
+.global _coa_recharge_ah_layer_x64
+coa_recharge_ah_layer_x64:
+_coa_recharge_ah_layer_x64:
+    mov rax, rcx                # RAX = current shield
+    # ADD AH, DL:
+    # - Small Meaning: Add 8-bit boost to AH
+    # - Long Form    : Add byte to Accumulator High
+    # - Why We Used It: Modifies only bits 8..15.
+    add ah, dl
     ret
 
-# ------------------------------------------------------------------------------
-# coa_demo_aegis_sentry: Full console demonstration of Sub-Register Sentry
-# ------------------------------------------------------------------------------
-.global _coa_demo_aegis_sentry
-_coa_demo_aegis_sentry:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+# ==============================================================================
+# Routine: coa_eval_shield_flags_x64
+# - Small Meaning: Compute combat damage and return condition flags
+# - Long Form    : Evaluate Shield Flags
+# - Why We Used It: Proves condition flags (ZF, SF, CF, OF) under 64-bit subtraction.
+# Calling Convention:
+#   RCX = currentShield (int64_t)
+#   RDX = incomingDamage (int64_t)
+#   R8  = outZF (int*)
+#   R9  = outSF (int*)
+#   [RSP + 40] = outCF (int*)
+#   [RSP + 48] = outOF (int*)
+# Returns: RAX = remaining shield value (RCX - RDX)
+# ==============================================================================
+.global coa_eval_shield_flags_x64
+.global _coa_eval_shield_flags_x64
+coa_eval_shield_flags_x64:
+_coa_eval_shield_flags_x64:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push r12
+    push r13
 
-    push offset aegis_title
-    call _print_str
-    add esp, 4
+    mov rax, rcx
+    # CMP / SUB RAX, RDX:
+    # - Small Meaning: Subtract incoming damage and update RFLAGS
+    # - Long Form    : 64-bit Subtraction with Condition Flag generation
+    # - Why We Used It: Updates Zero Flag (depletion), Sign Flag (over-penetration),
+    #                  Carry Flag (borrow), and Overflow Flag (boundary flip).
+    sub rax, rdx
 
-    # Initial composite shield
-    call _coa_init_aegis_shield
-    mov ebx, eax            # ebx = 0xA5B6C7D8
+    setz r10b                   # ZF: Shield depleted to exactly 0
+    sets r11b                   # SF: Shield negative (hull damage)
+    setb r12b                   # CF: Unsigned underflow
+    seto r13b                   # OF: Signed boundary overflow
 
-    movzx eax, bl           # AL = 0xD8
-    push eax
-    movzx eax, bh           # AH = 0xC7
-    push eax
-    movzx eax, bx           # AX = 0xC7D8
-    push eax
-    push ebx                # EAX = 0xA5B6C7D8
-    push offset aegis_init_fmt
-    call _printf
-    add esp, 20
+    # Store flags into output pointer parameters
+    test r8, r8
+    jz .L_skip_zf_shield
+    movzx ecx, r10b
+    mov [r8], ecx
+.L_skip_zf_shield:
 
-    # Event 1: Damage AL by 0x18
-    push 0x18
-    push ebx
-    call _coa_damage_al_layer
-    add esp, 8
-    mov ebx, eax            # ebx = 0xA5B6C7C0
+    test r9, r9
+    jz .L_skip_sf_shield
+    movzx edx, r11b
+    mov [r9], edx
+.L_skip_sf_shield:
 
-    movzx eax, bl           # AL = 0xC0
-    push eax
-    movzx eax, bh           # AH = 0xC7
-    push eax
-    movzx eax, bx           # AX = 0xC7C0
-    push eax
-    push ebx                # EAX = 0xA5B6C7C0
-    push 0x18
-    push offset aegis_damage_al_fmt
-    call _printf
-    add esp, 24
+    # 5th arg (outCF) at [RBP + 48]
+    mov r10, [rbp + 48]
+    test r10, r10
+    jz .L_skip_cf_shield
+    movzx ecx, r12b
+    mov [r10], ecx
+.L_skip_cf_shield:
 
-    # Event 2: Boost AH by 0x10
-    push 0x10
-    push ebx
-    call _coa_recharge_ah_layer
-    add esp, 8
-    mov ebx, eax            # ebx = 0xA5B6D7C0
+    # 6th arg (outOF) at [RBP + 56]
+    mov r11, [rbp + 56]
+    test r11, r11
+    jz .L_skip_of_shield
+    movzx edx, r13b
+    mov [r11], edx
+.L_skip_of_shield:
 
-    movzx eax, bl           # AL = 0xC0
-    push eax
-    movzx eax, bh           # AH = 0xD7
-    push eax
-    movzx eax, bx           # AX = 0xD7C0
-    push eax
-    push ebx                # EAX = 0xA5B6D7C0
-    push 0x10
-    push offset aegis_recharge_ah_fmt
-    call _printf
-    add esp, 24
+    pop r13
+    pop r12
+    pop rbx
+    pop rbp
+    ret
 
-    # Event 3: Evaluate Flags on 50 - 50 -> ZF=1
-    push 1                  # isSub
-    push 50
-    push 50
-    call _coa_evaluate_shield_flags
-    add esp, 12
+# ==============================================================================
+# Routine: coa_sib_shield_layer_x64
+# - Small Meaning: Read shield layer using 64-bit SIB addressing
+# - Long Form    : Scaled-Index-Base Shield Layer Access
+# - Why We Used It: Hardware computes [Base + Index*8 + 16] in a single instruction.
+# Calling Convention:
+#   RCX = arrayBase (const int64_t*)
+#   RDX = layerIndex (int64_t)
+# Returns: RAX = 64-bit shield layer telemetry
+# ==============================================================================
+.global coa_sib_shield_layer_x64
+.global _coa_sib_shield_layer_x64
+coa_sib_shield_layer_x64:
+_coa_sib_shield_layer_x64:
+    push rbp
+    mov rbp, rsp
+    push rbx
 
-    # Parse flags: eax = (OF << 3) | (SF << 2) | (ZF << 1) | CF
-    mov ecx, eax
-    shr ecx, 3
-    and ecx, 1              # OF
-    push ecx
+    mov rbx, rcx                # RBX = Base Address
+    mov rcx, rdx                # RCX = Layer Index (0..3)
 
-    mov ecx, eax
-    and ecx, 1              # CF
-    push ecx
+    # --------------------------------------------------------------------------
+    # MOV RAX, [RBX + RCX*8 + 16]:
+    # - Small Meaning: 64-bit SIB memory read
+    # - Long Form    : Scale-Index-Base with 8-byte scale and 16-byte displacement
+    # - Why We Used It: Hardware shifts RCX by 3 bits (multiply by 8) and adds
+    #                  16-byte header offset to read the quadword slot instantly.
+    # --------------------------------------------------------------------------
+    mov rax, [rbx + rcx*8 + 16]
 
-    mov ecx, eax
-    shr ecx, 2
-    and ecx, 1              # SF
-    push ecx
+    pop rbx
+    pop rbp
+    ret
 
-    mov ecx, eax
-    shr ecx, 1
-    and ecx, 1              # ZF
-    push ecx
+# ==============================================================================
+# Routine: coa_demo_aegis_sentry_x64
+# Interactive Aegis Sentry Demonstrator
+# ==============================================================================
+.global coa_demo_aegis_sentry_x64
+.global _coa_demo_aegis_sentry_x64
+coa_demo_aegis_sentry_x64:
+_coa_demo_aegis_sentry_x64:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 80
+    push rbx
+    push rsi
 
-    push offset aegis_flags_fmt
-    call _printf
-    add esp, 20
+    lea rcx, [rip + aegis_title]
+    call printf
 
-    # Event 4: SIB Access for Layer 2
-    push 2
-    push offset aegis_layers
-    call _coa_sib_shield_layer_access
-    add esp, 8
+    # Initial Shield
+    call coa_init_aegis_shield_x64
+    mov rbx, rax                # RBX = initial shield
 
-    push eax
-    push 2
-    push offset aegis_sib_fmt
-    call _printf
-    add esp, 12
+    lea rcx, [rip + aegis_init_fmt]
+    mov rdx, rbx                # RAX
+    mov r8d, ebx                # EAX
+    mov r9w, bx                 # AX
+    movzx eax, bh
+    mov [rsp + 32], rax         # AH
+    movzx eax, bl
+    mov [rsp + 40], rax         # AL
+    call printf
 
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    # Damage Event (AL -= 0x20)
+    mov rcx, rbx
+    mov rdx, 0x20
+    call coa_damage_al_layer_x64
+    mov rbx, rax
+
+    lea rcx, [rip + aegis_damage_al_fmt]
+    mov rdx, 0x20               # Dmg
+    mov r8,  rbx                # RAX
+    mov r9d, ebx                # EAX
+    movzx eax, bx
+    mov [rsp + 32], rax         # AX
+    movzx eax, bh
+    mov [rsp + 40], rax         # AH
+    movzx eax, bl
+    mov [rsp + 48], rax         # AL
+    call printf
+
+    # SIB Shield Layer Read
+    lea rcx, [rip + aegis_layers_x64]
+    mov rdx, 1                  # Layer 1
+    call coa_sib_shield_layer_x64
+
+    lea rcx, [rip + aegis_sib_fmt]
+    mov rdx, 1                  # Layer Index
+    mov r8,  rax                # Telemetry Value
+    call printf
+
+    pop rsi
+    pop rbx
+    add rsp, 80
+    pop rbp
     ret

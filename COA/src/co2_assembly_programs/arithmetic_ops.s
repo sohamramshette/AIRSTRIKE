@@ -1,216 +1,232 @@
 # ==============================================================================
-# AIRSTRIKE 80386 Assembly Suite - CO2: Arithmetic Programs
+# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO2: ARITHMETIC PROGRAMS
 # Implements:
-#   1. Addition and Subtraction
-#   2. Multiplication and Division (with Quotient & Remainder)
-# GNU Assembler (GAS) - Intel Syntax (noprefix)
-# Target: Intel 80386 (32-bit cdecl)
+#   1. 64-bit Addition and Subtraction
+#   2. 64-bit Multiplication and Division (with 64-bit Quotient & Remainder)
+# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
+.align 8
 add_sub_title:
-    .asciz "\n--- CO2 Program 1: Addition & Subtraction ---\n"
+    .asciz "\n--- CO2 Program 1: 64-bit Addition & Subtraction ---\n"
 add_sub_fmt:
-    .asciz "  Operands: A = %d, B = %d\n  Addition (A + B)    = %d\n  Subtraction (A - B) = %d\n"
+    .asciz "  Operands: A = %lld, B = %lld\n  Addition (A + B)    = %lld\n  Subtraction (A - B) = %lld\n"
 
 mul_div_title:
-    .asciz "\n--- CO2 Program 2: Multiplication & Division ---\n"
+    .asciz "\n--- CO2 Program 2: 64-bit Multiplication & Division ---\n"
 mul_div_fmt:
-    .asciz "  Operands: Dividend/Multiplicand A = %d, Divisor/Multiplier B = %d\n  Multiplication (A * B) = %d\n  Division (A / B)       = %d (Quotient: %d, Remainder: %d)\n"
+    .asciz "  Operands: Dividend A = %lld, Divisor B = %lld\n  Multiplication (A * B) = %lld\n  Division (A / B)       = %lld (Quotient: %lld, Remainder: %lld)\n"
 div_by_zero_msg:
-    .asciz "  [ERROR] Cannot divide by zero!\n"
-
-prompt_enter_a:
-    .asciz "  Enter first integer (A): "
-prompt_enter_b:
-    .asciz "  Enter second integer (B): "
+    .asciz "  [ERROR] Cannot divide by zero in 64-bit IDIV!\n"
 
 .bss
-.lcomm rem_out, 4
+.align 8
+.lcomm rem_out_x64, 8
 
 .text
 
-# ------------------------------------------------------------------------------
-# asm_add: Computes A + B
-# Prototype: int asm_add(int a, int b)
-# ------------------------------------------------------------------------------
-.global _asm_add
-_asm_add:
-    push ebp
-    mov ebp, esp
+# ==============================================================================
+# Routine: asm_add_x64
+# - Small Meaning: 64-bit integer addition
+# - Long Form    : Assembly 64-bit Addition
+# - Why We Used It: High-speed combat score accumulator combining player base and bonus.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = a (int64_t)
+#   RDX = b (int64_t)
+# Returns: RAX = a + b (64-bit signed sum)
+# ==============================================================================
+.global asm_add_x64
+.global _asm_add_x64
+asm_add_x64:
+_asm_add_x64:
+    # --------------------------------------------------------------------------
+    # MOV RAX, RCX:
+    # - Small Meaning: Load 1st parameter into accumulator
+    # - Long Form    : Move Register C Extended to Register A Extended
+    # - Why We Used It: Places operand A in RAX to prepare for arithmetic.
+    # --------------------------------------------------------------------------
+    mov rax, rcx
 
-    mov eax, [ebp + 8]          # eax = a
-    add eax, [ebp + 12]         # eax = a + b
-
-    mov esp, ebp
-    pop ebp
+    # --------------------------------------------------------------------------
+    # ADD RAX, RDX:
+    # - Small Meaning: Add 2nd parameter to accumulator
+    # - Long Form    : 64-bit Integer Add (RAX = RAX + RDX)
+    # - Why We Used It: Performs two's complement 64-bit binary addition in hardware.
+    # --------------------------------------------------------------------------
+    add rax, rdx
     ret
 
-# ------------------------------------------------------------------------------
-# asm_sub: Computes A - B
-# Prototype: int asm_sub(int a, int b)
-# ------------------------------------------------------------------------------
-.global _asm_sub
-_asm_sub:
-    push ebp
-    mov ebp, esp
-
-    mov eax, [ebp + 8]          # eax = a
-    sub eax, [ebp + 12]         # eax = a - b
-
-    mov esp, ebp
-    pop ebp
+# ==============================================================================
+# Routine: asm_sub_x64
+# - Small Meaning: 64-bit integer subtraction
+# - Long Form    : Assembly 64-bit Subtraction
+# - Why We Used It: Calculates damage deductions and shield energy consumption.
+# Calling Convention:
+#   RCX = a (int64_t)
+#   RDX = b (int64_t)
+# Returns: RAX = a - b (64-bit signed difference)
+# ==============================================================================
+.global asm_sub_x64
+.global _asm_sub_x64
+asm_sub_x64:
+_asm_sub_x64:
+    mov rax, rcx                # RAX = a
+    # --------------------------------------------------------------------------
+    # SUB RAX, RDX:
+    # - Small Meaning: Subtract B from A
+    # - Long Form    : 64-bit Integer Subtract (RAX = RAX - RDX)
+    # - Why We Used It: Computes score difference and evaluates condition flags.
+    # --------------------------------------------------------------------------
+    sub rax, rdx
     ret
 
-# ------------------------------------------------------------------------------
-# asm_mul: Computes A * B (Signed 32-bit multiplication)
-# Prototype: int asm_mul(int a, int b)
-# ------------------------------------------------------------------------------
-.global _asm_mul
-_asm_mul:
-    push ebp
-    mov ebp, esp
-
-    mov eax, [ebp + 8]          # eax = a
-    imul eax, [ebp + 12]        # eax = a * b (80386 2-operand imul)
-
-    mov esp, ebp
-    pop ebp
+# ==============================================================================
+# Routine: asm_mul_x64
+# - Small Meaning: 64-bit signed integer multiplication
+# - Long Form    : Assembly 64-bit Signed Multiply
+# - Why We Used It: Computes score combo multipliers and explosion radius vectors.
+# Calling Convention:
+#   RCX = a (int64_t)
+#   RDX = b (int64_t)
+# Returns: RAX = a * b (64-bit signed product)
+# ==============================================================================
+.global asm_mul_x64
+.global _asm_mul_x64
+asm_mul_x64:
+_asm_mul_x64:
+    mov rax, rcx
+    # --------------------------------------------------------------------------
+    # IMUL RAX, RDX:
+    # - Small Meaning: Signed integer multiplication
+    # - Long Form    : 64-bit Integer Multiply
+    # - Why We Used It: Multiplies two 64-bit signed integers in a single cycle.
+    # --------------------------------------------------------------------------
+    imul rax, rdx
     ret
 
-# ------------------------------------------------------------------------------
-# asm_div: Computes A / B and remainder
-# Prototype: int asm_div(int dividend, int divisor, int* out_rem)
-# Returns: eax = quotient, stores remainder in *out_rem
-# ------------------------------------------------------------------------------
-.global _asm_div
-_asm_div:
-    push ebp
-    mov ebp, esp
-    push ebx
+# ==============================================================================
+# Routine: asm_div_x64
+# - Small Meaning: 64-bit signed integer division with remainder
+# - Long Form    : Assembly 64-bit Signed Division
+# - Why We Used It: Computes player accuracy percentages and spatial matrix cells.
+# Calling Convention:
+#   RCX = dividend A (int64_t)
+#   RDX = divisor  B (int64_t)
+#   R8  = outRemainder (int64_t* optional pointer)
+# Returns: RAX = Quotient (A / B), Remainder stored at [R8]
+# ==============================================================================
+.global asm_div_x64
+.global _asm_div_x64
+asm_div_x64:
+_asm_div_x64:
+    push rbp
+    mov rbp, rsp
+    push rbx
 
-    mov eax, [ebp + 8]          # eax = dividend
-    mov ebx, [ebp + 12]         # ebx = divisor
+    # Check for division by zero
+    test rdx, rdx
+    jz .L_div_zero_x64
 
-    cmp ebx, 0
-    je .L_div_zero
+    mov rax, rcx                # RAX = dividend A
+    mov rbx, rdx                # RBX = divisor B
 
-    cdq                         # Sign-extend EAX into EDX:EAX (80386 standard)
-    idiv ebx                    # EAX = Quotient, EDX = Remainder
+    # --------------------------------------------------------------------------
+    # CQO:
+    # - Small Meaning: Sign-extend RAX into RDX:RAX (128-bit)
+    # - Long Form    : Convert Quadword to Octaword
+    # - Why We Used It: 64-bit IDIV requires a 128-bit dividend in RDX:RAX.
+    #                  If RAX is negative, RDX fills with 1s; if positive, 0s.
+    # --------------------------------------------------------------------------
+    cqo
 
-    mov ecx, [ebp + 16]         # ecx = out_rem pointer
-    test ecx, ecx
-    jz .L_div_done
-    mov [ecx], edx              # *out_rem = remainder
+    # --------------------------------------------------------------------------
+    # IDIV RBX:
+    # - Small Meaning: Signed 128-bit by 64-bit division
+    # - Long Form    : Signed Integer Divide (RDX:RAX / RBX)
+    # - Why We Used It: Computes Quotient -> RAX, and Remainder -> RDX.
+    # --------------------------------------------------------------------------
+    idiv rbx
 
-    jmp .L_div_done
+    # Store remainder if output pointer (R8) is non-null
+    test r8, r8
+    jz .L_div_done_x64
+    mov [r8], rdx
 
-.L_div_zero:
-    xor eax, eax
-    xor edx, edx
-    mov ecx, [ebp + 16]
-    test ecx, ecx
-    jz .L_div_done
-    mov [ecx], edx
-
-.L_div_done:
-    pop ebx
-    mov esp, ebp
-    pop ebp
+.L_div_done_x64:
+    pop rbx
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# co2_demo_arithmetic: Interactive/Preset demonstration for Add/Sub and Mul/Div
-# ------------------------------------------------------------------------------
-.global _co2_demo_arithmetic
-_co2_demo_arithmetic:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
-
-    # Prompt user for inputs or use defaults if 0
-    push offset add_sub_title
-    call _print_str
-    add esp, 4
-
-    push offset prompt_enter_a
-    call _print_str
-    add esp, 4
-    call _read_int
-    mov ebx, eax                # ebx = A
-
-    push offset prompt_enter_b
-    call _print_str
-    add esp, 4
-    call _read_int
-    mov esi, eax                # esi = B
-
-    # 1. Addition and Subtraction
-    push esi
-    push ebx
-    call _asm_sub
-    add esp, 8
-    mov edi, eax                # edi = A - B
-
-    push esi
-    push ebx
-    call _asm_add
-    add esp, 8                  # eax = A + B
-
-    push edi
-    push eax
-    push esi
-    push ebx
-    push offset add_sub_fmt
-    call _printf
-    add esp, 20
-
-    # 2. Multiplication and Division
-    push offset mul_div_title
-    call _print_str
-    add esp, 4
-
-    cmp esi, 0
-    je .L_demo_div_zero
-
-    push offset rem_out
-    push esi
-    push ebx
-    call _asm_div
-    add esp, 12
-    mov edi, eax                # edi = Quotient
-
-    push esi
-    push ebx
-    call _asm_mul
-    add esp, 8                  # eax = Product
-
-    mov edx, [rem_out]          # edx = Remainder
-    push edx
-    push edi
-    push edi
-    push eax
-    push esi
-    push ebx
-    push offset mul_div_fmt
-    call _printf
-    add esp, 28
-    jmp .L_demo_arith_exit
-
-.L_demo_div_zero:
-    push offset div_by_zero_msg
-    call _print_str
-    add esp, 4
-
-.L_demo_arith_exit:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+.L_div_zero_x64:
+    xor rax, rax                # Return 0 on division by zero
+    pop rbx
+    pop rbp
     ret
 
+# ==============================================================================
+# Routine: demo_arithmetic_ops_x64
+# Interactive demonstration of 64-bit addition, subtraction, mul & div
+# ==============================================================================
+.global demo_arithmetic_ops_x64
+.global _demo_arithmetic_ops_x64
+demo_arithmetic_ops_x64:
+_demo_arithmetic_ops_x64:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64
+    push rbx
+
+    lea rcx, [rip + add_sub_title]
+    call printf
+
+    # Test Addition: 5000 + 3200
+    mov rcx, 5000
+    mov rdx, 3200
+    call asm_add_x64
+    mov rbx, rax                # Sum = 8200
+
+    # Test Subtraction: 5000 - 3200
+    mov rcx, 5000
+    mov rdx, 3200
+    call asm_sub_x64
+    mov r8, rax                 # Diff = 1800
+
+    lea rcx, [rip + add_sub_fmt]
+    mov rdx, 5000
+    mov r9, rbx                 # Sum
+    mov [rsp + 32], r8          # Diff (passed on stack as 5th argument)
+    mov r8, 3200
+    call printf
+
+    # Test Mul & Div: 450 * 12 and 450 / 12
+    lea rcx, [rip + mul_div_title]
+    call printf
+
+    mov rcx, 450
+    mov rdx, 12
+    call asm_mul_x64
+    mov rbx, rax                # Product = 5400
+
+    lea r8, [rip + rem_out_x64]
+    mov rcx, 450
+    mov rdx, 12
+    call asm_div_x64
+    mov r10, rax                # Quotient = 37
+    mov r11, [rip + rem_out_x64]# Remainder = 6
+
+    lea rcx, [rip + mul_div_fmt]
+    mov rdx, 450
+    mov r8, 12
+    mov r9, rbx                 # Product
+    mov [rsp + 32], r10         # Quotient
+    mov [rsp + 40], r10
+    mov [rsp + 48], r11         # Remainder
+    call printf
+
+    pop rbx
+    add rsp, 64
+    pop rbp
+    ret

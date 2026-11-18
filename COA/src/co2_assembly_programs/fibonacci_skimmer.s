@@ -1,233 +1,258 @@
 # ==============================================================================
-# AIRSTRIKE 80386 Assembly Suite - CO2: Fibonacci Skimmer Enemy
-# Uses genuine 80386 assembly iterative Fibonacci series (_asm_fibonacci)
-# to generate sinusoidal-like weaving trajectory coordinates and dynamic salvo timings.
-# GNU Assembler (GAS) - Intel Syntax (noprefix)
-# Target: Intel 80386 (32-bit Protected Mode, cdecl)
+# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO2: FIBONACCI SKIMMER ENEMY
+# Utilizes genuine 64-bit assembly iterative Fibonacci series (asm_fibonacci)
+# to generate sinusoidal flight trajectory coordinates and dynamic salvo timings.
+# Satisfies Course Outcome: COA-CO2 (Mathematical Series & Applied Addressing)
+# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
+.align 8
 skimmer_title:
-    .asciz "\n==============================================================================\n        COA-CO2: FIBONACCI SKIMMER - ASSEMBLY MATHEMATICAL FLIGHT WEAVE        \n==============================================================================\n"
+    .asciz "\n==============================================================================\n        COA-CO2: FIBONACCI SKIMMER - 64-BIT MATHEMATICAL FLIGHT WEAVE         \n==============================================================================\n"
 
 skimmer_hdr:
     .asciz "  Step  |  Fibonacci Term F(n)  |  Weave Offset  |  Target Screen X Coordinate\n  ------+-----------------------+---------------+----------------------------\n"
 
 skimmer_row_fmt:
-    .asciz "  [%02d]  |  F(%d) = %-12d |  %+11d  |  X = %d px\n"
+    .asciz "  [%02lld]  |  F(%lld) = %-12lld |  %+11lld  |  X = %lld px\n"
 
 skimmer_fire_fmt:
-    .asciz "\n  [WEAPON TIMING] Kinetic Salvo Interval for Step %d:\n    Base Rate = 100 ms * F(%d) [%d] = %d ms cooldown\n==============================================================================\n"
+    .asciz "\n  [WEAPON TIMING] Kinetic Salvo Interval for Step %lld:\n    Base Rate = 100 ms * F(%lld) [%lld] = %lld ms cooldown\n==============================================================================\n"
 
 .bss
-.lcomm fib_temp_buf, 64         # Storage for up to 16 Fibonacci terms (16 * 4 bytes)
+.align 8
+.lcomm fib_temp_buf, 128        # Storage for up to 16 Fibonacci quadwords (16 * 8 = 128 bytes)
 
 .text
 
-# ------------------------------------------------------------------------------
-# coa_skimmer_compute_trajectory: Computes screen X coordinates using Fibonacci
-# Prototype: void coa_skimmer_compute_trajectory(int* outX, int count, int baseX, int maxWeave)
-# Parameters:
-#   [ebp + 8]  = outX array pointer
-#   [ebp + 12] = count (number of steps, 1..16)
-#   [ebp + 16] = baseX (e.g. 400)
-#   [ebp + 20] = maxWeave (e.g. 150)
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: coa_skimmer_compute_trajectory
+# - Small Meaning: Calculates enemy flight path coordinates using 64-bit Fibonacci.
+# - Long Form    : COA Fibonacci Skimmer Trajectory Coordinate Evaluator
+# - Why We Used It: Generates non-linear evasive maneuvers for AI interceptors.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = int64_t* outX     (Output array pointer for screen X coordinates)
+#   RDX = int64_t  count    (Number of coordinate steps, 1..16)
+#   R8  = int64_t  baseX    (Screen center X baseline, e.g. 400)
+#   R9  = int64_t  maxWeave (Maximum lateral excursion amplitude, e.g. 150)
+# ==============================================================================
+.global coa_skimmer_compute_trajectory
 .global _coa_skimmer_compute_trajectory
+coa_skimmer_compute_trajectory:
 _coa_skimmer_compute_trajectory:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48                 # Shadow space (32) + alignment
+    push rbx
+    push rsi
+    push rdi
+    push r12
+    push r13
 
-    mov edi, [ebp + 8]          # edi = outX
-    mov ecx, [ebp + 12]         # ecx = count
-    cmp ecx, 0
+    mov rdi, rcx                # RDI = outX pointer
+    mov r12, rdx                # R12 = count
+    mov r13, r8                 # R13 = baseX
+    mov rbx, r9                 # RBX = maxWeave
+
+    cmp r12, 0
     jle .L_traj_exit
-    cmp ecx, 16
+    cmp r12, 16
     jle .L_traj_count_ok
-    mov ecx, 16                 # clamp to 16 max
+    mov r12, 16                 # Clamp maximum trajectory count to 16
 
 .L_traj_count_ok:
-    # 1. Compute raw Fibonacci terms using genuine 80386 assembly routine
-    push ecx
-    push offset fib_temp_buf
-    call _asm_fibonacci
-    add esp, 8
+    # 1. Compute 64-bit Fibonacci sequence into fib_temp_buf
+    lea rcx, [rip + fib_temp_buf]
+    mov rdx, r12
+    call asm_fibonacci
 
     # 2. Iterate through terms and generate alternating weave coordinates
-    #    If step i is even: X[i] = baseX + (F[i] % maxWeave)
-    #    If step i is odd : X[i] = baseX - (F[i] % maxWeave)
-    xor esi, esi                # esi = step index (0 .. count-1)
+    xor rsi, rsi                # RSI = step index i (0 .. count - 1)
 
 .L_traj_loop:
-    cmp esi, [ebp + 12]
+    cmp rsi, r12
     jge .L_traj_exit
 
-    mov eax, [offset fib_temp_buf + esi * 4] # eax = F(i)
-    mov ebx, [ebp + 20]         # ebx = maxWeave
-    cmp ebx, 0
+    lea r10, [rip + fib_temp_buf]
+    mov rax, [r10 + rsi*8]      # RAX = F(i)
+
+    cmp rbx, 0
     jle .L_no_modulo
 
-    # Modulo: edx = eax % ebx
-    xor edx, edx
-    div ebx                     # edx = remainder = F(i) % maxWeave
-    mov eax, edx
+    # --------------------------------------------------------------------------
+    # CQO / IDIV RBX:
+    # - Small Meaning: 64-bit signed modulo operation: RDX = RAX % RBX
+    # - Long Form    : Convert Quadword to Octaword and Signed Divide by RBX
+    # - Why We Used It: Bounds the unbounded Fibonacci growth within screen width.
+    # --------------------------------------------------------------------------
+    cqo
+    idiv rbx                    # RDX = remainder = F(i) % maxWeave
+    mov rax, rdx                # RAX = bounded lateral weave offset
 
 .L_no_modulo:
-    # Check parity of step index (test esi, 1)
-    test esi, 1
+    # Check parity of step index i to alternate left/right weave
+    test rsi, 1
     jnz .L_odd_step
 
 .L_even_step:
     # Positive weave: baseX + offset
-    mov edx, [ebp + 16]
-    add edx, eax
+    lea rdx, [r13 + rax]
     jmp .L_store_x
 
 .L_odd_step:
     # Negative weave: baseX - offset
-    mov edx, [ebp + 16]
-    sub edx, eax
+    mov rdx, r13
+    sub rdx, rax
 
 .L_store_x:
-    mov [edi + esi * 4], edx
-    inc esi
+    mov [rdi + rsi*8], rdx      # Store 64-bit screen X into array
+    inc rsi
     jmp .L_traj_loop
 
 .L_traj_exit:
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop r13
+    pop r12
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# coa_skimmer_fire_interval: Computes weapon salvo cooldown based on F(step)
-# Prototype: int coa_skimmer_fire_interval(int stepIndex, int baseCooldownMs)
-# Parameters:
-#   [ebp + 8]  = stepIndex (0..10)
-#   [ebp + 12] = baseCooldownMs (e.g. 100)
+# ==============================================================================
+# Routine: coa_skimmer_fire_interval
+# - Small Meaning: Computes weapon salvo cooldown dynamically based on F(step).
+# - Long Form    : COA Skimmer Dynamic Fire Interval Calculator
+# - Why We Used It: Modulates enemy attack cadence based on Fibonacci progression.
+# Calling Convention (Microsoft x64 ABI):
+#   RCX = int64_t stepIndex      (Current step index, 0..15)
+#   RDX = int64_t baseCooldownMs (Base cooldown unit, e.g. 100 ms)
 # Returns:
-#   EAX = cooldownMs
-# ------------------------------------------------------------------------------
+#   RAX = 64-bit cooldown in milliseconds
+# ==============================================================================
+.global coa_skimmer_fire_interval
 .global _coa_skimmer_fire_interval
+coa_skimmer_fire_interval:
 _coa_skimmer_fire_interval:
-    push ebp
-    mov ebp, esp
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48                 # Shadow space + alignment
+    push rbx
+    push rsi
 
-    mov esi, [ebp + 8]          # stepIndex
-    test esi, esi
+    mov rsi, rcx                # RSI = stepIndex
+    mov rbx, rdx                # RBX = baseCooldownMs
+
+    test rsi, rsi
     jns .L_step_valid
-    xor esi, esi                # clamp negative to 0
+    xor rsi, rsi                # Clamp negative step index to 0
 
 .L_step_valid:
-    cmp esi, 15
+    cmp rsi, 15
     jle .L_step_clamp
-    mov esi, 15
+    mov rsi, 15
 
 .L_step_clamp:
     # Generate 16 Fibonacci terms
-    push 16
-    push offset fib_temp_buf
-    call _asm_fibonacci
-    add esp, 8
+    lea rcx, [rip + fib_temp_buf]
+    mov rdx, 16
+    call asm_fibonacci
 
-    mov eax, [offset fib_temp_buf + esi * 4] # F(stepIndex)
-    test eax, eax
+    lea r10, [rip + fib_temp_buf]
+    mov rax, [r10 + rsi*8]      # RAX = F(stepIndex)
+    test rax, rax
     jnz .L_fib_nonzero
-    mov eax, 1                  # minimum multiplier 1 if F(0) = 0
+    mov rax, 1                  # Minimum multiplier 1 if F(0) == 0
 
 .L_fib_nonzero:
-    mov ebx, [ebp + 12]         # baseCooldownMs
-    imul eax, ebx               # eax = F(step) * baseCooldownMs
+    # --------------------------------------------------------------------------
+    # IMUL RAX, RBX:
+    # - Small Meaning: Multiply Fibonacci factor by base cooldown
+    # - Long Form    : Signed 64-Bit Integer Multiply
+    # - Why We Used It: Scales cooldown proportionally to mathematical sequence.
+    # --------------------------------------------------------------------------
+    imul rax, rbx
 
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
 
-# ------------------------------------------------------------------------------
-# coa_demo_fibonacci_skimmer: Interactive demonstration of Fibonacci Skimmer
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Routine: coa_demo_fibonacci_skimmer
+# - Small Meaning: Interactive demonstration of the Fibonacci Skimmer enemy.
+# - Long Form    : CO2 Demonstration Driver for Fibonacci Skimmer Flight
+# - Why We Used It: Outputs formatted coordinate telemetry and firing timings.
+# ==============================================================================
+.global coa_demo_fibonacci_skimmer
 .global _coa_demo_fibonacci_skimmer
+coa_demo_fibonacci_skimmer:
 _coa_demo_fibonacci_skimmer:
-    push ebp
-    mov ebp, esp
-    sub esp, 40                 # 8 coords * 4 bytes = 32 bytes + padding
-    push ebx
-    push esi
-    push edi
+    push rbp
+    mov rbp, rsp
+    sub rsp, 128                # Stack buffer for 8 coordinates (64 bytes) + shadow
+    push rbx
+    push rsi
+    push rdi
 
-    push offset skimmer_title
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + skimmer_title]
+    call print_str
 
-    push offset skimmer_hdr
-    call _print_str
-    add esp, 4
+    lea rcx, [rip + skimmer_hdr]
+    call print_str
 
     # Compute 8 trajectory points: baseX = 400, maxWeave = 120
-    push 120
-    push 400
-    push 8
-    lea eax, [ebp - 32]
-    push eax
-    call _coa_skimmer_compute_trajectory
-    add esp, 16
+    lea rcx, [rbp - 64]         # RCX = &local_coords[0]
+    mov rdx, 8                  # RDX = 8 steps
+    mov r8,  400                # R8  = baseX
+    mov r9,  120                # R9  = maxWeave
+    call coa_skimmer_compute_trajectory
 
-    # Display table
-    xor esi, esi
+    # Display trajectory table
+    xor rsi, rsi
 .L_demo_fib_loop:
-    cmp esi, 8
+    cmp rsi, 8
     jge .L_demo_fib_fire
 
-    mov edx, [ebp - 32 + esi * 4] # Screen X
-    mov eax, edx
-    sub eax, 400                # Offset relative to 400
-    mov ebx, [offset fib_temp_buf + esi * 4] # F(esi)
+    mov rdx, [rbp - 64 + rsi*8] # RDX = Screen X
+    mov rax, rdx
+    sub rax, 400                # RAX = Offset relative to 400
+    lea r10, [rip + fib_temp_buf]
+    mov rbx, [r10 + rsi*8]      # RBX = F(rsi)
 
-    push edx                    # Screen X
-    push eax                    # Weave offset
-    push ebx                    # F(esi)
-    push esi                    # n
-    push esi                    # Step
-    push offset skimmer_row_fmt
-    call _printf
-    add esp, 24
+    lea rcx, [rip + skimmer_row_fmt]
+    mov rdx, rsi                # 1st: Step
+    mov r8,  rsi                # 2nd: n
+    mov r9,  rbx                # 3rd: F(n)
+    mov [rsp + 32], rax         # 4th: Weave offset on stack
+    mov [rsp + 40], rdx         # 5th: Screen X on stack
+    call printf
 
-    inc esi
+    inc rsi
     jmp .L_demo_fib_loop
 
 .L_demo_fib_fire:
     # Demonstrate salvo timing for step 5
-    push 100                    # 100 ms base
-    push 5                      # step 5 -> F(5) = 5
-    call _coa_skimmer_fire_interval
-    add esp, 8
+    mov rcx, 5                  # Step 5
+    mov rdx, 100                # 100 ms base
+    call coa_skimmer_fire_interval
+    mov rbx, rax                # RBX = Result cooldown
 
-    push eax                    # Result cooldown (500 ms)
-    mov edx, offset fib_temp_buf
-    mov ebx, [edx + 5 * 4]
-    push ebx                    # F(5)
-    push 5
-    push 5
-    push offset skimmer_fire_fmt
-    call _printf
-    add esp, 20
+    lea rcx, [rip + skimmer_fire_fmt]
+    mov rdx, 5
+    mov r8,  5
+    lea r10, [rip + fib_temp_buf]
+    mov r9,  [r10 + 5*8]        # F(5)
+    mov [rsp + 32], rbx         # Calculated cooldown ms on stack
+    call printf
 
-    pop edi
-    pop esi
-    pop ebx
-    mov esp, ebp
-    pop ebp
+    pop rdi
+    pop rsi
+    pop rbx
+    mov rsp, rbp
+    pop rbp
     ret
