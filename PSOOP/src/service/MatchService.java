@@ -128,12 +128,13 @@ public class MatchService {
                 Map<String, Object> map = (Map<String, Object>) rowObj;
                 String id = SimpleJson.getString(map, "id");
                 String userId = SimpleJson.getString(map, "user_id");
+                String username = SimpleJson.getString(map, "username");
                 int score = SimpleJson.getInt(map, "score", 0);
                 int level = SimpleJson.getInt(map, "level_reached", 1);
                 int duration = SimpleJson.getInt(map, "duration_seconds", 0);
                 String createdAt = SimpleJson.getString(map, "created_at");
 
-                records.add(new MatchRecord(id, userId, score, level, duration, createdAt));
+                records.add(new MatchRecord(id, userId, username, score, level, duration, createdAt));
             }
         }
         return records;

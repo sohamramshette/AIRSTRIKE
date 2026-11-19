@@ -11,14 +11,20 @@ public class MatchRecord {
 
     private final String id;
     private final String userId;
+    private final String username;
     private final int score;
     private final int levelReached;
     private final int durationSeconds;
     private final String createdAt;
 
     public MatchRecord(String id, String userId, int score, int levelReached, int durationSeconds, String createdAt) {
+        this(id, userId, "", score, levelReached, durationSeconds, createdAt);
+    }
+
+    public MatchRecord(String id, String userId, String username, int score, int levelReached, int durationSeconds, String createdAt) {
         this.id = id != null ? id : "";
         this.userId = userId != null ? userId : "";
+        this.username = username != null ? username : "";
         this.score = score;
         this.levelReached = levelReached;
         this.durationSeconds = durationSeconds;
@@ -31,6 +37,10 @@ public class MatchRecord {
 
     public String getUserId() {
         return userId;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public int getScore() {

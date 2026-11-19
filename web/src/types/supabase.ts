@@ -8,6 +8,7 @@ export interface SupabaseProfile {
 export interface SupabaseMatch {
   id?: string;
   user_id?: string;
+  username?: string;
   score: number;
   level_reached: number;
   duration_seconds: number;
