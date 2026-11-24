@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/stacks/action_stack.cpp
+// Subject   : PL-CO3 | Stack and Queue Applications
+// Topics    : [TOPIC: ActionStack] [TOPIC: Stack] [TOPIC: LIFO] [TOPIC: Overflow Underflow]
+// Game Role : Implements O(1) LIFO push/pop/peek combat history operations for AIRSTRIKE.
+// ==============================================================================
+
 #include "action_stack.h"
 #include <iomanip>
 
@@ -31,21 +38,29 @@ ActionStack& ActionStack::operator=(const ActionStack& other) {
     return *this;
 }
 
+// [TOPIC: ActionStack] [TOPIC: Stack Push] [TOPIC: Overflow Guard]
+// Purpose: Guards against full capacity and inserts a CombatAction onto the stack top in O(1).
+// Game Role: Logs a player combat action as the most recent undoable event.
 bool ActionStack::push(const CombatAction& action) {
     if (isFull()) {
         std::cerr << "[ERROR: ActionStack Overflow] Cannot push action ID " << action.actionId
                   << "; stack reached capacity " << maxCapacity << "!\n";
         return false;
     }
+    // WHY: Pre-increment topIndex (initialized to -1) so index 0 receives the first element in O(1).
     elements[++topIndex] = action;
     return true;
 }
 
+// [TOPIC: ActionStack] [TOPIC: Stack Pop] [TOPIC: Underflow Guard]
+// Purpose: Guards against empty underflow and returns the top CombatAction in O(1).
+// Game Role: Unwinds the latest combat event during tactical undo.
 bool ActionStack::pop(CombatAction& outAction) {
     if (isEmpty()) {
         std::cerr << "[ERROR: ActionStack Underflow] Cannot pop from empty combat stack!\n";
         return false;
     }
+    // WHY: Read at topIndex then decrement logically in O(1) without clearing memory -> Game: Fast LIFO rollback.
     outAction = elements[topIndex--];
     return true;
 }

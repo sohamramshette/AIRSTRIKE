@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/MatchHistoryDialog.java
+// Subject   : PSOOP-CO3 / CO4 | Pilot Flight Log Archive Dialog
+// Topics    : [TOPIC: Threading/Swing EDT] [TOPIC: REST Client] [TOPIC: Row Level Security]
+// Game Role : Displays the logged-in pilot's match history or a local-only guest notice.
+// ==============================================================================
 package ui;
 
 import database.SessionManager;
@@ -173,6 +179,7 @@ public class MatchHistoryDialog extends JDialog {
 
     private void loadHistoryData() {
         UserSession session = SessionManager.getInstance().getCurrentSession();
+        // WHY: Guest pilots have no JWT for RLS-protected queries, so short-circuit locally without network calls.
         if (!session.isAuthenticated()) {
             pilotInfoLabel.setText("PILOT: GUEST / OFFLINE");
             pilotInfoLabel.setForeground(Theme.TEXT_MUTED);

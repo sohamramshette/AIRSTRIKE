@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/objects/space_scene.hpp
+// Subject   : Scene | Integrated CO1-CO6 Space Combat Scene
+// Topics    : [TOPIC: Scene Orchestration] [TOPIC: CO1-CO6 Integration] [TOPIC: Orthographic Radar PIP] [TOPIC: HUD Font Renderer]
+// Game Role : Declares the integrated AIRSTRIKE combat scene uniting all six CGL Course Outcomes.
+// ==============================================================================
+
 #ifndef SPACE_SCENE_HPP
 #define SPACE_SCENE_HPP
 
@@ -8,6 +15,9 @@
 
 namespace CGL {
 
+// [TOPIC: 3D Asteroid Entity]
+// Purpose: Stores world position, rotation axis/speed, and radius for each spinning asteroid.
+// Game Role: Populates the 3D lit asteroid belt in SpaceCombatScene.
 struct AsteroidEntity {
     Vec3 pos;
     Vec3 rotAxis;
@@ -16,16 +26,9 @@ struct AsteroidEntity {
     float radius;
 };
 
-/**
- * @brief Integrated AirStrike 2D/3D Combat Scene.
- * Integrates all 6 CGL Course Outcomes:
- * - CO1: Complete suite of OpenGL primitives (Ship, Lasers, Shields, Station, Particles)
- * - CO2: Hierarchical transformations (Player ship, Escort drones, Matrix stack)
- * - CO3: Mathematical Bresenham laser trajectory & Midpoint circle shield
- * - CO4: Simultaneous 3D Perspective chase-cam and Orthographic PIP radar
- * - CO5: Cohen-Sutherland & Sutherland-Hodgman sector boundary clipping
- * - CO6: Dynamic Phong lighting and textured celestial planet
- */
+// [TOPIC: Scene Orchestration / CO1-CO6 Integration / Orthographic Radar PIP / HUD Font Renderer]
+// Purpose: Integrates CO1 primitives, CO2 hierarchical drones, CO3 shields, CO4 PIP radar, CO5 clipped lasers, and CO6 lit/textured bodies.
+// Game Role: Default Screen 0 interactive combat showcase for AIRSTRIKE CGL.
 class SpaceCombatScene {
 public:
     SpaceCombatScene();
@@ -62,6 +65,9 @@ private:
     std::vector<AsteroidEntity> asteroids;
     RectWindow combatBounds;
 
+    // [TOPIC: Scene Subsystem Renderers]
+    // Purpose: Helper methods separating procedural textures, skybox/planet, asteroids, player+drones, clipped lasers, and PIP radar.
+    // Game Role: Structures the integrated CO1-CO6 render pass cleanly.
     void createProceduralTextures();
     void renderSkyboxStars();
     void renderAsteroids();

@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/appearance/phong_cruiser.hpp
+// Subject   : CGL-CO6 | PhongCruiser Illuminated Enemy
+// Topics    : [TOPIC: Blinn-Phong Illumination (Ambient + Diffuse + Specular)] [TOPIC: Gouraud Smooth Shading] [TOPIC: 24-bit BMP Texture Mapping] [TOPIC: PhongCruiser]
+// Game Role : Declares the PhongCruiser 3D enemy with pure-C++ Phong/Blinn-Phong/Gouraud illumination math.
+// ==============================================================================
+
 #ifndef PHONG_CRUISER_HPP
 #define PHONG_CRUISER_HPP
 
@@ -7,16 +14,9 @@
 
 namespace CGL {
 
-/**
- * @brief Specular Phong Cruiser Enemy (CGL-CO6).
- *
- * Demonstrates:
- * - Phong & Blinn-Phong Illumination Models (Ambient, Diffuse, Specular)
- * - Lambert's Cosine Law for Diffuse Reflection: Id = kd * Ld * max(0, N . L)
- * - Specular Highlights: Is = ks * Ls * max(0, R . V)^n (Phong) and (N . H)^n (Blinn-Phong)
- * - Clear Distinction: Per-vertex Gouraud Interpolation vs High-frequency Specular Highlights
- * - Local 24-bit Uncompressed BMP Texture Mapping (space_hull.bmp)
- */
+// [TOPIC: PhongCruiser / Blinn-Phong Illumination (Ambient + Diffuse + Specular) / Gouraud Smooth Shading / 24-bit BMP Texture Mapping]
+// Purpose: Combines a 24-bit BMP-textured 3D faceted hull with analytical Phong, Blinn-Phong, and Gouraud evaluation.
+// Game Role: Represents CGL-CO6 enemy type [6] in AIRSTRIKE's Enemy Demonstrator and CO6 test suite.
 class PhongCruiser {
 public:
     PhongCruiser();
@@ -26,7 +26,9 @@ public:
     void update(float dt);
     void render();
 
-    // Illumination Mathematics Helpers (Pure C++ for direct testability)
+    // [TOPIC: Blinn-Phong Illumination (Ambient + Diffuse + Specular)]
+    // Purpose: Computes reflection vector R, Blinn-Phong half-angle vector H, and full illumination colors.
+    // Game Role: Validates Ambient + Diffuse + Specular shading equations in CO6 automated tests.
     static Vec3 computeReflectionVector(const Vec3& normal, const Vec3& lightDir);
     static Vec3 computeHalfAngleVector(const Vec3& lightDir, const Vec3& viewDir);
 
@@ -38,7 +40,9 @@ public:
                                           float ka, float kd, float ks, float shininess,
                                           Color4 lightColor = Color4(1.0f, 1.0f, 1.0f, 1.0f));
 
-    // Gouraud Shading: Per-vertex illumination bilinear color interpolation across fragments
+    // [TOPIC: Gouraud Smooth Shading]
+    // Purpose: Linearly interpolates vertex-evaluated colors across edge parameter t in [0, 1].
+    // Game Role: Demonstrates per-vertex Gouraud shading interpolation analytically.
     static Color4 interpolateGouraudColor(const Color4& c1, const Color4& c2, float t);
 
     // Texture Inspection

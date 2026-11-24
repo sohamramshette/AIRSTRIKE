@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/CyberButton.java
+// Subject   : PSOOP-CO1 / CO4 | Custom Vector Tactical Command Button
+// Topics    : [TOPIC: Custom Swing Rendering] [TOPIC: Factory Pattern]
+// Game Role : Renders Hero, Tactical, Danger, and Pill Swing buttons with hover/press states.
+// ==============================================================================
 package ui;
 
 import java.awt.BasicStroke;
@@ -40,6 +46,7 @@ public class CyberButton extends JButton {
         this.accentColor = accentColor != null ? accentColor : Theme.CYAN_PRIMARY;
         this.baseBg = baseBg != null ? baseBg : Theme.BG_PANEL;
 
+        // WHY: Disable default Swing fill/border painting so custom Graphics2D gradients render cleanly.
         setFocusPainted(false);
         setContentAreaFilled(false);
         setBorderPainted(false);

@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/multiplayer/MultiplayerStateManager.java
+// Subject   : PSOOP-CO2 | Guarded Multiplayer Room State Machine
+// Topics    : [TOPIC: Game State Machine] [TOPIC: Thread Safety]
+// Game Role : Enforces valid 1v1 room status transitions and blocks illegal regressions.
+// ==============================================================================
 package database.multiplayer;
 
 import database.multiplayer.MultiplayerModels.MultiplayerRoomState;
@@ -9,13 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * ==============================================================================
- * AIRSTRIKE Phase 12 (Part 4): Multiplayer Room State Machine Manager
- * PACKAGE: database.multiplayer
- *
- * Demonstrates PSOOP-CO2:
- * - Deterministic finite state machine with guarded transitions and lifecycle invariants.
- * ==============================================================================
+ * Deterministic finite state machine enforcing guarded 1v1 room lifecycle transitions.
  */
 public class MultiplayerStateManager {
 
@@ -55,6 +55,7 @@ public class MultiplayerStateManager {
         }
 
         MultiplayerRoomState oldState = currentRoomRef.get();
+        // WHY: Reject stale or out-of-order broadcast updates that violate the room FSM transition table.
         if (oldState != null && !isTransitionAllowed(oldState.getStatus(), newState.getStatus())) {
             return false;
         }

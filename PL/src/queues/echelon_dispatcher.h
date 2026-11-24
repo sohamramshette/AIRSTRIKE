@@ -1,19 +1,19 @@
+// ==============================================================================
+// File      : PL/src/queues/echelon_dispatcher.h
+// Subject   : PL-CO3 | Stack and Queue Applications
+// Topics    : [TOPIC: EchelonDispatcher] [TOPIC: Circular Queue] [TOPIC: FIFO] [TOPIC: Modulo Wrap-Around]
+// Game Role : Dispatches PL-CO3 Queue Wave Echelon squadrons in FIFO order with wrap-around tracking.
+// ==============================================================================
+
 #ifndef ECHELON_DISPATCHER_H
 #define ECHELON_DISPATCHER_H
 
 #include <iostream>
 #include <string>
 
-/**
- * Queue Wave Echelon (PL-CO3).
- *
- * Demonstrates:
- * - Circular Queue implementation using static/dynamic array
- * - True FIFO (First-In, First-Out) dispatch semantics
- * - Pointer / Index Wraparound arithmetic: (index + 1) % capacity
- * - Underflow and Overflow boundary enforcement
- * - Explicit wraparound state verification (rearIndex < frontIndex)
- */
+// [TOPIC: EchelonWaveUnit Record]
+// Purpose: Holds an enemy echelon squadron's ID, codename, size, speed, delay, and deployment flag.
+// Game Role: Represents a single tactical echelon unit buffered inside QueueWaveEchelon.
 struct EchelonWaveUnit {
     int echelonId;
     std::string codename;
@@ -28,6 +28,9 @@ struct EchelonWaveUnit {
         : echelonId(id), codename(name), craftCount(count), flightSpeed(spd), spawnDelaySec(delay), deployed(false) {}
 };
 
+// [TOPIC: QueueWaveEchelon] [TOPIC: EchelonDispatcher] [TOPIC: Circular Queue]
+// Purpose: Circular array queue enforcing FIFO echelon dispatch with overflow/underflow/wraparound telemetry.
+// Game Role: Controls sequential rank deployment for the PL-CO3 Queue Wave Echelon enemy mechanic.
 class QueueWaveEchelon {
 public:
     static constexpr int DEFAULT_CAPACITY = 6;
@@ -43,11 +46,15 @@ public:
     explicit QueueWaveEchelon(int capacity = DEFAULT_CAPACITY);
     ~QueueWaveEchelon();
 
-    // Deep copy operations
+    // [TOPIC: Circular Buffer Deep Copy]
+    // Purpose: Copies queued echelon units in FIFO sequence into a normalized contiguous buffer.
+    // Game Role: Duplicates pending echelon queues safely.
     QueueWaveEchelon(const QueueWaveEchelon& other);
     QueueWaveEchelon& operator=(const QueueWaveEchelon& other);
 
-    // Core Queue Operations
+    // [TOPIC: FIFO Echelon Operations]
+    // Purpose: Enqueues incoming echelons, deploys the front echelon, or peeks next launch in O(1).
+    // Game Role: Releases attacking squadrons in deterministic FIFO order.
     bool enqueue(const EchelonWaveUnit& unit);
     bool dequeue(EchelonWaveUnit& outUnit);
     bool peek(EchelonWaveUnit& outUnit) const;

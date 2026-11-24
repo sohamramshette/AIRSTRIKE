@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/SimpleJson.java
+// Subject   : PSOOP-CO3 / CO4 | Zero-Dependency JSON Parser & Serializer
+// Topics    : [TOPIC: Recursive Descent Parser] [TOPIC: Defensive Parsing]
+// Game Role : Parses and serializes Supabase REST, Auth, and Phoenix WebSocket payloads.
+// ==============================================================================
 package database;
 
 import java.util.ArrayList;
@@ -383,6 +389,7 @@ public final class SimpleJson {
                 }
             }
             String numStr = src.substring(start, pos);
+            // WHY: Preserve exact integers as Long while routing decimals/exponents to Double.
             if (isFloating) {
                 return Double.parseDouble(numStr);
             } else {

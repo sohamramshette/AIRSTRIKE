@@ -1,9 +1,19 @@
+// ==============================================================================
+// File      : PL/tests/test_arrays.cpp
+// Subject   : PL-CO1 | Arrays Unit Tests
+// Topics    : [TOPIC: 1D Array] [TOPIC: 2D Array] [TOPIC: DynamicArray] [TOPIC: Rule of Five] [TOPIC: BulletPool] [TOPIC: CollisionGrid]
+// Game Role : Verifies static arrays, dynamic capacity doubling, bullet pooling, and grid collisions.
+// ==============================================================================
+
 #include "test_arrays.h"
 #include "../src/arrays/array_ops.h"
 #include "../src/arrays/dynamic_array.h"
 #include "../src/arrays/bullet_pool.h"
 #include "../src/arrays/collision_grid.h"
 
+// [TOPIC: PL-CO1 Unit Tests]
+// Purpose: Executes 10 automated checks covering 1D/2D arrays, DynamicArray, BulletPool, and CollisionGrid.
+// Game Role: Ensures core array-backed AIRSTRIKE subsystems preserve bounds and memory invariants.
 TestSummary runArrayTests() {
     TestSummary summary;
     std::cout << "\n======================================================\n";

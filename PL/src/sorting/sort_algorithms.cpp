@@ -1,12 +1,19 @@
+// ==============================================================================
+// File      : PL/src/sorting/sort_algorithms.cpp
+// Subject   : PL-CO4 | Searching and Sorting Techniques
+// Topics    : [TOPIC: Bubble Sort] [TOPIC: Selection Sort] [TOPIC: Insertion Sort] [TOPIC: Merge Sort] [TOPIC: Quick Sort]
+// Game Role : Implements all 5 canonical sorting algorithms for AirStrike leaderboards & benchmarks.
+// ==============================================================================
+
 #include "sort_algorithms.h"
 #include <chrono>
 #include <iomanip>
 
 namespace SortAlgorithms {
 
-// ==========================================
-// 1. Bubble Sort (Integers)
-// ==========================================
+// [TOPIC: Bubble Sort] [TOPIC: Early Exit Optimization]
+// Purpose: Repeatedly swaps adjacent inversions with an early-exit flag for O(N) best-case.
+// Game Role: Baseline stable quadratic sort for small AirStrike telemetry arrays.
 SortMetrics bubbleSort(int arr[], int size, bool ascending) {
     SortMetrics m;
     m.algorithmName = "Bubble Sort";
@@ -31,7 +38,8 @@ SortMetrics bubbleSort(int arr[], int size, bool ascending) {
                 swapped = true;
             }
         }
-        if (!swapped) break; // Optimized early exit
+        // WHY: Zero swaps in a full pass proves the array is sorted, giving O(N) best-case time.
+        if (!swapped) break;
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -39,9 +47,9 @@ SortMetrics bubbleSort(int arr[], int size, bool ascending) {
     return m;
 }
 
-// ==========================================
-// 2. Selection Sort (Integers)
-// ==========================================
+// [TOPIC: Selection Sort] [TOPIC: Minimum Swaps]
+// Purpose: Selects the min/max element each pass and performs at most one swap per outer step.
+// Game Role: Minimizes memory writes when sorting heavy records in O(N^2) comparisons.
 SortMetrics selectionSort(int arr[], int size, bool ascending) {
     SortMetrics m;
     m.algorithmName = "Selection Sort";
@@ -62,6 +70,7 @@ SortMetrics selectionSort(int arr[], int size, bool ascending) {
                 targetIdx = j;
             }
         }
+        // WHY: Swap once per pass (O(N) total swaps) rather than swapping on every comparison.
         if (targetIdx != i) {
             int temp = arr[i];
             arr[i] = arr[targetIdx];
@@ -75,9 +84,9 @@ SortMetrics selectionSort(int arr[], int size, bool ascending) {
     return m;
 }
 
-// ==========================================
-// 3. Insertion Sort (Integers)
-// ==========================================
+// [TOPIC: Insertion Sort] [TOPIC: Adaptive Sort]
+// Purpose: Shifts larger prefix items right and inserts key into sorted order in-place.
+// Game Role: Fast O(N) adaptive sort when AirStrike scores arrive nearly ordered.
 SortMetrics insertionSort(int arr[], int size, bool ascending) {
     SortMetrics m;
     m.algorithmName = "Insertion Sort";
@@ -96,6 +105,7 @@ SortMetrics insertionSort(int arr[], int size, bool ascending) {
             m.comparisons++;
             bool condition = ascending ? (arr[j] > key) : (arr[j] < key);
             if (condition) {
+                // WHY: Shift sorted elements right one slot rather than doing full swaps per step.
                 arr[j + 1] = arr[j];
                 m.swaps++;
                 j--;
@@ -111,9 +121,9 @@ SortMetrics insertionSort(int arr[], int size, bool ascending) {
     return m;
 }
 
-// ==========================================
-// 4. Merge Sort (Integers)
-// ==========================================
+// [TOPIC: Merge Sort] [TOPIC: Divide and Conquer] [TOPIC: Stable Sort]
+// Purpose: Merges two sorted halves in O(N) auxiliary space while preserving equal-element order.
+// Game Role: Guarantees O(N log N) stable leaderboard sorting without worst-case degradation.
 static void mergeInternal(int arr[], int left, int mid, int right, bool ascending, long long& comparisons, long long& swaps) {
     int n1 = mid - left + 1;
     int n2 = right - mid;
@@ -127,6 +137,7 @@ static void mergeInternal(int arr[], int left, int mid, int right, bool ascendin
     int i = 0, j = 0, k = left;
     while (i < n1 && j < n2) {
         comparisons++;
+        // WHY: Use <= / >= so equal keys from left half L win, preserving sort stability.
         bool condition = ascending ? (L[i] <= R[j]) : (L[i] >= R[j]);
         if (condition) {
             arr[k] = L[i++];
@@ -152,6 +163,7 @@ static void mergeInternal(int arr[], int left, int mid, int right, bool ascendin
 
 static void mergeSortRecursive(int arr[], int left, int right, bool ascending, long long& comparisons, long long& swaps) {
     if (left < right) {
+        // WHY: Overflow-safe midpoint prevents integer overflow when splitting large index ranges.
         int mid = left + (right - left) / 2;
         mergeSortRecursive(arr, left, mid, ascending, comparisons, swaps);
         mergeSortRecursive(arr, mid + 1, right, ascending, comparisons, swaps);
@@ -177,10 +189,11 @@ SortMetrics mergeSort(int arr[], int size, bool ascending) {
     return m;
 }
 
-// ==========================================
-// 5. Quick Sort (Integers)
-// ==========================================
+// [TOPIC: Quick Sort] [TOPIC: Pivot Partitioning] [TOPIC: Divide and Conquer]
+// Purpose: Partitions around the rightmost pivot in-place and recurses on sub-ranges in O(N log N) avg.
+// Game Role: Fast in-place sorting for large AirStrike score datasets.
 static int partitionInternal(int arr[], int low, int high, bool ascending, long long& comparisons, long long& swaps) {
+    // WHY: Lomuto scheme uses arr[high] as pivot and partitions in-place using O(log N) stack space.
     int pivot = arr[high];
     int i = low - 1;
 
@@ -228,9 +241,9 @@ SortMetrics quickSort(int arr[], int size, bool ascending) {
     return m;
 }
 
-// ==========================================
-// Leaderboard (PlayerScore) Overloads
-// ==========================================
+// [TOPIC: Leaderboard Sorting] [TOPIC: Bubble Sort] [TOPIC: Selection Sort] [TOPIC: Insertion Sort]
+// Purpose: Orders AirStrike PlayerScore structs by score using quadratic in-place sorts.
+// Game Role: Ranks pilot leaderboard entries and reports comparison/swap trade-offs.
 SortMetrics bubbleSortScores(PlayerScore arr[], int size, bool descending) {
     SortMetrics m;
     m.algorithmName = "Bubble Sort (Scores)";
@@ -254,6 +267,7 @@ SortMetrics bubbleSortScores(PlayerScore arr[], int size, bool descending) {
                 swapped = true;
             }
         }
+        // WHY: Early exit avoids redundant passes once scores are ordered.
         if (!swapped) break;
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -323,6 +337,9 @@ SortMetrics insertionSortScores(PlayerScore arr[], int size, bool descending) {
     return m;
 }
 
+// [TOPIC: Merge Sort] [TOPIC: Quick Sort] [TOPIC: Leaderboard Sorting]
+// Purpose: Sorts PlayerScore entries in O(N log N) via stable Merge Sort and in-place Quick Sort.
+// Game Role: Scales high-score leaderboard ranking for larger AirStrike pilot tables.
 static void mergeScoresInternal(PlayerScore arr[], int left, int mid, int right, bool descending, long long& comparisons, long long& swaps) {
     int n1 = mid - left + 1;
     int n2 = right - mid;
@@ -336,6 +353,7 @@ static void mergeScoresInternal(PlayerScore arr[], int left, int mid, int right,
     int i = 0, j = 0, k = left;
     while (i < n1 && j < n2) {
         comparisons++;
+        // WHY: Break ties in favor of left subarray L to preserve original order for tied scores (stable).
         bool condition = descending ? (L[i].score >= R[j].score) : (L[i].score <= R[j].score);
         if (condition) {
             arr[k] = L[i++];
@@ -361,6 +379,7 @@ static void mergeScoresInternal(PlayerScore arr[], int left, int mid, int right,
 
 static void mergeSortScoresRecursive(PlayerScore arr[], int left, int right, bool descending, long long& comparisons, long long& swaps) {
     if (left < right) {
+        // WHY: Overflow-safe midpoint calculation keeps recursion balanced.
         int mid = left + (right - left) / 2;
         mergeSortScoresRecursive(arr, left, mid, descending, comparisons, swaps);
         mergeSortScoresRecursive(arr, mid + 1, right, descending, comparisons, swaps);
@@ -387,6 +406,7 @@ SortMetrics mergeSortScores(PlayerScore arr[], int size, bool descending) {
 }
 
 static int partitionScoresInternal(PlayerScore arr[], int low, int high, bool descending, long long& comparisons, long long& swaps) {
+    // WHY: Partition around arr[high] pivot in-place; unstable for equal scores when swapping across pivot.
     PlayerScore pivot = arr[high];
     int i = low - 1;
 

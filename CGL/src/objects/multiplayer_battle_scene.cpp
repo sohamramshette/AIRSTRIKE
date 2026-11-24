@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/objects/multiplayer_battle_scene.cpp
+// Subject   : Scene | Dual-Player CO1-CO6 Combat Visualizer
+// Topics    : [TOPIC: Scene Orchestration] [TOPIC: Split-Screen Viewports] [TOPIC: BMP Loader] [TOPIC: Bresenham & Midpoint Rasterization] [TOPIC: Cohen-Sutherland Clipping]
+// Game Role : Renders opposing P1/P2 starfighters with BMP hull texturing, Bresenham/Midpoint effects, clipped lasers, and dual cameras.
+// ==============================================================================
+
 #include "multiplayer_battle_scene.hpp"
 #include "common/image_loader.hpp"
 #include "common/font_renderer.hpp"
@@ -49,11 +56,15 @@ MultiplayerBattleScene::~MultiplayerBattleScene() {
     }
 }
 
+// [TOPIC: BMP Loader / 24-bit BMP Texture Mapping]
+// Purpose: Loads space_hull.bmp from workspace or relative paths and uploads it to GL_TEXTURE_2D.
+// Game Role: Applies 24-bit hull texture to both multiplayer vessels.
 void MultiplayerBattleScene::init() {
     int texW = 0, texH = 0;
     std::vector<unsigned char> texData;
 
     // Attempt loading space_hull texture from standard paths
+    // WHY: Probe both repository root and bin/working-directory relative paths for BMP assets
     bool loaded = loadBMP("CGL/assets/textures/space_hull.bmp", texW, texH, texData);
     if (!loaded) {
         loaded = loadBMP("assets/textures/space_hull.bmp", texW, texH, texData);
@@ -73,6 +84,9 @@ void MultiplayerBattleScene::init() {
     }
 }
 
+// [TOPIC: CO6 Gouraud Smooth Shading & Lighting]
+// Purpose: Enables GL_SMOOTH shading and configures GL_LIGHT0 positional light for both viewports.
+// Game Role: Illuminates P1 and P2 ships when lightingEnabled is true.
 void MultiplayerBattleScene::setupLighting() {
     if (!lightingEnabled) {
         glDisable(GL_LIGHTING);
@@ -95,9 +109,13 @@ void MultiplayerBattleScene::setupLighting() {
     glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
 }
 
+// [TOPIC: CO4 Orthographic vs Perspective Projection]
+// Purpose: Configures either aspect-corrected glOrtho overview or 45-degree gluPerspective chase view.
+// Game Role: Switches projection matrices between Arena Overview and Split-Screen viewports.
 void MultiplayerBattleScene::setupProjection(int w, int h, int cameraPerspective) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    // WHY: Guard denominator against h == 0 during minimized/resized window events
     float aspect = static_cast<float>(w) / static_cast<float>(h > 0 ? h : 1);
 
     if (cameraPerspective == 0) {
@@ -113,6 +131,9 @@ void MultiplayerBattleScene::setupProjection(int w, int h, int cameraPerspective
     glLoadIdentity();
 }
 
+// [TOPIC: CO5 Arena Boundary Frame]
+// Purpose: Draws the [-2.5, 2.5] x [-1.8, 1.8] combat enclosure and corner reticles.
+// Game Role: Visually marks the clipping window used by renderClippedCombatBeams().
 void MultiplayerBattleScene::renderArenaBoundary() {
     // Combat Envelope Boundary (CO5)
     glDisable(GL_LIGHTING);
@@ -145,6 +166,9 @@ void MultiplayerBattleScene::renderArenaBoundary() {
     glEnd();
 }
 
+// [TOPIC: CO1 CCW Primitives / CO2 Matrix Transform / CO6 Material & Texture]
+// Purpose: Renders P1's cyan delta-wing Interceptor with BMP hull texturing and Phong materials.
+// Game Role: Left-side agile fighter in MultiplayerBattleScene.
 void MultiplayerBattleScene::renderPlayer1Ship() {
     // CGL-CO1 & CO2: Cyan Agile Interceptor with delta wings
     glPushMatrix();
@@ -203,6 +227,9 @@ void MultiplayerBattleScene::renderPlayer1Ship() {
     glPopMatrix();
 }
 
+// [TOPIC: CO1 Quads / CO2 Matrix Transform / CO6 Material & Texture]
+// Purpose: Renders P2's magenta Heavy Cruiser hull and plasma nacelles with Phong materials.
+// Game Role: Right-side opposing heavy vessel in MultiplayerBattleScene.
 void MultiplayerBattleScene::renderPlayer2Ship() {
     // CGL-CO1 & CO2: Purple/Magenta Heavy Assault Cruiser
     glPushMatrix();
@@ -255,6 +282,9 @@ void MultiplayerBattleScene::renderPlayer2Ship() {
     glPopMatrix();
 }
 
+// [TOPIC: CO3 Bresenham Integer Line (8 Octants)]
+// Purpose: Maps P1/P2 positions to integer centi-units, runs bresenhamLine(), and plots pulsed GL_POINTS.
+// Game Role: Renders the targeting beam connecting P1 to P2 in MultiplayerBattleScene.
 void MultiplayerBattleScene::renderBresenhamBeams() {
     // CGL-CO3: Integer Bresenham Laser Trajectory from P1 towards P2
     glDisable(GL_LIGHTING);
@@ -262,6 +292,7 @@ void MultiplayerBattleScene::renderBresenhamBeams() {
     glColor4f(0.0f, 1.0f, 0.9f, 0.85f);
 
     // Map float coordinates to integer screen/grid units for Bresenham demonstration
+    // WHY: Scale world coordinates by 100 so integer Bresenham rasterization preserves smooth centi-unit resolution
     int x1 = static_cast<int>(player1.x * 100.0f);
     int y1 = static_cast<int>(player1.y * 100.0f);
     int x2 = static_cast<int>(player2.x * 100.0f);
@@ -276,6 +307,9 @@ void MultiplayerBattleScene::renderBresenhamBeams() {
     glEnd();
 }
 
+// [TOPIC: CO3 Midpoint Circle (8-Way Symmetry)]
+// Purpose: Generates integer circle rings via midpointCircle() and plots pulsed shields around P1 and P2.
+// Game Role: Renders energy barrier rings for both multiplayer craft.
 void MultiplayerBattleScene::renderMidpointShields() {
     // CGL-CO3: Midpoint Circle Algorithm for Shield Barriers
     glDisable(GL_LIGHTING);
@@ -314,6 +348,9 @@ void MultiplayerBattleScene::renderMidpointShields() {
     }
 }
 
+// [TOPIC: CO5 Cohen-Sutherland Clipping]
+// Purpose: Clips a long forward ray from P1 against arenaWin and draws accepted (gold) vs rejected (dim red) spans.
+// Game Role: Visually proves Cohen-Sutherland clipping against the combat boundary in Arena Overview.
 void MultiplayerBattleScene::renderClippedCombatBeams() {
     // CGL-CO5: Cohen-Sutherland Line Clipping against Arena Window
     RectWindow arenaWin(-2.5f, -1.8f, 2.5f, 1.8f);
@@ -338,6 +375,7 @@ void MultiplayerBattleScene::renderClippedCombatBeams() {
         glEnd();
 
         // Render clipped-away exterior section in dashed/dim red (proving clipping math)
+        // WHY: Highlighting the discarded tail from clippedBeam.p2 to incomingBeam.p2 illustrates the boundary cut
         glColor4f(1.0f, 0.2f, 0.2f, 0.35f);
         glBegin(GL_LINES);
         glVertex3f(clippedBeam.p2.x, clippedBeam.p2.y, 0.05f);
@@ -346,6 +384,9 @@ void MultiplayerBattleScene::renderClippedCombatBeams() {
     }
 }
 
+// [TOPIC: HUD Font Renderer]
+// Purpose: Renders P1/P2 health/score banners and bottom mode controls across the full screen.
+// Game Role: Displays live multiplayer match telemetry on Screen 8.
 void MultiplayerBattleScene::renderHUD(int screenWidth, int screenHeight, int viewportIndex) {
     (void)viewportIndex;
     beginHUD(screenWidth, screenHeight);
@@ -369,6 +410,9 @@ void MultiplayerBattleScene::renderHUD(int screenWidth, int screenHeight, int vi
     endHUD();
 }
 
+// [TOPIC: Scene Orchestration / Split-Screen Viewports]
+// Purpose: Draws either the full-window orthographic arena or dual left/right perspective chase-cam viewports.
+// Game Role: Executes Screen 8 Multiplayer Combat rendering pass.
 void MultiplayerBattleScene::render(int screenWidth, int screenHeight) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -394,6 +438,7 @@ void MultiplayerBattleScene::render(int screenWidth, int screenHeight) {
         int halfW = screenWidth / 2;
 
         // Viewport 1: Player 1 Camera (Left)
+        // WHY: Partition framebuffer into left/right glViewport halves with independent gluLookAt chase cameras
         glViewport(0, 0, halfW, screenHeight);
         setupProjection(halfW, screenHeight, 1);
         gluLookAt(player1.x, player1.y - 2.5f, 3.2f,
@@ -438,6 +483,9 @@ void MultiplayerBattleScene::render(int screenWidth, int screenHeight) {
     }
 }
 
+// [TOPIC: Dual-Player Motion & Shield Pulsation]
+// Purpose: Oscillates P1/P2 vertical positions, banking angles, and shield alpha values.
+// Game Role: Drives continuous combat motion verified by CO2 multiplayer tests.
 void MultiplayerBattleScene::update(float dt) {
     animTimer += dt;
 

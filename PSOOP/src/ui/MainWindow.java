@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/MainWindow.java
+// Subject   : PSOOP-CO2 / CO4 | Primary Application Window & CardLayout Router
+// Topics    : [TOPIC: Threading/Swing EDT] [TOPIC: CardLayout Navigation] [TOPIC: Game Loop]
+// Game Role : Owns top-level JFrame, routes between MenuPanel and GameCanvas, and launches dialogs.
+// ==============================================================================
 package ui;
 
 import database.SessionManager;
@@ -13,9 +19,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 /**
- * Main application window for AIRSTRIKE.
- * Houses CardLayout navigation between the Main Menu and active Combat Canvas,
- * as well as Supabase Authentication and Pilot Profile management.
+ * [TOPIC: CardLayout Navigation]
+ * Main application frame orchestrating menu/gameplay switching and subsystem dialogs.
  */
 public class MainWindow extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -54,28 +59,41 @@ public class MainWindow extends JFrame {
 
         add(rootPanel);
 
-        // Start background game loop for starfield animation
+        // WHY: Start the Swing Timer loop immediately so the starfield renders continuously in MENU state.
         gameLoop.start();
         showMainMenu();
     }
 
+    /**
+     * [TOPIC: CardLayout Navigation] Switches view to MenuPanel and restores keyboard focus.
+     */
     public void showMainMenu() {
         cardLayout.show(rootPanel, "MENU");
         menuPanel.requestFocusInWindow();
     }
 
+    /**
+     * [TOPIC: CardLayout Navigation] Switches to GameCanvas, starts solo run, and focuses canvas for WASD/Space.
+     */
     public void startGame() {
         cardLayout.show(rootPanel, "GAME");
         engine.startNewGame();
+        // WHY: CardLayout.show does not auto-focus the newly revealed panel; explicit request enables KeyListener input.
         gameCanvas.requestFocusInWindow();
     }
 
+    /**
+     * [TOPIC: Multiplayer Telemetry] Launches a seeded 1v1 match on GameCanvas.
+     */
     public void startMultiplayerGame(long matchSeed, String startedAt, database.multiplayer.MultiplayerModels.MultiplayerRoomState room) {
         cardLayout.show(rootPanel, "GAME");
         engine.startMultiplayerGame(matchSeed, startedAt, room);
         gameCanvas.requestFocusInWindow();
     }
 
+    /**
+     * [TOPIC: Subject CO Matrix] Opens the interactive multi-subject enemy demo arena.
+     */
     public void startEnemyDemo() {
         cardLayout.show(rootPanel, "GAME");
         engine.startEnemyDemo();
@@ -98,6 +116,11 @@ public class MainWindow extends JFrame {
 
     public void showSubjectCODialog() {
         SubjectCODialog dialog = new SubjectCODialog(this, this);
+        dialog.setVisible(true);
+    }
+
+    public void showNativeBridgeDialog() {
+        NativeBridgeDialog dialog = new NativeBridgeDialog(this);
         dialog.setVisible(true);
     }
 

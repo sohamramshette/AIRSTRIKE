@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/linked_lists/formation_squadron.cpp
+// Subject   : PL-CO2 | Suitable Linked Lists
+// Topics    : [TOPIC: FormationSquadron] [TOPIC: Doubly Linked List] [TOPIC: O(1) List Splitting]
+// Game Role : Implements doubly-linked squadron maneuvers, O(1) craft removal, and chain splitting.
+// ==============================================================================
+
 #include "formation_squadron.h"
 #include <iomanip>
 
@@ -85,6 +92,9 @@ bool FormationSquadron::insertAtRank(size_t rankIndex, int id, const std::string
     return true;
 }
 
+// [TOPIC: O(1) Node Deletion] [TOPIC: Doubly Linked List]
+// Purpose: Splices node out of the doubly linked chain by updating neighbors in O(1).
+// Game Role: Removes a destroyed wingman without reallocating or shifting remaining ships.
 void FormationSquadron::removeNode(SquadronCraft* node) {
     if (!node) return;
 
@@ -103,6 +113,7 @@ void FormationSquadron::removeNode(SquadronCraft* node) {
             head = nullptr;
         }
     } else {
+        // WHY: Direct prev/next relinking eliminates O(N) array shifting on mid-chain deletion.
         node->prev->next = node->next;
         node->next->prev = node->prev;
     }
@@ -120,10 +131,14 @@ bool FormationSquadron::removeShip(int shipId) {
     return false;
 }
 
+// [TOPIC: O(1) List Splitting] [TOPIC: Doubly Linked List]
+// Purpose: Cuts the doubly linked chain after targetShipId and transfers trailing nodes to outSecondSquadron.
+// Game Role: Splits a long enemy formation into two independent combat wings upon mid-chain break.
 bool FormationSquadron::splitAt(int targetShipId, FormationSquadron& outSecondSquadron) {
     SquadronCraft* target = findShipMut(targetShipId);
     if (!target) return false;
-    if (target == tail) return false; // No trailing nodes to split into second formation
+    // WHY: Nothing trails the anchor craft, so splitting at tail produces no second squadron.
+    if (target == tail) return false;
 
     SquadronCraft* secondHead = target->next;
     SquadronCraft* secondTail = tail;
@@ -136,12 +151,12 @@ bool FormationSquadron::splitAt(int targetShipId, FormationSquadron& outSecondSq
         curr = curr->next;
     }
 
-    // Sever the link: target becomes the new tail of current squadron
+    // WHY: Sever target->next and retarget tail in O(1) without copying or reallocating craft nodes.
     target->next = nullptr;
     tail = target;
     craftCount -= trailingCount;
 
-    // Configure second squadron
+    // WHY: Clear destination squadron first to prevent leaks before adopting severed chain ownership.
     outSecondSquadron.clear();
     secondHead->prev = nullptr;
     outSecondSquadron.head = secondHead;

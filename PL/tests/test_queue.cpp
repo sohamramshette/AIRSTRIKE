@@ -1,6 +1,16 @@
+// ==============================================================================
+// File      : PL/tests/test_queue.cpp
+// Subject   : PL-CO3 | Queue Unit Tests
+// Topics    : [TOPIC: WaveQueue] [TOPIC: Circular Queue] [TOPIC: FIFO] [TOPIC: Modulo Wrap-Around]
+// Game Role : Verifies FIFO wave dispatch, circular wrap-around, and overflow/underflow protection.
+// ==============================================================================
+
 #include "test_queue.h"
 #include "../src/queues/wave_queue.h"
 
+// [TOPIC: PL-CO3 Queue Unit Tests]
+// Purpose: Executes 6 automated checks on WaveQueue circular buffering, FIFO order, and deep copy.
+// Game Role: Ensures reliable enemy wave sequencing without array drift.
 TestSummary runQueueTests() {
     TestSummary summary;
     std::cout << "\n======================================================\n";

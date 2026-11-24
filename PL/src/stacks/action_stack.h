@@ -1,14 +1,19 @@
+// ==============================================================================
+// File      : PL/src/stacks/action_stack.h
+// Subject   : PL-CO3 | Stack and Queue Applications
+// Topics    : [TOPIC: ActionStack] [TOPIC: Stack] [TOPIC: LIFO] [TOPIC: Overflow Underflow]
+// Game Role : Tracks player combat history in LIFO order to support undo and tactical rollback.
+// ==============================================================================
+
 #ifndef ACTION_STACK_H
 #define ACTION_STACK_H
 
 #include <iostream>
 #include <string>
 
-/**
- * Stack Implementation for AirStrike Combat Action History / Undo (PL-CO3).
- * Demonstrates LIFO (Last-In, First-Out) behavior with explicit
- * overflow and underflow detection.
- */
+// [TOPIC: CombatAction Record]
+// Purpose: Encapsulates a reversible combat event with score and health deltas.
+// Game Role: Forms the unit payload pushed onto and popped from ActionStack.
 struct CombatAction {
     int actionId;
     std::string type;       // "KILL", "POWERUP", "DAMAGE_TAKEN", "BOMB_DEPLOYED"
@@ -21,6 +26,9 @@ struct CombatAction {
         : actionId(id), type(t), scoreDelta(sDelta), healthDelta(hDelta), detail(d) {}
 };
 
+// [TOPIC: ActionStack] [TOPIC: Stack] [TOPIC: LIFO]
+// Purpose: Array-backed stack offering O(1) push, pop, and peek with explicit overflow/underflow guards.
+// Game Role: Enables deterministic LIFO undo/rollback of recent combat actions.
 class ActionStack {
 public:
     static constexpr int DEFAULT_CAPACITY = 16;
@@ -34,11 +42,15 @@ public:
     explicit ActionStack(int capacity = DEFAULT_CAPACITY);
     ~ActionStack();
 
-    // Deep copy operations
+    // [TOPIC: Deep Copy Semantics]
+    // Purpose: Allocates separate stack storage up to topIndex on copy construction/assignment.
+    // Game Role: Preserves independent action-history snapshots.
     ActionStack(const ActionStack& other);
     ActionStack& operator=(const ActionStack& other);
 
-    // Core Stack Operations
+    // [TOPIC: LIFO Stack Operations]
+    // Purpose: Pushes, pops, and inspects the top combat action in O(1) time.
+    // Game Role: Records live combat events and pops the latest one during undo.
     bool push(const CombatAction& action);
     bool pop(CombatAction& outAction);
     bool peek(CombatAction& outAction) const;

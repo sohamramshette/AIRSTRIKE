@@ -1,15 +1,15 @@
+// ==============================================================================
+// File      : PSOOP/src/database/multiplayer/MultiplayerValidation.java
+// Subject   : PSOOP-CO3 | Multiplayer Input Sanitization & Anti-Cheat Bounds
+// Topics    : [TOPIC: Input Validation] [TOPIC: Security Guards]
+// Game Role : Sanitizes 6-char room codes, validates UUIDs, and enforces score rate bounds.
+// ==============================================================================
 package database.multiplayer;
 
 import java.util.regex.Pattern;
 
 /**
- * ==============================================================================
- * AIRSTRIKE Phase 12 (Part 4): Multiplayer Input Validation & Security Guards
- * PACKAGE: database.multiplayer
- *
- * Demonstrates PSOOP-CO3:
- * - Defensive programming, strict contract verification, and sanitization.
- * ==============================================================================
+ * Defensive input sanitization and anti-cheat score verification for 1v1 multiplayer.
  */
 public final class MultiplayerValidation {
 

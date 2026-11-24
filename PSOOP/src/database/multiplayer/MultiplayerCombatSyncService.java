@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/multiplayer/MultiplayerCombatSyncService.java
+// Subject   : PSOOP-CO1 / CO3 / CO4 | Real-Time 1v1 Telemetry & Match Timer Sync
+// Topics    : [TOPIC: Singleton Pattern] [TOPIC: Multiplayer Telemetry] [TOPIC: Threading/Swing EDT]
+// Game Role : Broadcasts local vitals at 10 Hz, filters opponent sequence numbers, and fires match expiry.
+// ==============================================================================
 package database.multiplayer;
 
 import database.SimpleJson;
@@ -17,15 +23,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
- * ==============================================================================
- * AIRSTRIKE Phase 12 (Part 6): Java Real-Time 1v1 Combat Telemetry & Scoreboard Sync
- * PACKAGE: database.multiplayer
- *
- * Demonstrates:
- * - PSOOP-CO1: Encapsulated concurrent telemetry modeling.
- * - PSOOP-CO3: Defensive packet sequence verification and rate-limiting.
- * - PSOOP-CO4: Kinematics and vital state replication over Realtime Broadcast.
- * ==============================================================================
+ * [TOPIC: Multiplayer Telemetry] [TOPIC: Singleton Pattern]
+ * Coordinates 10 Hz 1v1 combat telemetry broadcast, overtake cues, and 90-second match countdown.
  */
 public class MultiplayerCombatSyncService {
 
@@ -93,7 +92,8 @@ public class MultiplayerCombatSyncService {
     }
 
     /**
-     * Initializes the combat sync session for an active room.
+     * [TOPIC: Multiplayer Telemetry] [TOPIC: Threading/Swing EDT]
+     * Initializes 10 Hz broadcast and 200 ms watchdog tasks on a daemon executor.
      */
     public synchronized void startCombatSync(
             MultiplayerRoomState room,
@@ -159,7 +159,7 @@ public class MultiplayerCombatSyncService {
     }
 
     /**
-     * Broadcasts local telemetry snapshot.
+     * [TOPIC: Multiplayer Telemetry] Broadcasts local telemetry snapshot.
      */
     public void sendLocalTelemetry() {
         if (currentRoom == null || vitalsSupplier == null) return;
@@ -188,7 +188,8 @@ public class MultiplayerCombatSyncService {
     }
 
     /**
-     * Inbound telemetry packet handler with sequence filtering.
+     * [TOPIC: Multiplayer Telemetry] [TOPIC: Defensive Parsing]
+     * Applies opponent vitals only for newer sequence packets in the active room.
      */
     public void handleInboundTelemetry(Map<String, Object> payload) {
         if (payload == null || currentRoom == null) return;
@@ -197,6 +198,7 @@ public class MultiplayerCombatSyncService {
         if (!currentRoom.getRoomId().equals(roomId)) return;
 
         String senderId = SimpleJson.getString(payload, "playerId");
+        // WHY: Ignore echoed self-packets and out-of-order stale frames via monotonic sequence check.
         if (localPlayerId.equals(senderId)) return; // Drop own reflection
 
         long seq = SimpleJson.getLong(payload, "sequence", 0);
@@ -268,6 +270,7 @@ public class MultiplayerCombatSyncService {
             if (onMatchExpiredCallback != null) {
                 Runnable cb = onMatchExpiredCallback;
                 onMatchExpiredCallback = null;
+                // WHY: Dispatch match end onto EDT so GameEngine state/HUD transitions stay thread-safe.
                 SwingUtilities.invokeLater(cb);
             }
         }

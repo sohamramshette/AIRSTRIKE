@@ -1,9 +1,9 @@
 # ==============================================================================
-# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO3: BOOTH'S MULTIPLICATION ALGORITHM
-# Implements Signed Two's Complement Binary Multiplication from First Principles
-# Does NOT use processor hardware MUL or IMUL instructions for multiplication logic.
-# Satisfies Course Outcome: COA-CO3 (Computer Arithmetic - Signed Multiplication)
-# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
+# File    : COA/src/co3_arithmetic/booth_multiplier.s
+# Subject : COA-CO3 | Booth's Signed Binary Multiplication Algorithm
+# Topics  : Booth's Algorithm, Signed Binary Multiplication, Two's Complement,
+#           Pairwise Bit Recoding (Q0, Q-1), Arithmetic Right Shift (SAR)
+# Target  : x86-64 (64-bit Windows ABI, GAS Intel Syntax)
 # ==============================================================================
 
 .intel_syntax noprefix
@@ -11,77 +11,47 @@
 .data
 .align 8
 booth_hdr:
-    .asciz "\n==============================================================================\n        CO3: BOOTH'S SIGNED BINARY MULTIPLICATION ALGORITHM (64-BIT)          \n==============================================================================\n"
-booth_inputs_fmt:
-    .asciz "  Multiplicand (M) = %lld (0x%02llX | Binary: "
-booth_inputs_q:
-    .asciz ")\n  Multiplier   (Q) = %lld (0x%02llX | Binary: "
+    .asciz "\n==============================================================================\n        CO3: BOOTH'S SIGNED BINARY MULTIPLICATION ALGORITHM (8-CYCLE)         \n==============================================================================\n"
+booth_inputs_fmt:   .asciz "  Multiplicand (M) = %lld (0x%02llX | Binary: "
+booth_inputs_q:     .asciz ")\n  Multiplier   (Q) = %lld (0x%02llX | Binary: "
 booth_table_hdr:
-    .asciz ")\n\n  +-------+-------------------+----------+----------+-----+----------------+\n  | Cycle | Operation         |    A     |    Q     | Q-1 | Action         |\n  +-------+-------------------+----------+----------+-----+----------------+\n"
-booth_row_fmt:
-    .asciz "  |   %lld   | %-17s | "
-booth_row_mid:
-    .asciz " | "
-booth_row_end:
-    .asciz " |  %lld  | %-14s |\n"
-booth_table_footer:
-    .asciz "  +-------+-------------------+----------+----------+-----+----------------+\n"
+    .asciz ")\n\n  +-------+-------------------+----------+----------+-----+----------------+\n  | Cycle | Operation         |    A     |    Q     | Q-1 | Bit Pair       |\n  +-------+-------------------+----------+----------+-----+----------------+\n"
+booth_row_fmt:      .asciz "  |   %lld   | %-17s | "
+booth_row_mid:      .asciz " | "
+booth_row_end:      .asciz " |  %lld  | %-14s |\n"
+booth_table_footer: .asciz "  +-------+-------------------+----------+----------+-----+----------------+\n"
 booth_final_fmt:
-    .asciz "  Final Combined Product (A:Q) = 0x%04llX (%lld in decimal)\n  Theoretical Verification     : %lld * %lld = %lld -> %s\n"
-str_pass:
-    .asciz "MATCH (PASS)"
-str_fail:
-    .asciz "MISMATCH (FAIL)"
+    .asciz "  Final Product (A:Q) = 0x%04llX (%lld decimal)\n  Verification        : %lld * %lld = %lld -> %s\n"
 
-str_init:
-    .asciz "Initial State"
-str_add_ashr:
-    .asciz "A = A + M, ASHR"
-str_sub_ashr:
-    .asciz "A = A - M, ASHR"
-str_ashr_only:
-    .asciz "ASHR (No Add/Sub)"
-str_action_add:
-    .asciz "Q0,Q-1 = 01"
-str_action_sub:
-    .asciz "Q0,Q-1 = 10"
-str_action_shift:
-    .asciz "Q0,Q-1 = 00/11"
+str_pass:       .asciz "MATCH (PASS)"
+str_fail:       .asciz "MISMATCH (FAIL)"
+str_init:       .asciz "Initial State"
+str_add_ashr:   .asciz "A = A + M, SAR"
+str_sub_ashr:   .asciz "A = A - M, SAR"
+str_ashr_only:  .asciz "SAR (No Add/Sub)"
+str_pair_01:    .asciz "01 -> Add M"
+str_pair_10:    .asciz "10 -> Sub M"
+str_pair_shift: .asciz "00/11 -> Shift"
 
-prompt_booth_m:
-    .asciz "  Enter signed Multiplicand M (-128 to 127): "
-prompt_booth_q:
-    .asciz "  Enter signed Multiplier   Q (-128 to 127): "
-
-.bss
-.align 8
-.lcomm booth_m_val, 8
-.lcomm booth_q_val, 8
+prompt_booth_m: .asciz "  Enter signed Multiplicand M (-128 to 127): "
+prompt_booth_q: .asciz "  Enter signed Multiplier   Q (-128 to 127): "
 
 .text
 
-# ==============================================================================
-# Routine: asm_booth_multiply
-# - Small Meaning: Executes 8-cycle Booth's signed binary multiplication algorithm.
-# - Long Form    : Assembly 64-Bit Booth Signed Binary Multiplication
-# - Why We Used It: Multiplies signed combat damage multipliers without IMUL hardware.
-# Calling Convention (Microsoft x64 ABI):
-#   RCX = int64_t M       (Signed Multiplicand, -128..127)
-#   RDX = int64_t Q       (Signed Multiplier,   -128..127)
-#   R8  = int64_t verbose (1 = print step-by-step table, 0 = silent evaluation)
-# Returns:
-#   RAX = 64-bit sign-extended 16-bit product (A:Q)
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Booth's Signed Multiplication Algorithm] asm_booth_multiply
+# Purpose   : Multiplies two signed 8-bit numbers (-128..127) in 8 cycles using
+#             Booth's bit-pair recoding and SAR—without hardware MUL or IMUL.
+# Game Role : Core arithmetic engine for Booth Multiplier Gunship's blast damage.
+# Inputs    : RCX = M (-128..127), RDX = Q (-128..127), R8 = verbose (1=print table)
+# Output    : RAX = signed 16-bit product sign-extended to 64 bits
+# ------------------------------------------------------------------------------
 .global asm_booth_multiply
 .global _asm_booth_multiply
 asm_booth_multiply:
 _asm_booth_multiply:
-    # --------------------------------------------------------------------------
-    # Frame setup and non-volatile register preservation
-    # --------------------------------------------------------------------------
     push rbp
-    mov rbp, rsp
-    sub rsp, 80                 # Local variable storage and shadow space
+    mov  rbp, rsp
     push rbx
     push rsi
     push rdi
@@ -89,255 +59,210 @@ _asm_booth_multiply:
     push r13
     push r14
     push r15
+    sub  rsp, 104               # WHY: 7 pushes (56) + 104 = 160 -> strictly 16-byte aligned for printf calls
 
-    # Register allocation:
-    # R12 = Multiplicand M (sign-extended byte)
-    # R13 = Multiplier Q   (low 8 bits in R13B)
-    # R14 = Verbose flag
-    # RBX = Accumulator A  (initially 0)
-    # R15 = Q_prev (Q-1, initially 0)
-    # [rbp - 8]  = Cycle counter (1..8)
-    # [rbp - 16] = op_str pointer
-    # [rbp - 24] = action_str pointer
-
-    movsx r12, cl               # R12 = M (8-bit signed integer sign-extended to 64 bits)
-    movzx r13, dl               # R13 = Q (8-bit value zero-extended)
-    mov r14, r8                 # R14 = verbose flag
-    xor rbx, rbx                # RBX = Accumulator A = 0
-    xor r15, r15                # R15 = Q-1 = 0
-    mov qword ptr [rbp - 8], 1  # Cycle = 1
+    movsx r12, cl               # WHY: Sign-extend 8-bit M so negative values work in two's complement
+    movsx rax, dl               # WHY: Save original signed Q at [rsp+88] for final verification line
+    mov  [rsp + 88], rax
+    movzx r13, dl               # WHY: Keep working Q as 8-bit unsigned slice while shifting [A:Q]
+    mov  r14, r8                # WHY: Verbose flag (0 = fast silent mode for Gunship shots, 1 = print table)
+    xor  rbx, rbx               # WHY: Accumulator A always starts at 0
+    xor  r15, r15               # WHY: Auxiliary bit Q_-1 always starts at 0
+    mov  qword ptr [rsp + 64], 1
 
     test r14, r14
-    jz .L_booth_loop            # Silent mode skips table printing
+    jz   .L_booth_loop
 
-    # Print Booth header and inputs
-    lea rcx, [rip + booth_hdr]
+    lea  rcx, [rip + booth_hdr]
     call print_str
 
-    lea rcx, [rip + booth_inputs_fmt]
-    mov rdx, r12
+    lea  rcx, [rip + booth_inputs_fmt]
+    mov  rdx, r12
     movzx r8, r12b
     call printf
-
     movzx rcx, r12b
     call print_bin8
 
-    lea rcx, [rip + booth_inputs_q]
-    movsx rdx, r13b
+    lea  rcx, [rip + booth_inputs_q]
+    mov  rdx, [rsp + 88]
     movzx r8, r13b
     call printf
-
     movzx rcx, r13b
     call print_bin8
 
-    lea rcx, [rip + booth_table_hdr]
+    lea  rcx, [rip + booth_table_hdr]
     call print_str
 
-    # Print Cycle 0 (Initial State)
-    lea rcx, [rip + booth_row_fmt]
-    xor rdx, rdx                # Cycle 0
-    lea r8,  [rip + str_init]
+    lea  rcx, [rip + booth_row_fmt]
+    xor  rdx, rdx
+    lea  r8,  [rip + str_init]
     call printf
-
-    xor rcx, rcx                # A = 0
+    xor  rcx, rcx
     call print_bin8
-
-    lea rcx, [rip + booth_row_mid]
+    lea  rcx, [rip + booth_row_mid]
     call print_str
-
-    movzx rcx, r13b             # Q
+    movzx rcx, r13b
     call print_bin8
-
-    lea rcx, [rip + booth_row_end]
-    xor rdx, rdx                # Q-1 = 0
-    lea r8,  [rip + str_init]
+    lea  rcx, [rip + booth_row_end]
+    xor  rdx, rdx
+    lea  r8,  [rip + str_init]
     call printf
 
 .L_booth_loop:
-    # --------------------------------------------------------------------------
-    # Inspect lowest bit of Q (Q0) and previous bit (Q-1)
-    # Pair = (Q0 << 1) | (Q-1)
-    # --------------------------------------------------------------------------
-    mov rax, r13
-    and rax, 1                  # RAX = Q0
-    shl rax, 1                  # RAX = Q0 << 1
-    or  rax, r15                # RAX = (Q0 << 1) | Q-1
+    # Step 1: Build 2-bit pair (Q0, Q-1) to decide Add (+M), Sub (-M), or Shift only
+    mov  rax, r13
+    and  rax, 1                 # WHY: Isolate lowest bit Q0 of multiplier Q
+    shl  rax, 1                 # WHY: Put Q0 in bit 1
+    or   rax, r15               # WHY: Combine with Q-1 in bit 0 -> pair in {00=0, 01=1, 10=2, 11=3}
 
-    cmp rax, 1                  # 01 -> A = A + M, then ASHR
-    je .L_booth_op_add
-    cmp rax, 2                  # 10 -> A = A - M, then ASHR
-    je .L_booth_op_sub
+    cmp  rax, 1                 # WHY: Pair 01 marks end of a run of 1s -> A = A + M
+    je   .L_booth_add
+    cmp  rax, 2                 # WHY: Pair 10 marks start of a run of 1s -> A = A - M
+    je   .L_booth_sub
 
-    # 00 or 11 -> No arithmetic, ASHR only
-    lea rax, [rip + str_ashr_only]
-    mov [rbp - 16], rax
-    lea rax, [rip + str_action_shift]
-    mov [rbp - 24], rax
-    jmp .L_booth_do_shift
+    # Pair 00 or 11 -> skip arithmetic and shift directly (speeds up runs of 0s/1s)
+    lea  rax, [rip + str_ashr_only]
+    mov  [rsp + 72], rax
+    lea  rax, [rip + str_pair_shift]
+    mov  [rsp + 80], rax
+    jmp  .L_booth_shift
 
-.L_booth_op_add:
-    # --------------------------------------------------------------------------
-    # ADD RBX, R12:
-    # - Small Meaning: Add Multiplicand M into Accumulator A
-    # - Long Form    : Add Register R12 to Register Base (Accumulator)
-    # - Why We Used It: Booth algorithm step when transitioning from 1 to 0 (Q0=0, Q-1=1).
-    # --------------------------------------------------------------------------
-    add rbx, r12
-    movsx rbx, bl               # Keep signed 8-bit accumulator
-    lea rax, [rip + str_add_ashr]
-    mov [rbp - 16], rax
-    lea rax, [rip + str_action_add]
-    mov [rbp - 24], rax
-    jmp .L_booth_do_shift
+.L_booth_add:
+    add  rbx, r12               # WHY: Add signed multiplicand M into 8-bit accumulator A
+    movsx rbx, bl               # WHY: Wrap to 8-bit two's complement and re-sign-extend
+    lea  rax, [rip + str_add_ashr]
+    mov  [rsp + 72], rax
+    lea  rax, [rip + str_pair_01]
+    mov  [rsp + 80], rax
+    jmp  .L_booth_shift
 
-.L_booth_op_sub:
-    # --------------------------------------------------------------------------
-    # SUB RBX, R12:
-    # - Small Meaning: Subtract Multiplicand M from Accumulator A
-    # - Long Form    : Subtract Register R12 from Register Base (Accumulator)
-    # - Why We Used It: Booth algorithm step when transitioning from 0 to 1 (Q0=1, Q-1=0).
-    # --------------------------------------------------------------------------
-    sub rbx, r12
-    movsx rbx, bl               # Keep signed 8-bit accumulator
-    lea rax, [rip + str_sub_ashr]
-    mov [rbp - 16], rax
-    lea rax, [rip + str_action_sub]
-    mov [rbp - 24], rax
+.L_booth_sub:
+    sub  rbx, r12               # WHY: Subtract signed multiplicand M from accumulator A
+    movsx rbx, bl
+    lea  rax, [rip + str_sub_ashr]
+    mov  [rsp + 72], rax
+    lea  rax, [rip + str_pair_10]
+    mov  [rsp + 80], rax
 
-.L_booth_do_shift:
-    # --------------------------------------------------------------------------
-    # Arithmetic Right Shift of combined register pair [A : Q : Q-1]
-    # --------------------------------------------------------------------------
-    # 1. Update Q-1 = LSB of Q
-    mov r15, r13
-    and r15, 1
+.L_booth_shift:
+    # Step 2: Arithmetic Right Shift across combined [A : Q : Q-1]
+    mov  r15, r13
+    and  r15, 1                 # WHY: Shift Q0 out into Q-1 for the next cycle
 
-    # 2. Shift Q right by 1, and copy LSB of A into MSB of Q (bit 7)
-    mov rax, rbx
-    and rax, 1                  # LSB of A
-    shl rax, 7                  # Position at bit 7
-    shr r13, 1
-    and r13, 0x7F
-    or  r13, rax                # Combine into new Q
+    mov  rax, rbx
+    and  rax, 1                 # WHY: Shift lowest bit of A into bit 7 (MSB) of Q
+    shl  rax, 7
+    shr  r13, 1
+    and  r13, 0x7F
+    or   r13, rax
 
-    # 3. Arithmetic shift right Accumulator A by 1 (preserving sign bit)
-    sar bl, 1
+    sar  bl, 1                  # WHY: SAR (not SHR!) replicates A's sign bit so negative products stay negative
     movsx rbx, bl
 
-    # 4. Print row if verbose
     test r14, r14
-    jz .L_booth_loop_next
+    jz   .L_booth_next
 
-    lea rcx, [rip + booth_row_fmt]
-    mov rdx, [rbp - 8]          # Cycle index
-    mov r8,  [rbp - 16]         # op_str
+    lea  rcx, [rip + booth_row_fmt]
+    mov  rdx, [rsp + 64]
+    mov  r8,  [rsp + 72]
     call printf
-
-    movzx rcx, bl               # A byte
+    movzx rcx, bl
     call print_bin8
-
-    lea rcx, [rip + booth_row_mid]
+    lea  rcx, [rip + booth_row_mid]
     call print_str
-
-    movzx rcx, r13b             # Q byte
+    movzx rcx, r13b
     call print_bin8
-
-    lea rcx, [rip + booth_row_end]
-    mov rdx, r15                # Q-1
-    mov r8,  [rbp - 24]         # action_str
+    lea  rcx, [rip + booth_row_end]
+    mov  rdx, r15
+    mov  r8,  [rsp + 80]
     call printf
 
-.L_booth_loop_next:
-    inc qword ptr [rbp - 8]
-    cmp qword ptr [rbp - 8], 8
-    jle .L_booth_loop
+.L_booth_next:
+    inc  qword ptr [rsp + 64]
+    cmp  qword ptr [rsp + 64], 8 # WHY: Exactly 8 cycles for 8-bit signed operands
+    jle  .L_booth_loop
 
-    # --------------------------------------------------------------------------
-    # Combine final 16-bit signed product: (A << 8) | (Q & 0xFF)
-    # --------------------------------------------------------------------------
-    mov rax, rbx
-    and rax, 0xFF
-    shl rax, 8
-    mov rdx, r13
-    and rdx, 0xFF
-    or  rax, rdx
-    movsx rax, ax               # RAX = signed 16-bit integer sign-extended to 64 bits
+    # Step 3: Pack 8-bit A and 8-bit Q into signed 16-bit product (A:Q)
+    mov  rax, rbx
+    and  rax, 0xFF
+    shl  rax, 8                 # WHY: A forms the high byte (bits 8..15)
+    mov  rdx, r13
+    and  rdx, 0xFF              # WHY: Q forms the low byte (bits 0..7)
+    or   rax, rdx
+    movsx rax, ax               # WHY: Sign-extend 16-bit product to 64-bit RAX for C/game callers
 
     test r14, r14
-    jz .L_booth_exit            # If silent, return RAX immediately
+    jz   .L_booth_exit
 
-    mov rsi, rax                # RSI = preserved computed product
-
-    lea rcx, [rip + booth_table_footer]
+    mov  rsi, rax
+    lea  rcx, [rip + booth_table_footer]
     call print_str
 
-    # Compute expected product = M * Q via standard arithmetic for verification
-    movsx rdx, r13b
-    mov rax, r12
-    imul rax, rdx               # RAX = expected product
+    mov  r10, [rsp + 88]
+    mov  rax, r12
+    imul rax, r10               # WHY: Cross-check Booth output against CPU IMUL only to print PASS/FAIL
 
-    lea rdi, [rip + str_pass]
-    cmp rsi, rax
-    je .L_booth_print_res
-    lea rdi, [rip + str_fail]
+    lea  rdi, [rip + str_pass]
+    cmp  rsi, rax
+    je   .L_booth_print
+    lea  rdi, [rip + str_fail]
 
-.L_booth_print_res:
-    lea rcx, [rip + booth_final_fmt]
-    movzx rdx, si               # Hex product
-    mov r8,  rsi                # Decimal product
-    mov r9,  r12                # M
-    mov [rsp + 32], rdx         # Q
-    mov [rsp + 40], rax         # Expected product
-    mov [rsp + 48], rdi         # Pass/Fail string
+.L_booth_print:
+    lea  rcx, [rip + booth_final_fmt]
+    movzx rdx, si
+    mov  r8,  rsi
+    mov  r9,  r12
+    mov  [rsp + 32], r10
+    mov  [rsp + 40], rax
+    mov  [rsp + 48], rdi
     call printf
 
-    mov rax, rsi                # Return final computed product
+    mov  rax, rsi
 
 .L_booth_exit:
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop rdi
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    add  rsp, 104
+    pop  r15
+    pop  r14
+    pop  r13
+    pop  r12
+    pop  rdi
+    pop  rsi
+    pop  rbx
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: co3_demo_booth
-# - Small Meaning: Interactive demonstration runner for Booth's algorithm.
-# - Long Form    : CO3 Demonstration Driver for Signed Booth's Multiplication
-# - Why We Used It: Accepts user multiplicand and multiplier and displays execution table.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Interactive Booth Multiplication Demo] co3_demo_booth
+# Purpose   : Reads M and Q from console and prints the 8-cycle Booth trace table.
+# Game Role : Lets students enter Gunship Charge (M) & Velocity (Q) to trace bits.
+# ------------------------------------------------------------------------------
 .global co3_demo_booth
 .global _co3_demo_booth
 co3_demo_booth:
 _co3_demo_booth:
     push rbp
-    mov rbp, rsp
-    sub rsp, 48
+    mov  rbp, rsp
     push rbx
     push rsi
+    sub  rsp, 32
 
-    lea rcx, [rip + prompt_booth_m]
+    lea  rcx, [rip + prompt_booth_m]
     call print_str
     call read_int
-    mov rbx, rax                # RBX = M
+    mov  rbx, rax
 
-    lea rcx, [rip + prompt_booth_q]
+    lea  rcx, [rip + prompt_booth_q]
     call print_str
     call read_int
-    mov rsi, rax                # RSI = Q
+    mov  rsi, rax
 
-    mov rcx, rbx                # 1st: M
-    mov rdx, rsi                # 2nd: Q
-    mov r8,  1                  # 3rd: verbose = 1 (Display table)
+    mov  rcx, rbx
+    mov  rdx, rsi
+    mov  r8,  1                 # WHY: verbose=1 prints the full cycle-by-cycle binary trace
     call asm_booth_multiply
 
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    add  rsp, 32
+    pop  rsi
+    pop  rbx
+    pop  rbp
     ret

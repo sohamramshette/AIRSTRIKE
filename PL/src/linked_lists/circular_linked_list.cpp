@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/linked_lists/circular_linked_list.cpp
+// Subject   : PL-CO2 | Suitable Linked Lists
+// Topics    : [TOPIC: Circular Linked List] [TOPIC: Ring Closure] [TOPIC: Cyclic Traversal]
+// Game Role : Implements circular weapon-wheel insertion, deletion, cycling, and teardown.
+// ==============================================================================
+
 #include "circular_linked_list.h"
 #include <iomanip>
 
@@ -11,6 +18,7 @@ CircularLinkedList::CircularLinkedList(const CircularLinkedList& other)
     : head(nullptr), activeWeapon(nullptr), count(0) {
     if (!other.head) return;
     const WeaponNode* curr = other.head;
+    // WHY: Use do-while so head is processed before checking return-to-head loop termination.
     do {
         insertTail(curr->weaponId, curr->name, curr->energyCost, curr->damage);
         curr = curr->next;
@@ -34,9 +42,11 @@ CircularLinkedList& CircularLinkedList::operator=(const CircularLinkedList& othe
 void CircularLinkedList::insertHead(int id, const std::string& name, int energyCost, int damage) {
     WeaponNode* newNode = new WeaponNode(id, name, energyCost, damage, nullptr);
     if (!head) {
+        // WHY: Single-node circular list closes onto itself so cycleNext() never hits nullptr.
         newNode->next = newNode;
         head = activeWeapon = newNode;
     } else {
+        // WHY: Walk to tail (curr->next == head) so tail closes the loop onto the new head.
         WeaponNode* curr = head;
         while (curr->next != head) {
             curr = curr->next;
@@ -66,6 +76,7 @@ void CircularLinkedList::insertTail(int id, const std::string& name, int energyC
 
 bool CircularLinkedList::deleteHead() {
     if (!head) return false;
+    // WHY: Self-looped single node must reset pointers to nullptr instead of relinking to freed self.
     if (head->next == head) {
         delete head;
         head = activeWeapon = nullptr;
@@ -79,6 +90,7 @@ bool CircularLinkedList::deleteHead() {
     WeaponNode* temp = head;
     head = head->next;
     last->next = head;
+    // WHY: Reassign activeWeapon before deleting temp so active cursor never dangles -> Game: Safe weapon switch.
     if (activeWeapon == temp) {
         activeWeapon = head;
     }
@@ -135,6 +147,7 @@ bool CircularLinkedList::deleteById(int id) {
 
 const WeaponNode* CircularLinkedList::cycleNext() {
     if (!activeWeapon) return nullptr;
+    // WHY: Tail already links to head, giving wrap-around weapon cycling in O(1) without modulo checks.
     activeWeapon = activeWeapon->next;
     return activeWeapon;
 }
@@ -170,13 +183,14 @@ void CircularLinkedList::traverse() const {
                   << (curr == activeWeapon ? " <== ACTIVE SELECTION" : "")
                   << "\n";
         curr = curr->next;
-    } while (curr != head); // Proper circular termination
+    } while (curr != head); // WHY: Loop terminates only when pointer completes full cycle back to head.
 }
 
 void CircularLinkedList::clear() {
     if (!head) return;
     WeaponNode* curr = head;
     WeaponNode* nextNode = nullptr;
+    // WHY: Save curr->next before delete so circular cleanup stops cleanly upon reaching head.
     do {
         nextNode = curr->next;
         delete curr;

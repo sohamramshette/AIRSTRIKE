@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/service/AuthService.java
+// Subject   : PSOOP-CO3 | Asynchronous Pilot Authentication Service
+// Topics    : [TOPIC: REST Client] [TOPIC: Async CompletableFuture] [TOPIC: Input Validation]
+// Game Role : Handles pilot signup, password login, and logout via Supabase Auth APIs.
+// ==============================================================================
 package service;
 
 import database.SessionManager;
@@ -92,7 +98,7 @@ public class AuthService {
         Map<String, Object> json = SimpleJson.parseObject(body);
 
         if (code == 200 || code == 201) {
-            // Check if identities array is present and empty -> Supabase returns empty identities for duplicate user
+            // WHY: Supabase obfuscates duplicate-email signups with HTTP 200 and an empty identities array instead of 409.
             Object identitiesObj = json.get("identities");
             if (identitiesObj instanceof java.util.List && ((java.util.List<?>) identitiesObj).isEmpty()) {
                 return CompletableFuture.completedFuture(

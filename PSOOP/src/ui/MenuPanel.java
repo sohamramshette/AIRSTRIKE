@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/MenuPanel.java
+// Subject   : PSOOP-CO2 / CO4 | Main Menu Landing Canvas & Pilot Status HUD
+// Topics    : [TOPIC: Custom Swing Rendering] [TOPIC: Observer Pattern] [TOPIC: Threading/Swing EDT]
+// Game Role : Renders the animated menu starfield, pilot auth capsule, and subsystem launchers.
+// ==============================================================================
 package ui;
 
 import database.SessionManager;
@@ -77,7 +83,7 @@ public class MenuPanel extends JPanel {
 
         buildUI();
 
-        // Listen for authentication changes from SessionManager
+        // WHY: SessionManager may emit updates from async HTTP threads; refresh HUD labels on the EDT.
         SessionManager.getInstance().addListener((oldSession, newSession) -> {
             SwingUtilities.invokeLater(this::updatePilotStatus);
         });
@@ -152,8 +158,19 @@ public class MenuPanel extends JPanel {
         subjectCoBtn.addActionListener(e -> mainWindow.showSubjectCODialog());
         add(subjectCoBtn, gbc);
 
-        // 5. Global Leaderboard
+        // 5. Native Hardware & Subsystem Bridge (C++ / Assembly / OpenGL)
         gbc.gridy = 4;
+        gbc.insets = new Insets(2, 12, 3, 12);
+        CyberButton bridgeBtn = CyberButton.tactical(
+                "⚡   NATIVE HARDWARE BRIDGE (C++ / ASM / OPENGL)",
+                Theme.CYAN_PRIMARY,
+                new Color(10, 36, 44)
+        );
+        bridgeBtn.addActionListener(e -> mainWindow.showNativeBridgeDialog());
+        add(bridgeBtn, gbc);
+
+        // 6. Global Leaderboard
+        gbc.gridy = 5;
         gbc.insets = new Insets(2, 12, 3, 12);
         CyberButton leaderboardBtn = CyberButton.tactical(
                 "★   GLOBAL LEADERBOARD (HALL OF FAME)",
@@ -163,8 +180,8 @@ public class MenuPanel extends JPanel {
         leaderboardBtn.addActionListener(e -> mainWindow.showLeaderboardDialog());
         add(leaderboardBtn, gbc);
 
-        // 6. Pilot Profile & System Settings
-        gbc.gridy = 5;
+        // 7. Pilot Profile & System Settings
+        gbc.gridy = 6;
         CyberButton profileSettingsBtn = CyberButton.tactical(
                 "◈   PILOT PROFILE & SYSTEM SETTINGS",
                 Theme.BLUE_ACCENT,
@@ -173,8 +190,8 @@ public class MenuPanel extends JPanel {
         profileSettingsBtn.addActionListener(e -> mainWindow.showProfileSettingsDialog());
         add(profileSettingsBtn, gbc);
 
-        // 7. Match History / Flight Logs
-        gbc.gridy = 6;
+        // 8. Match History / Flight Logs
+        gbc.gridy = 7;
         CyberButton historyBtn = CyberButton.tactical(
                 "⟡   MATCH HISTORY (FLIGHT LOGS)",
                 new Color(56, 189, 248),
@@ -183,8 +200,8 @@ public class MenuPanel extends JPanel {
         historyBtn.addActionListener(e -> mainWindow.showMatchHistoryDialog());
         add(historyBtn, gbc);
 
-        // 8. Pilot Manual (Controls)
-        gbc.gridy = 7;
+        // 9. Pilot Manual (Controls)
+        gbc.gridy = 8;
         CyberButton manualBtn = CyberButton.tactical(
                 "❖   PILOT MANUAL (FLIGHT CONTROLS)",
                 Theme.EMERALD_STATUS,
@@ -193,8 +210,8 @@ public class MenuPanel extends JPanel {
         manualBtn.addActionListener(e -> mainWindow.showInstructions());
         add(manualBtn, gbc);
 
-        // 9. Abort to Desktop Button
-        gbc.gridy = 8;
+        // 10. Abort to Desktop Button
+        gbc.gridy = 9;
         gbc.insets = new Insets(4, 12, 10, 12);
         CyberButton exitBtn = CyberButton.danger("✕   ABORT TO DESKTOP");
         exitBtn.addActionListener(e -> System.exit(0));

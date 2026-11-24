@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/service/AuthResult.java
+// Subject   : PSOOP-CO1 | Authentication Result Value Object
+// Topics    : [TOPIC: Encapsulation] [TOPIC: Factory Pattern]
+// Game Role : Encapsulates Supabase login/signup outcomes, status codes, and sessions.
+// ==============================================================================
 package service;
 
 import database.UserSession;

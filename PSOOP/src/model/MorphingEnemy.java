@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/MorphingEnemy.java
+// Subject   : PSOOP-CO2 | State-Driven Adaptive Drone Subclass
+// Topics    : [TOPIC: FSM State Pattern] [TOPIC: Polymorphism] [TOPIC: Inheritance] [TOPIC: Kinematics]
+// Game Role : Delegates movement, attack patterns, and aura rendering to its active DroneAIState FSM.
+// ==============================================================================
 package model;
 
 import java.awt.BasicStroke;
@@ -7,14 +13,7 @@ import java.awt.Polygon;
 import java.util.List;
 
 /**
- * Adaptive Morphing Drone (PSOOP-CO2).
- * Demonstrates: Solutions to Reduce Complexity via State Pattern.
- *
- * Implements a 4-state Finite State Machine:
- * - PATROL: Standard sweeping cruise.
- * - CHASE: Active tracking towards player horizontal plane.
- * - EVADE: High-speed evasive withdrawal.
- * - OVERCHARGE: Pulsing temporary frenzy barrage.
+ * Adaptive Morphing Drone delegating behavior across PATROL, CHASE, EVADE, and OVERCHARGE states.
  */
 public class MorphingEnemy extends Enemy {
 
@@ -27,6 +26,10 @@ public class MorphingEnemy extends Enemy {
     // Cache latest player reference for decoupled state update
     private Player targetedPlayer;
 
+    /**
+     * [TOPIC: Inheritance] [TOPIC: FSM State Pattern]
+     * Game Role: Initializes the morphing drone in PATROL state with fresh overcharge timers.
+     */
     public MorphingEnemy(double x, double y) {
         // x, y, width 36, height 36, maxHealth 50, maxShield 15, speed 120.0, shootCooldown 1300ms, scoreValue 300
         super(x, y, 36, 36, 50, 15, 120.0, 1300, 300);
@@ -37,6 +40,10 @@ public class MorphingEnemy extends Enemy {
         this.vy = 90.0;
     }
 
+    /**
+     * [TOPIC: FSM State Pattern] [TOPIC: Method Overriding]
+     * Game Role: Executes current state kinematics and evaluates FSM transitions on each tick.
+     */
     @Override
     public void update(double delta) {
         stateTimer += delta;
@@ -44,25 +51,32 @@ public class MorphingEnemy extends Enemy {
             overchargeCooldownTimer -= delta;
         }
 
-        // Delegate kinematics to current state object
+        // WHY: Polymorphic state dispatch replaces branching if/switch logic inside the entity update loop.
         currentState.update(this, delta, targetedPlayer);
 
-        // Evaluate state transitions in a decoupled, structured manner
         DroneAIState nextState = currentState.evaluateTransition(this, targetedPlayer);
         if (nextState != currentState) {
             transitionTo(nextState);
         }
     }
 
+    /**
+     * [TOPIC: FSM State Pattern] [TOPIC: Polymorphism]
+     * Game Role: Caches player target for update() and delegates firing to the active AI state.
+     */
     @Override
     public void performAttack(double delta, List<Projectile> projectileList, Player player) {
+        // WHY: Cached player reference lets update(delta) evaluate distance transitions without changing Enemy.update signature.
         this.targetedPlayer = player;
         attackTimer += delta;
 
-        // Delegate attack logic to current state object
         currentState.attack(this, delta, projectileList, player);
     }
 
+    /**
+     * [TOPIC: FSM State Pattern]
+     * Game Role: Atomically switches AI state, resets stateTimer, and arms OVERCHARGE duration on entry.
+     */
     private void transitionTo(DroneAIState nextState) {
         this.currentState = nextState;
         this.stateTimer = 0.0;
@@ -85,6 +99,7 @@ public class MorphingEnemy extends Enemy {
         if (player != null) {
             double targetX = player.getCenterX() - (width / 2.0);
             double dx = targetX - x;
+            // WHY: Clamps step to |dx| so pursuing drone stops cleanly on alignment without overshooting.
             x += Math.signum(dx) * Math.min(Math.abs(dx), 110.0 * delta);
         }
         y += vy * delta;
@@ -123,6 +138,7 @@ public class MorphingEnemy extends Enemy {
             double dx = targetX - (x + 18);
             double dy = ((player != null) ? player.getCenterY() : y + 300) - (y + height);
             double dist = Math.hypot(dx, dy);
+            // WHY: Epsilon guard avoids NaN division when player overlaps muzzle coordinates.
             double vx = (dist > 0.001) ? (dx / dist) * 330.0 : 0.0;
             double vyProj = (dist > 0.001) ? (dy / dist) * 330.0 : 330.0;
 
@@ -148,11 +164,13 @@ public class MorphingEnemy extends Enemy {
         }
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Standard single-bolt fallback firing method. */
     @Override
     public void shoot(List<Projectile> projectileList) {
         projectileList.add(new Projectile(x + 16, y + height, 5, 14, 0, 300.0, false, 14));
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Draws hexagonal hull tinted with the active AI state aura. */
     @Override
     public void render(Graphics2D g) {
         if (!active) return;

@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_leaderboard_search.h
+// Subject   : PL-CO4 | Searching and Sorting Techniques
+// Topics    : [TOPIC: MultiplayerLeaderboardSearch] [TOPIC: QuickSort] [TOPIC: Binary Search]
+// Game Role : Ranks two-player AirStrike match outcomes and queries target scores in O(log N).
+// ==============================================================================
+
 #ifndef AIRSTRIKE_MULTIPLAYER_LEADERBOARD_SEARCH_H
 #define AIRSTRIKE_MULTIPLAYER_LEADERBOARD_SEARCH_H
 
@@ -6,6 +13,9 @@
 
 namespace Airstrike::Multiplayer {
 
+// [TOPIC: MatchRecord]
+// Purpose: Summarizes a completed two-player match, storing individual scores and max highestScore key.
+// Game Role: Unit record sorted and searched in multiplayer match history rankings.
 struct MatchRecord {
     std::string matchId;
     std::string player1Id;
@@ -26,16 +36,9 @@ struct MatchRecord {
           highestScore(s1 > s2 ? s1 : s2), winnerId(win) {}
 };
 
-/**
- * ==============================================================================
- * Demonstrator for PL-CO4: Searching and Sorting
- *
- * Implements canonical QuickSort and Binary Search for match records:
- * - QuickSort: O(N log N) recursive in-place sorting by highest score
- * - Binary Search: O(log N) lookup on sorted array
- * - Duplicate handling: returns range [firstIndex, lastIndex] for duplicate scores
- * ==============================================================================
- */
+// [TOPIC: MultiplayerLeaderboardSearch] [TOPIC: QuickSort] [TOPIC: Binary Search] [TOPIC: Range Search]
+// Purpose: Provides in-place QuickSort, iterative Binary Search, and duplicate-score range expansion.
+// Game Role: Orders multiplayer match history by top score and fetches rank/tie spans rapidly.
 class MultiplayerLeaderboardSearch {
 public:
     static void quickSortByScore(std::vector<MatchRecord>& records, int low, int high);

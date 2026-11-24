@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/common/font_renderer.hpp
+// Subject   : Common | HUD Font Renderer
+// Topics    : [TOPIC: HUD Font Renderer] [TOPIC: 2D Orthographic Overlay] [TOPIC: Matrix Stack]
+// Game Role : Declares screen-space 2D HUD projection switches and GLUT bitmap text drawing for AIRSTRIKE.
+// ==============================================================================
+
 #ifndef FONT_RENDERER_HPP
 #define FONT_RENDERER_HPP
 
@@ -6,25 +13,19 @@
 
 namespace CGL {
 
-/**
- * @brief Renders 2D bitmap text at world/screen coordinates (x, y)
- * @param x X coordinate
- * @param y Y coordinate
- * @param font GLUT bitmap font pointer (e.g. GLUT_BITMAP_HELVETICA_12, GLUT_BITMAP_HELVETICA_18)
- * @param text String to display
- */
+// [TOPIC: HUD Font Renderer]
+// Purpose: Draws a 2D GLUT bitmap string anchored at raster coordinates (x, y).
+// Game Role: Displays live telemetry, controls, and CO annotations across all AIRSTRIKE screens.
 void renderBitmapString(float x, float y, void* font, const std::string& text);
 
-/**
- * @brief Sets up 2D orthographic HUD overlay projection for text and 2D UI
- * @param width Viewport width in pixels
- * @param height Viewport height in pixels
- */
+// [TOPIC: 2D Orthographic Overlay / Matrix Stack]
+// Purpose: Pushes current matrices and configures a pixel-aligned 2D orthographic HUD projection.
+// Game Role: Isolates 2D HUD overlays from underlying 3D perspective scenes without state corruption.
 void beginHUD(int width, int height);
 
-/**
- * @brief Restores projection and modelview matrices after HUD rendering
- */
+// [TOPIC: Matrix Stack Restoration]
+// Purpose: Pops the projection and modelview matrices saved by beginHUD().
+// Game Role: Restores scene transforms cleanly after AIRSTRIKE HUD rendering completes.
 void endHUD();
 
 } // namespace CGL

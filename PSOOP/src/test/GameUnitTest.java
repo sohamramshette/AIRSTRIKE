@@ -1,24 +1,46 @@
+// ==============================================================================
+// File      : PSOOP/src/test/GameUnitTest.java
+// Subject   : PSOOP-CO1..CO4 | Core Gameplay & Multi-Subject Integration Test Suite
+// Topics    : [TOPIC: Unit Testing] [TOPIC: AABB Collision] [TOPIC: Game State Machine] [TOPIC: Native Process Bridge]
+// Game Role : Verifies core engine physics, CO1-CO4 enemies, waves, state errors, and native bridge.
+// ==============================================================================
 package test;
 
 import exception.InvalidGameStateException;
 import game.CollisionManager;
 import game.GameEngine;
 import game.GameState;
+import model.ArmouredEnemy;
+import model.BoundarySkimmerEnemy;
+import model.BoothGunshipEnemy;
 import model.BossEnemy;
+import model.DroneAIState;
 import model.DroneEnemy;
 import model.Enemy;
+import model.FailSafeEnemy;
+import model.FibonacciSkimmerEnemy;
 import model.FighterEnemy;
-import model.ArmouredEnemy;
+import model.FormationChainEnemy;
+import model.GridSwarmEnemy;
+import model.HashShieldEnemy;
 import model.InterceptorEnemy;
 import model.MorphingEnemy;
-import model.DroneAIState;
-import model.FailSafeEnemy;
-import model.RammerEnemy;
+import model.OrbitalRotorEnemy;
 import model.Particle;
+import model.PhongCruiserEnemy;
 import model.Player;
+import model.PolygonCruiserEnemy;
 import model.PowerUp;
 import model.PowerUpType;
 import model.Projectile;
+import model.RailgunDreadnoughtEnemy;
+import model.RammerEnemy;
+import model.RasterSentinelEnemy;
+import model.SubRegSentryEnemy;
+import model.TargetHunterEnemy;
+import model.WarpCruiserEnemy;
+import model.WaveEchelonEnemy;
+import service.NativeBridgeService;
 import service.ScoreCalculator;
 import service.WaveManager;
 
@@ -72,6 +94,12 @@ public class GameUnitTest {
         testFailSafeEnemyDefensiveProgramming();
         testRammerEnemyKinematicsAndCollision();
         testWaveProgressionMultiTier();
+
+        // Integrated Multi-Subject Academic Fleet (PL, COA, CGL) & Native Bridge
+        testPLEnemySubsystem();
+        testCOAEnemySubsystem();
+        testCGLEnemySubsystem();
+        testNativeHardwareBridge();
 
         System.out.println("========================================================");
         System.out.println("TEST RESULTS: " + testsPassed + " / " + testsTotal + " PASSED");
@@ -318,6 +346,10 @@ public class GameUnitTest {
         assertTrue("Boss Phase 1 Dual Cannons", projectiles.size() == 2, "Boss phase 1 should fire 2 heavy plasma beams");
     }
 
+    /**
+     * [TOPIC: Unit Testing] [TOPIC: Exception Handling]
+     * Verifies illegal MENU -> PAUSED transition raises InvalidGameStateException.
+     */
     // 14. Illegal State Transitions Test
     private static void testIllegalStateTransitions() {
         GameEngine engine = new GameEngine(800, 600);
@@ -373,6 +405,10 @@ public class GameUnitTest {
                 "Combo streak should reset to 0 upon player taking damage");
     }
 
+    /**
+     * [TOPIC: Unit Testing] [TOPIC: Encapsulation]
+     * Verifies ArmouredEnemy shield-first absorption and flat armor reduction (PSOOP-CO1).
+     */
     // 17. Phase 8.2: Armoured Vanguard Encapsulation & Damage Mitigation (PSOOP-CO1)
     private static void testArmouredEnemyEncapsulation() {
         ArmouredEnemy armoured = new ArmouredEnemy(200, 100);
@@ -512,6 +548,7 @@ public class GameUnitTest {
         player.setY(rammer.getY()); // Force collision overlap
         player.setShield(0); // Deplete shields to test direct kinetic prow impact
         int prePlayerHealth = player.getHealth();
+        // WHY: Rammer prow impact deals 45 damage vs standard 35 hull collision; verify direct hull subtraction with shield=0.
         cm.checkPlayerVsEnemies(player, enemyList, particles, scoreCalc, waveMgr, powerUps);
 
         assertTrue("Rammer Prow Impact Inflicted", player.getHealth() == (prePlayerHealth - 45),
@@ -553,6 +590,108 @@ public class GameUnitTest {
         long uniqueClasses = l5Enemies.stream().map(Object::getClass).distinct().count();
         assertTrue("Level 5 Full Fleet Deployment", uniqueClasses >= 4,
                 "Level 5+ should deploy a rich multi-class hostile fleet");
+    }
+
+    // 23. PL Enemy Integration Tests (PL-CO1 to PL-CO5)
+    private static void testPLEnemySubsystem() {
+        GridSwarmEnemy grid = new GridSwarmEnemy(100, 100);
+        assertTrue("PL-CO1: Grid Swarm Dimensions", grid.getWidth() == 44 && grid.getHeight() == 42, "Grid Swarm should have 44x42 dimensions");
+        grid.takeDamage(10, false);
+        assertTrue("PL-CO1: Grid Swarm Damage Reaction", grid.getShield() < 25, "Shield should absorb damage");
+
+        FormationChainEnemy n0 = new FormationChainEnemy(100, 100, 0);
+        FormationChainEnemy n1 = new FormationChainEnemy(100, 140, 1);
+        FormationChainEnemy n2 = new FormationChainEnemy(100, 180, 2);
+        n0.setNext(n1);
+        n1.setPrev(n0);
+        n1.setNext(n2);
+        n2.setPrev(n1);
+        n1.splice();
+        assertTrue("PL-CO2: Doubly-Linked List Splice", n0.getNext() == n2 && n2.getPrev() == n0, "Splicing n1 should link n0 directly to n2");
+
+        WaveEchelonEnemy ech = new WaveEchelonEnemy(200, 200);
+        ech.update(1.0);
+        assertTrue("PL-CO3: Wave Echelon Step", ech.getY() > 200, "Wave Echelon should advance along trajectory");
+
+        TargetHunterEnemy hunter = new TargetHunterEnemy(300, 100);
+        Player dummyPlayer = new Player(350, 400);
+        List<Projectile> bullets = new ArrayList<>();
+        hunter.performAttack(2.0, bullets, dummyPlayer);
+        assertTrue("PL-CO4: Target Hunter Sniping", !bullets.isEmpty(), "Hunter should discharge lead-calculated salvo");
+
+        HashShieldEnemy hash = new HashShieldEnemy(400, 100);
+        hash.update(2.0);
+        assertTrue("PL-CO5: Hash Shield Probing", hash.getActiveHashBucket() != 0, "Hash bucket should advance via linear probing");
+    }
+
+    // 24. COA Enemy Integration Tests (COA-CO1 to COA-CO4)
+    private static void testCOAEnemySubsystem() {
+        SubRegSentryEnemy sentry = new SubRegSentryEnemy(100, 100);
+        assertTrue("COA-CO1: Sub-Register Initial Tier EAX", sentry.getCurrentTier() == SubRegSentryEnemy.RegisterTier.EAX_DWORD, "Initial tier should be EAX");
+        sentry.takeDamage(20, false);
+        sentry.update(0.1);
+        assertTrue("COA-CO1: Register Tier Depletion to AX", sentry.getCurrentTier() == SubRegSentryEnemy.RegisterTier.AX_WORD, "Shield damage should step down register tier");
+
+        FibonacciSkimmerEnemy fib = new FibonacciSkimmerEnemy(200, 100);
+        fib.update(1.0);
+        assertTrue("COA-CO2: Fibonacci Recurrence Progression", fib.getFibValue() >= 1, "Fibonacci index should advance");
+
+        BoothGunshipEnemy booth = new BoothGunshipEnemy(300, 100);
+        booth.update(0.3);
+        assertTrue("COA-CO3: Booth Multiplication Clock Cycle", booth.getBoothCycle() > 0, "Booth cycle should increment on clock tick");
+
+        RailgunDreadnoughtEnemy rail = new RailgunDreadnoughtEnemy(400, 100);
+        rail.update(0.9); // Advance clock into EX/MEM stage
+        rail.takeDamage(10, true);
+        assertTrue("COA-CO4: CPU Pipeline Stall Hazard Bubble", rail.isStallBubble(), "Damage during charge should inject RAW stall bubble");
+    }
+
+    // 25. CGL Enemy Integration Tests (CGL-CO1 to CGL-CO6)
+    private static void testCGLEnemySubsystem() {
+        PolygonCruiserEnemy poly = new PolygonCruiserEnemy(100, 100);
+        assertTrue("CGL-CO1: Polygon Cruiser Instantiation", poly.getWidth() == 50 && poly.getMaxHealth() == 90, "Polygon Cruiser dimensions verified");
+
+        OrbitalRotorEnemy rotor = new OrbitalRotorEnemy(200, 100);
+        rotor.update(0.5);
+        List<Projectile> bList = new ArrayList<>();
+        rotor.shoot(bList);
+        assertTrue("CGL-CO2: Orbital Matrix Pod Firing", bList.size() == 2, "Orbital Rotor should fire from both rotating pods");
+
+        RasterSentinelEnemy raster = new RasterSentinelEnemy(300, 100);
+        assertTrue("CGL-CO3: Midpoint Raster Sentinel Shield", raster.getMaxShield() == 40, "Raster Sentinel shield verified");
+
+        WarpCruiserEnemy warp = new WarpCruiserEnemy(400, 100);
+        double initialZ = warp.getDepthZ();
+        warp.update(0.5);
+        assertTrue("CGL-CO4: Perspective 1/Z Depth Warp", warp.getDepthZ() < initialZ, "Warp Cruiser should advance in 3D perspective depth");
+
+        BoundarySkimmerEnemy skimmer = new BoundarySkimmerEnemy(50, 100);
+        skimmer.update(0.1);
+        assertTrue("CGL-CO5: Cohen-Sutherland Boundary Outcode", skimmer.getCurrentOutcode() >= 0, "Outcode should be computed");
+
+        PhongCruiserEnemy phong = new PhongCruiserEnemy(500, 100);
+        Player dummy = new Player(500, 400);
+        phong.performAttack(0.1, new ArrayList<>(), dummy);
+        assertTrue("CGL-CO6: Blinn-Phong Specular Intensity", phong.getSpecularIntensity() > 0, "Specular highlight should be calculated from player light vector");
+    }
+
+    /**
+     * [TOPIC: Unit Testing] [TOPIC: Native Process Bridge]
+     * Verifies Booth multiplication and C++/Java QuickSort bridge parity.
+     */
+    // 26. Native Hardware & Subsystem Execution Bridge Tests
+    private static void testNativeHardwareBridge() {
+        NativeBridgeService bridge = NativeBridgeService.getInstance();
+        int product = bridge.executeBoothMultiply(8, 7);
+        assertTrue("Native Bridge: Booth Multiply", product == 56, "8 * 7 should yield 56");
+
+        int[] unsorted = { 90, 10, 40, 70, 20 };
+        int[] sorted = bridge.executeNativeQuickSort(unsorted);
+        boolean isSorted = true;
+        for (int i = 0; i < sorted.length - 1; i++) {
+            if (sorted[i] > sorted[i + 1]) { isSorted = false; break; }
+        }
+        assertTrue("Native Bridge: QuickSort Execution", isSorted && sorted.length == 5, "Scores should be sorted ascending");
     }
 }
 

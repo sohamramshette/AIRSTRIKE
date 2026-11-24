@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/algorithms/raster_sentinel.hpp
+// Subject   : CGL-CO3 | RasterSentinel Software-Rasterized Enemy
+// Topics    : [TOPIC: Bresenham Integer Line (8 Octants)] [TOPIC: Midpoint Circle (8-Way Symmetry)] [TOPIC: RasterSentinel]
+// Game Role : Declares the RasterSentinel enemy whose pulsing shield and laser beam use pure integer rasterizers.
+// ==============================================================================
+
 #ifndef RASTER_SENTINEL_HPP
 #define RASTER_SENTINEL_HPP
 
@@ -7,15 +14,9 @@
 
 namespace CGL {
 
-/**
- * @brief Bresenham Shield Sentinel Enemy (CGL-CO3).
- *
- * Demonstrates:
- * - Software Rasterization of Force Shield via Midpoint Circle Algorithm (8-way symmetry)
- * - Software Rasterization of Targeting Beam via Bresenham's Integer Line Algorithm (All 8 octants)
- * - Elimination of Floating-point Arithmetic: Pure integer decision parameter updates
- * - Verification of circle equation adherence: |(x - xc)^2 + (y - yc)^2 - r^2| <= 2r + 1
- */
+// [TOPIC: RasterSentinel / Bresenham Integer Line (8 Octants) / Midpoint Circle (8-Way Symmetry)]
+// Purpose: Plots an enemy's force shield and targeting laser as exact integer pixel arrays without floats.
+// Game Role: Represents CGL-CO3 enemy type [3] in AIRSTRIKE's Enemy Demonstrator and test suite.
 class RasterSentinel {
 public:
     RasterSentinel();
@@ -25,11 +26,15 @@ public:
     void update(float dt);
     void render(int screenW, int screenH);
 
-    // Mathematical Rasterization Generators (Direct link to CO3 algorithms)
+    // [TOPIC: Midpoint Circle (8-Way Symmetry) / Bresenham Integer Line (8 Octants)]
+    // Purpose: Generates integer shield and targeting beam pixel buffers via RasterAlgorithmsDemo.
+    // Game Role: Produces the live pixel geometry drawn for RasterSentinel.
     std::vector<Point2D> generateShield(int xc, int yc, int radius) const;
     std::vector<Point2D> generateTargetingBeam(int x0, int y0, int x1, int y1) const;
 
-    // Mathematical Verification Assertions
+    // [TOPIC: Rasterization Verification]
+    // Purpose: Asserts circle equation error bound, 8-way cardinal symmetry, and Bresenham endpoint accuracy.
+    // Game Role: Automated correctness predicates used by CO3 enemy unit tests.
     static bool verifyCircleEquation(const std::vector<Point2D>& points, int xc, int yc, int radius);
     static bool verify8WaySymmetry(int xc, int yc, int radius);
     static bool verifyBresenhamEndpoints(const std::vector<Point2D>& points, int x0, int y0, int x1, int y1);

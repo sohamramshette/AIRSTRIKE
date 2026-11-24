@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_session_table.cpp
+// Subject   : PL-CO5 | Hashing Techniques
+// Topics    : [TOPIC: MultiplayerSessionTable] [TOPIC: DJB2 Hash] [TOPIC: Linear Probing] [TOPIC: Tombstone Deletion] [TOPIC: Rehashing]
+// Game Role : Implements session hashing, load-triggered rehashing, probing, and tombstone disconnects.
+// ==============================================================================
+
 #include "multiplayer_session_table.h"
 
 namespace Airstrike::Multiplayer {
@@ -8,7 +15,7 @@ MultiplayerSessionTable::MultiplayerSessionTable(size_t capacity)
 }
 
 size_t MultiplayerSessionTable::hashFunction(const std::string& key) const {
-    // DJB2 hash algorithm
+    // WHY: DJB2 hash (hash * 33 + c) spreads string player IDs evenly across m_capacity slots.
     unsigned long hash = 5381;
     for (char c : key) {
         hash = ((hash << 5) + hash) + static_cast<unsigned char>(c); // hash * 33 + c
@@ -19,7 +26,7 @@ size_t MultiplayerSessionTable::hashFunction(const std::string& key) const {
 bool MultiplayerSessionTable::insert(const std::string& playerId, const PlayerSession& session) {
     if (playerId.empty()) return false;
 
-    // Check if table is too full (load factor >= 0.75)
+    // WHY: Include tombstones in 0.75 load threshold because tombstones degrade probe length just like occupied slots.
     if (m_size + m_tombstones >= m_capacity * 3 / 4) {
         // Rehash with double capacity
         size_t oldCap = m_capacity;
@@ -49,6 +56,7 @@ bool MultiplayerSessionTable::insert(const std::string& playerId, const PlayerSe
                 return true;
             }
         } else if (m_table[probeIndex].state == EntryState::TOMBSTONE) {
+            // WHY: Defer tombstone reuse until EMPTY confirms playerId isn't already further along the chain.
             if (firstTombstoneIndex == -1) {
                 firstTombstoneIndex = static_cast<int>(probeIndex);
             }
@@ -128,6 +136,7 @@ bool MultiplayerSessionTable::remove(const std::string& playerId) {
             return false;
         }
         if (m_table[probeIndex].state == EntryState::OCCUPIED && m_table[probeIndex].key == playerId) {
+            // WHY: Mark slot TOMBSTONE instead of EMPTY so keys hashed past this slot stay reachable -> Game: Safe disconnect.
             m_table[probeIndex].state = EntryState::TOMBSTONE;
             m_table[probeIndex].key = "";
             --m_size;

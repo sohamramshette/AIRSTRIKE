@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/arrays/collision_grid.cpp
+// Subject   : PL-CO1 | Arrays
+// Topics    : [TOPIC: CollisionGrid] [TOPIC: 2D Spatial Partitioning] [TOPIC: Bounds Clamping]
+// Game Role : Implements 8x8 spatial sector binning and 3x3 broadphase collision queries.
+// ==============================================================================
+
 #include "collision_grid.h"
 #include <cmath>
 #include <iomanip>
@@ -31,6 +38,7 @@ void CollisionGrid::getSector(double x, double y, int& outRow, int& outCol) cons
     outCol = static_cast<int>(x / cellW);
     outRow = static_cast<int>(y / cellH);
 
+    // WHY: Clamp boundary coordinates to valid [0..ROWS-1][0..COLS-1] indices -> Game: Prevents out-of-bounds grid reads at screen edges.
     if (outCol < 0) outCol = 0;
     if (outCol >= COLS) outCol = COLS - 1;
     if (outRow < 0) outRow = 0;
@@ -38,7 +46,6 @@ void CollisionGrid::getSector(double x, double y, int& outRow, int& outCol) cons
 }
 
 bool CollisionGrid::insertAsteroid(int id, double x, double y, double radius) {
-    // Find free slot in entity array
     int slot = -1;
     for (int i = 0; i < MAX_ASTEROIDS; ++i) {
         if (!asteroids[i].active) {
@@ -46,12 +53,12 @@ bool CollisionGrid::insertAsteroid(int id, double x, double y, double radius) {
             break;
         }
     }
-    if (slot == -1) return false; // Max asteroids reached
+    if (slot == -1) return false;
 
     int r, c;
     getSector(x, y, r, c);
     if (cellCounts[r][c] >= MAX_PER_CELL) {
-        return false; // Cell overflow
+        return false; // WHY: Enforce fixed MAX_PER_CELL cap to prevent 3D static bucket overflow.
     }
 
     asteroids[slot].id = id;
@@ -75,12 +82,11 @@ bool CollisionGrid::removeAsteroid(int id) {
     }
     if (slot == -1) return false;
 
-    // Find in sector grid and remove
     int r, c;
     getSector(asteroids[slot].x, asteroids[slot].y, r, c);
     for (int k = 0; k < cellCounts[r][c]; ++k) {
         if (cellOccupancy[r][c][k] == slot) {
-            // Shift elements
+            // WHY: Shift cell occupancy entries left so active slot indices stay dense [0..cellCounts-1].
             for (int j = k; j < cellCounts[r][c] - 1; ++j) {
                 cellOccupancy[r][c][j] = cellOccupancy[r][c][j + 1];
             }
@@ -93,11 +99,14 @@ bool CollisionGrid::removeAsteroid(int id) {
     return true;
 }
 
+// [TOPIC: CollisionGrid] [TOPIC: Broadphase 3x3 Query]
+// Purpose: Inspects only the 3x3 neighborhood around (testX, testY) using squared circle distance.
+// Game Role: Avoids O(N) full-arena asteroid scans during high-rate combat collision checks.
 bool CollisionGrid::testCollision(double testX, double testY, double testRadius, int& hitId) const {
     int rCenter, cCenter;
     getSector(testX, testY, rCenter, cCenter);
 
-    // Check center sector and adjacent 8 neighbors (3x3 spatial query window)
+    // WHY: Probe 3x3 adjacent sectors to catch large asteroids straddling cell boundaries -> Game: Guarantees border hit accuracy.
     for (int r = rCenter - 1; r <= rCenter + 1; ++r) {
         if (r < 0 || r >= ROWS) continue;
         for (int c = cCenter - 1; c <= cCenter + 1; ++c) {
@@ -110,6 +119,7 @@ bool CollisionGrid::testCollision(double testX, double testY, double testRadius,
                     double dy = testY - asteroids[slot].y;
                     double distSq = dx * dx + dy * dy;
                     double radSum = testRadius + asteroids[slot].radius;
+                    // WHY: Compare squared distances to avoid expensive std::sqrt() on every candidate.
                     if (distSq <= radSum * radSum) {
                         hitId = asteroids[slot].id;
                         return true;

@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/multiplayer/MultiplayerRoomService.java
+// Subject   : PSOOP-CO2 / CO3 | 1v1 Room Lifecycle & RPC Coordinator
+// Topics    : [TOPIC: REST Client] [TOPIC: Singleton Pattern] [TOPIC: WebSocket/Phoenix]
+// Game Role : Bridges PostgreSQL room RPCs, Realtime lobby broadcasts, and local room state.
+// ==============================================================================
 package database.multiplayer;
 
 import database.SessionManager;
@@ -22,15 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * ==============================================================================
- * AIRSTRIKE Phase 12 (Part 4): High-Level Multiplayer Room Service Coordinator
- * PACKAGE: database.multiplayer
- *
- * Coordinates:
- * - Supabase PostgreSQL stored procedures (RPCs) over SupabaseHttpClient.
- * - Ephemeral Realtime Presence and Broadcast over MultiplayerPresenceService.
- * - Deterministic state machine transitions over MultiplayerStateManager.
- * ==============================================================================
+ * Coordinates Supabase room RPCs, Realtime lobby broadcasts, and local room state transitions.
  */
 public class MultiplayerRoomService {
 

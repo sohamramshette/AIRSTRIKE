@@ -1,10 +1,15 @@
+// ==============================================================================
+// File      : PSOOP/src/model/Ship.java
+// Subject   : PSOOP-CO1 | Inheritance, Method Overloading & Combat State
+// Topics    : [TOPIC: Inheritance] [TOPIC: Method Overloading] [TOPIC: Encapsulation] [TOPIC: Abstraction]
+// Game Role : Adds hull health, energy shields, speed, and weapon-firing contracts to Player and Enemy.
+// ==============================================================================
 package model;
 
 import java.util.List;
 
 /**
- * Abstract class representing a spacecraft (Player or Enemy) equipped with shields and weapons.
- * Demonstrates Inheritance, Method Overloading, and Protected State Encapsulation.
+ * Abstract spacecraft extending Entity with shields, hull integrity, and weapon cooldowns.
  */
 public abstract class Ship extends Entity {
     
@@ -17,10 +22,12 @@ public abstract class Ship extends Entity {
     protected long shootCooldownMs;
 
     /**
-     * Constructor for Ship initialization.
+     * [TOPIC: Inheritance] [TOPIC: Defensive Programming]
+     * Game Role: Chains Entity setup and enforces valid non-negative hull, shield, speed, and cooldown bounds.
      */
     public Ship(double x, double y, int width, int height, int maxHealth, int maxShield, double speed, long shootCooldownMs) {
         super(x, y, width, height);
+        // WHY: Clamps vital combat invariants at construction to prevent instant-death or zero-cooldown bugs.
         this.maxHealth = Math.max(1, maxHealth);
         this.health = this.maxHealth;
         this.maxShield = Math.max(0, maxShield);
@@ -31,21 +38,22 @@ public abstract class Ship extends Entity {
     }
 
     /**
-     * Method Overloading #1: Standard damage absorption (Shields absorb damage first).
-     * @param amount Damage amount to inflict.
+     * [TOPIC: Method Overloading]
+     * Game Role: Standard damage entry point routing hits through active shields first.
      */
     public void takeDamage(int amount) {
         takeDamage(amount, false);
     }
 
     /**
-     * Method Overloading #2: Damage with option to bypass shielding.
-     * @param amount Damage amount to inflict.
-     * @param bypassShield Whether shields are ignored.
+     * [TOPIC: Method Overloading] [TOPIC: Encapsulation]
+     * Game Role: Resolves shield-before-hull damage absorption and deactivates destroyed ships.
      */
     public void takeDamage(int amount, boolean bypassShield) {
+        // WHY: Ignore non-positive hits or inactive craft so health invariants cannot be corrupted.
         if (amount <= 0 || !active) return;
 
+        // WHY: Shield capacitor absorbs incoming damage before hull integrity takes overflow.
         if (!bypassShield && shield > 0) {
             if (shield >= amount) {
                 shield -= amount;
@@ -57,6 +65,7 @@ public abstract class Ship extends Entity {
         }
 
         if (amount > 0) {
+            // WHY: Clamp hull at 0 and deactivate ship on lethal damage for cleanup.
             health = Math.max(0, health - amount);
             if (health == 0) {
                 active = false;
@@ -65,7 +74,8 @@ public abstract class Ship extends Entity {
     }
 
     /**
-     * Restores health up to maximum limit.
+     * [TOPIC: Encapsulation]
+     * Game Role: Repairs hull points on living ships without exceeding maxHealth.
      */
     public void heal(int amount) {
         if (amount > 0 && health > 0) {
@@ -74,7 +84,8 @@ public abstract class Ship extends Entity {
     }
 
     /**
-     * Recharges shield up to maximum limit.
+     * [TOPIC: Encapsulation]
+     * Game Role: Recharges energy shields on living ships without exceeding maxShield.
      */
     public void rechargeShield(int amount) {
         if (amount > 0 && health > 0) {
@@ -82,28 +93,24 @@ public abstract class Ship extends Entity {
         }
     }
 
-    /**
-     * Checks if weapon cooldown has expired.
-     */
+    /** [TOPIC: Encapsulation] Game Role: Verifies weapon fire-rate cooldown has elapsed. */
     public boolean canShoot() {
         return (System.currentTimeMillis() - lastShotTime) >= shootCooldownMs;
     }
 
-    /**
-     * Records the timestamp of weapon discharge.
-     */
+    /** Game Role: Records discharge timestamp to enforce per-ship weapon cadence. */
     protected void recordShot() {
         this.lastShotTime = System.currentTimeMillis();
     }
 
     /**
-     * Abstract firing behavior implemented specifically by Player and individual Enemy subtypes.
+     * [TOPIC: Abstraction] [TOPIC: Polymorphism]
+     * Game Role: Spawns subtype-specific projectiles into the active world projectile list.
      */
     public abstract void shoot(List<Projectile> projectileList);
 
     public boolean isDestroyed() { return health <= 0 || !active; }
 
-    // Getters and Setters
     public int getMaxHealth() { return maxHealth; }
     public int getHealth() { return health; }
     public void setHealth(int health) { this.health = Math.max(0, Math.min(maxHealth, health)); }

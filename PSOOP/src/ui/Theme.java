@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/Theme.java
+// Subject   : PSOOP-CO1 / CO4 | Centralized Design System Tokens & Graphics2D Helpers
+// Topics    : [TOPIC: Design System] [TOPIC: Custom Swing Rendering]
+// Game Role : Defines shared color, font, and radius tokens plus Graphics2D cosmic helpers.
+// ==============================================================================
 package ui;
 
 import java.awt.BasicStroke;
@@ -105,6 +111,7 @@ public final class Theme {
     // =========================================================================
 
     public static void enableQuality(Graphics2D g2) {
+        // WHY: Apply consistent antialiasing and text smoothing across all custom Swing paintComponent passes.
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);

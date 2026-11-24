@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/queues/wave_queue.cpp
+// Subject   : PL-CO3 | Stack and Queue Applications
+// Topics    : [TOPIC: WaveQueue] [TOPIC: Circular Queue] [TOPIC: Modulo Wrap-Around] [TOPIC: FIFO]
+// Game Role : Implements O(1) circular-array FIFO wave queuing for AIRSTRIKE.
+// ==============================================================================
+
 #include "wave_queue.h"
 #include <iomanip>
 
@@ -11,11 +18,15 @@ WaveQueue::~WaveQueue() {
     delete[] elements;
 }
 
+// [TOPIC: Circular Buffer Copy]
+// Purpose: Unrolls wrapped circular entries into indices [0..currentSize-1] during deep copy.
+// Game Role: Preserves exact FIFO wave dispatch order when cloning WaveQueue.
 WaveQueue::WaveQueue(const WaveQueue& other)
     : frontIndex(0), rearIndex(other.currentSize - 1), currentSize(other.currentSize),
       maxCapacity(other.maxCapacity) {
     elements = new EnemyWave[maxCapacity];
     for (int i = 0; i < other.currentSize; ++i) {
+        // WHY: Map logical FIFO offset i from wrapped source frontIndex via modulo capacity.
         int idx = (other.frontIndex + i) % other.maxCapacity;
         elements[i] = other.elements[idx];
     }
@@ -30,6 +41,7 @@ WaveQueue& WaveQueue::operator=(const WaveQueue& other) {
         maxCapacity = other.maxCapacity;
         elements = new EnemyWave[maxCapacity];
         for (int i = 0; i < other.currentSize; ++i) {
+            // WHY: Linearize wrapped circular slots into normalized [0..currentSize-1] layout.
             int idx = (other.frontIndex + i) % other.maxCapacity;
             elements[i] = other.elements[idx];
         }
@@ -37,24 +49,32 @@ WaveQueue& WaveQueue::operator=(const WaveQueue& other) {
     return *this;
 }
 
+// [TOPIC: WaveQueue] [TOPIC: Modulo Wrap-Around] [TOPIC: FIFO Enqueue]
+// Purpose: Appends a wave at the circular rear index in O(1) if buffer capacity permits.
+// Game Role: Registers the next enemy wave without shifting existing queue elements.
 bool WaveQueue::enqueue(const EnemyWave& wave) {
     if (isFull()) {
         std::cerr << "[ERROR: WaveQueue Overflow] Cannot enqueue wave " << wave.waveNumber
                   << "; queue at capacity " << maxCapacity << "!\n";
         return false;
     }
+    // WHY: Modulo wrap-around reuses freed slots at array start -> Game: Prevents linear array drift.
     rearIndex = (rearIndex + 1) % maxCapacity;
     elements[rearIndex] = wave;
     currentSize++;
     return true;
 }
 
+// [TOPIC: WaveQueue] [TOPIC: Modulo Wrap-Around] [TOPIC: FIFO Dequeue]
+// Purpose: Removes and returns the oldest queued wave from frontIndex in O(1).
+// Game Role: Launches the next scheduled enemy wave in strict FIFO order.
 bool WaveQueue::dequeue(EnemyWave& outWave) {
     if (isEmpty()) {
         std::cerr << "[ERROR: WaveQueue Underflow] Cannot dequeue from empty wave queue!\n";
         return false;
     }
     outWave = elements[frontIndex];
+    // WHY: Advance frontIndex circularly in O(1) instead of shifting trailing waves left.
     frontIndex = (frontIndex + 1) % maxCapacity;
     currentSize--;
     return true;

@@ -1,20 +1,19 @@
+// ==============================================================================
+// File      : PL/src/linked_lists/formation_squadron.h
+// Subject   : PL-CO2 | Suitable Linked Lists
+// Topics    : [TOPIC: FormationSquadron] [TOPIC: Doubly Linked List] [TOPIC: O(1) List Splitting] [TOPIC: O(1) Node Removal]
+// Game Role : Models the PL-CO2 Formation Squadron Chain enemy that splits into two wings on mid-chain hits.
+// ==============================================================================
+
 #ifndef FORMATION_SQUADRON_H
 #define FORMATION_SQUADRON_H
 
 #include <iostream>
 #include <string>
 
-/**
- * Formation Squadron Chain (PL-CO2).
- *
- * Demonstrates:
- * - Doubly Linked List Structure: Each craft node maintains prev and next pointers.
- * - Bidirectional Traversal: Vanguard to Rearguard and Rearguard to Vanguard.
- * - O(1) Node Splitting: Severing a formation link cuts the squadron into two
- *   distinct, fully operational squadrons in O(1) pointer operations.
- * - O(1) Node Removal: Removing a destroyed node directly via pointer rewiring.
- * - Formation Movement & Coordinate Shifting: Updating positions along flight path.
- */
+// [TOPIC: SquadronCraft] [TOPIC: Doubly Linked Node]
+// Purpose: Stores a linked enemy craft's telemetry, coordinates, formation offsets, and prev/next links.
+// Game Role: Forms an individual segment of the FormationSquadron chain enemy.
 struct SquadronCraft {
     int shipId;
     std::string callsign;
@@ -34,6 +33,9 @@ struct SquadronCraft {
           posX(x), posY(y), offsetX(offX), offsetY(offY), prev(p), next(n) {}
 };
 
+// [TOPIC: FormationSquadron] [TOPIC: Doubly Linked List] [TOPIC: O(1) List Splitting]
+// Purpose: Doubly linked enemy formation supporting O(1) craft unlinking and O(1) pointer-severing splits.
+// Game Role: Drives the PL-CO2 splitting centipede squadron that divides when a middle craft is destroyed.
 class FormationSquadron {
 private:
     SquadronCraft* head; // Vanguard (Lead ship)
@@ -45,22 +47,22 @@ public:
     explicit FormationSquadron(const std::string& name = "Alpha-Wing");
     ~FormationSquadron();
 
-    // Deep copy operations
     FormationSquadron(const FormationSquadron& other);
     FormationSquadron& operator=(const FormationSquadron& other);
 
-    // Dynamic insertion
     void addVanguard(int id, const std::string& callsign, int health, double x, double y);
     void addRearguard(int id, const std::string& callsign, int health, double x, double y);
     bool insertAtRank(size_t rankIndex, int id, const std::string& callsign, int health, double x, double y);
 
-    // Tactical Deletion / Destruction (O(1) given node, O(N) by ID)
+    // [TOPIC: O(1) Node Deletion]
+    // Purpose: Unlinks a destroyed craft node via direct prev/next pointer rewiring without array shifts.
+    // Game Role: Eliminates shot-down squadron members cleanly.
     bool removeShip(int shipId);
     void removeNode(SquadronCraft* node);
 
-    // Splitting: Divides current formation at targetShipId.
-    // The nodes after targetShipId become `outSecondSquadron` (with valid head, tail, count).
-    // The current formation retains nodes up to and including targetShipId.
+    // [TOPIC: O(1) List Splitting] [TOPIC: Doubly Linked List]
+    // Purpose: Severs the formation after targetShipId, transferring trailing nodes into outSecondSquadron.
+    // Game Role: Splits a damaged enemy formation into two autonomous combat detachments.
     bool splitAt(int targetShipId, FormationSquadron& outSecondSquadron);
 
     // Search

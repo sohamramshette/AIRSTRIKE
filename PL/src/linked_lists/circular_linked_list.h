@@ -1,18 +1,19 @@
+// ==============================================================================
+// File      : PL/src/linked_lists/circular_linked_list.h
+// Subject   : PL-CO2 | Suitable Linked Lists
+// Topics    : [TOPIC: Circular Linked List] [TOPIC: Cyclic Traversal] [TOPIC: Weapon Selection Wheel]
+// Game Role : Implements an endless cyclic weapon wheel for the AirStrike spacecraft HUD.
+// ==============================================================================
+
 #ifndef CIRCULAR_LINKED_LIST_H
 #define CIRCULAR_LINKED_LIST_H
 
 #include <iostream>
 #include <string>
 
-/**
- * Circular Linked List implementation for AirStrike Weapon Selection Wheel (PL-CO2).
- * Application: Cyclic weapon selector (Plasma, Laser, Missile, EMP).
- * Why CLL is suitable:
- * 1. Infinite cycling: Cycling past the last weapon seamlessly wraps to the first
- *    without modulo or boundary check overhead.
- * 2. Proper circular termination: Traversal stops reliably when current pointer returns
- *    to head node.
- */
+// [TOPIC: WeaponNode] [TOPIC: Circular Linked Node]
+// Purpose: Encapsulates a spacecraft weapon's stats and a ring-closing next pointer.
+// Game Role: Forms one selectable slot on the player's cyclic HUD weapon selector.
 struct WeaponNode {
     int weaponId;
     std::string name;
@@ -24,6 +25,9 @@ struct WeaponNode {
         : weaponId(id), name(n), energyCost(cost), damage(dmg), next(nxt) {}
 };
 
+// [TOPIC: CircularLinkedList] [TOPIC: Circular Linked List] [TOPIC: Weapon Cycling]
+// Purpose: Singly circular list where tail->next points back to head for seamless cyclic traversal.
+// Game Role: Cycles active spacecraft weapons endlessly without index wrap-around checks.
 class CircularLinkedList {
 private:
     WeaponNode* head;
@@ -34,20 +38,22 @@ public:
     CircularLinkedList();
     ~CircularLinkedList();
 
-    // Deep copy operations
+    // [TOPIC: Circular Deep Copy]
+    // Purpose: Walks one full ring around other.head to copy all weapons into a separate ring.
+    // Game Role: Duplicates weapon wheel configurations safely.
     CircularLinkedList(const CircularLinkedList& other);
     CircularLinkedList& operator=(const CircularLinkedList& other);
 
-    // Insertion
     void insertHead(int id, const std::string& name, int energyCost, int damage);
     void insertTail(int id, const std::string& name, int energyCost, int damage);
 
-    // Deletion
     bool deleteHead();
     bool deleteTail();
     bool deleteById(int id);
 
-    // Cycling mechanism
+    // [TOPIC: Cyclic Weapon Switching]
+    // Purpose: Advances activeWeapon to activeWeapon->next in O(1) across the circular ring.
+    // Game Role: Cycles the player's equipped weapon on HUD switch input.
     const WeaponNode* cycleNext();
     const WeaponNode* getActiveWeapon() const { return activeWeapon; }
 

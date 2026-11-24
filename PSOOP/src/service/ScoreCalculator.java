@@ -1,8 +1,14 @@
+// ==============================================================================
+// File      : PSOOP/src/service/ScoreCalculator.java
+// Subject   : PSOOP-CO1 | Score Accumulation & Streak Multiplier Service
+// Topics    : [TOPIC: Method Overloading] [TOPIC: Encapsulation] [TOPIC: Combo Multiplier]
+// Game Role : Tracks match score, high score, and timed kill-streak multipliers.
+// ==============================================================================
 package service;
 
 /**
- * Service managing player score accumulation, kill-streak combos, and high score calculation.
- * Demonstrates Method Overloading and Encapsulation.
+ * [TOPIC: Method Overloading] [TOPIC: Encapsulation]
+ * Service managing score accumulation, kill-streak combos, and session high scores.
  */
 public class ScoreCalculator {
 
@@ -21,8 +27,7 @@ public class ScoreCalculator {
     }
 
     /**
-     * Method Overloading #1: Adds base score with automatic combo multiplier calculation.
-     * @param baseScore Points awarded for destroyed unit.
+     * [TOPIC: Method Overloading] Adds base score scaled by the active streak multiplier.
      */
     public void addScore(int baseScore) {
         updateStreak();
@@ -34,11 +39,10 @@ public class ScoreCalculator {
     }
 
     /**
-     * Method Overloading #2: Adds score with an explicit custom bonus multiplier.
-     * @param baseScore Base points.
-     * @param customMultiplier Explicit multiplier (e.g. boss defeat or precision bonus).
+     * [TOPIC: Method Overloading] Adds base score scaled by an explicit bonus multiplier.
      */
     public void addScore(int baseScore, int customMultiplier) {
+        // WHY: Clamp customMultiplier to >= 1 so bonuses never zero out or invert earned score.
         int activeMult = Math.max(1, customMultiplier);
         int points = baseScore * activeMult;
         this.score += points;
@@ -47,9 +51,12 @@ public class ScoreCalculator {
         }
     }
 
+    /**
+     * [TOPIC: Combo Multiplier] Extends streak within a 3.5-second window and updates tier.
+     */
     private void updateStreak() {
         long now = System.currentTimeMillis();
-        // If kill happens within 3.5 seconds of previous kill, increment streak
+        // WHY: 3500 ms kill window keeps combos active during normal wave pacing before decaying to 1.
         if (now - lastKillTime <= 3500) {
             killStreak++;
         } else {

@@ -1,14 +1,18 @@
+// ==============================================================================
+// File      : PSOOP/src/model/Entity.java
+// Subject   : PSOOP-CO1 | Abstract Base Class & Encapsulation
+// Topics    : [TOPIC: Abstraction] [TOPIC: Encapsulation] [TOPIC: Interfaces] [TOPIC: Kinematics]
+// Game Role : Provides shared 2D coordinates, velocity, AABB hitboxes, and lifecycle flags for all entities.
+// ==============================================================================
 package model;
 
 import java.awt.Rectangle;
 
 /**
  * Abstract root class representing any physical entity in the 2D space shooter world.
- * Demonstrates OOP Abstraction, Encapsulation, and Interface Implementation.
  */
 public abstract class Entity implements Renderable, Collidable {
     
-    // Encapsulated coordinates and dimensions
     protected double x;
     protected double y;
     protected double vx;
@@ -18,11 +22,13 @@ public abstract class Entity implements Renderable, Collidable {
     protected boolean active;
 
     /**
-     * Primary constructor with encapsulation boundary checks.
+     * [TOPIC: Encapsulation] [TOPIC: Defensive Programming]
+     * Game Role: Initializes entity coordinates and clamps dimensions to positive hitbox bounds.
      */
     public Entity(double x, double y, int width, int height) {
         this.x = x;
         this.y = y;
+        // WHY: Enforces >= 1px bounds so zero/negative sizes never invalidate AABB collision checks.
         this.width = Math.max(1, width);
         this.height = Math.max(1, height);
         this.vx = 0.0;
@@ -31,23 +37,33 @@ public abstract class Entity implements Renderable, Collidable {
     }
 
     /**
-     * Updates physics, kinematics, and internal timers over elapsed delta seconds.
+     * [TOPIC: Abstraction] [TOPIC: Kinematics]
+     * Game Role: Advances entity motion and internal timers over elapsed frame delta seconds.
      * @param delta Elapsed time in seconds.
      */
     public abstract void update(double delta);
 
+    /**
+     * [TOPIC: Method Overriding] [TOPIC: AABB Collision]
+     * Game Role: Projects floating-point world coordinates onto an integer AABB hitbox.
+     */
     @Override
     public Rectangle getBounds() {
+        // WHY: Rounds continuous double coordinates to nearest pixel for accurate AWT Rectangle intersection.
         return new Rectangle((int) Math.round(x), (int) Math.round(y), width, height);
     }
 
+    /**
+     * [TOPIC: Polymorphism] [TOPIC: Defensive Programming]
+     * Game Role: Executes null-safe AABB collision detection against another Collidable object.
+     */
     @Override
     public boolean intersects(Collidable other) {
+        // WHY: Guards against null targets so collision loops never dereference an empty slot.
         if (other == null) return false;
         return this.getBounds().intersects(other.getBounds());
     }
 
-    // Encapsulated Getters and Setters
     public double getX() { return x; }
     public void setX(double x) { this.x = x; }
 

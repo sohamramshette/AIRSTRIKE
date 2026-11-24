@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/ArmouredEnemy.java
+// Subject   : PSOOP-CO1 | Encapsulation & Armored Damage Mitigation
+// Topics    : [TOPIC: Encapsulation] [TOPIC: Inheritance] [TOPIC: Method Overriding] [TOPIC: Polymorphism]
+// Game Role : Implements a heavy vanguard whose private armor rating dampens hull damage.
+// ==============================================================================
 package model;
 
 import java.awt.BasicStroke;
@@ -7,24 +13,17 @@ import java.awt.Polygon;
 import java.util.List;
 
 /**
- * Armoured Vanguard Heavy Fighter (PSOOP-CO1).
- * Demonstrates: Encapsulation and Inheritance.
- *
- * Encapsulation:
- * - Maintains private armorRating and health fields.
- * - Provides controlled damage-handling methods ensuring state integrity.
- * - Armor absorbs a flat portion of incoming damage after shields deplete,
- *   guaranteeing at least 1 point of effective damage if incoming damage > 0.
- *
- * Inheritance:
- * - Inherits from Enemy -> Ship -> Entity hierarchy.
- * - Overrides takeDamage() to provide specialized defense absorption while preserving the superclass contract.
+ * Armoured Vanguard heavy fighter enforcing encapsulated armor damage mitigation.
  */
 public class ArmouredEnemy extends Enemy {
 
     // Encapsulated state: private armor rating
     private int armorRating;
 
+    /**
+     * [TOPIC: Inheritance] [TOPIC: Encapsulation]
+     * Game Role: Spawns a slow heavy vanguard (HP 90, Shield 30, Armor 8).
+     */
     public ArmouredEnemy(double x, double y) {
         // x, y, width 46, height 44, maxHealth 90, maxShield 30, speed 75.0, shootCooldown 1600ms, scoreValue 350
         super(x, y, 46, 44, 90, 30, 75.0, 1600, 350);
@@ -33,12 +32,8 @@ public class ArmouredEnemy extends Enemy {
     }
 
     /**
-     * Controlled damage handling method demonstrating encapsulation.
-     * Enforces combat rule: Shield absorbs first, then armour mitigates remaining damage
-     * before hull health is reduced.
-     *
-     * @param amount Incoming raw damage amount.
-     * @param bypassShield Whether shields are bypassed.
+     * [TOPIC: Method Overriding] [TOPIC: Encapsulation]
+     * Game Role: Applies shield-first absorption, then flat armor mitigation with a 1-damage floor.
      */
     @Override
     public void takeDamage(int amount, boolean bypassShield) {
@@ -46,7 +41,7 @@ public class ArmouredEnemy extends Enemy {
 
         int remaining = amount;
 
-        // 1. Shield absorption layer (inherited from Ship mechanics)
+        // WHY: Shield layer absorbs damage before armor plating is engaged.
         if (!bypassShield && shield > 0) {
             if (shield >= remaining) {
                 shield -= remaining;
@@ -57,7 +52,7 @@ public class ArmouredEnemy extends Enemy {
             }
         }
 
-        // 2. Encapsulated Armour mitigation layer
+        // WHY: Armor dampens leftover damage by armorRating while guaranteeing >= 1 damage per hit.
         if (remaining > 0) {
             int effectiveDamage = Math.max(1, remaining - armorRating);
             health = Math.max(0, health - effectiveDamage);
@@ -67,6 +62,7 @@ public class ArmouredEnemy extends Enemy {
         }
     }
 
+    /** [TOPIC: Method Overriding] [TOPIC: Kinematics] Game Role: Advances slow descent with gentle lateral sway. */
     @Override
     public void update(double delta) {
         flightTimer += delta * 1.5;
@@ -74,6 +70,7 @@ public class ArmouredEnemy extends Enemy {
         x += Math.sin(flightTimer) * 20.0 * delta; // Heavy, stable dampening sway
     }
 
+    /** [TOPIC: Polymorphism] [TOPIC: Method Overriding] Game Role: Fires inside the active vertical window. */
     @Override
     public void performAttack(double delta, List<Projectile> projectileList, Player player) {
         attackTimer += delta;
@@ -82,6 +79,7 @@ public class ArmouredEnemy extends Enemy {
         }
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Launches a single heavy prow plasma slug. */
     @Override
     public void shoot(List<Projectile> projectileList) {
         recordShot();
@@ -92,6 +90,7 @@ public class ArmouredEnemy extends Enemy {
         projectileList.add(new Projectile(x + (width / 2.0) - 4, y + height, 8, 18, 0, bulletSpeed, false, damage));
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Draws gunmetal armored hull, rivets, muzzle, and shield ring. */
     @Override
     public void render(Graphics2D g) {
         if (!active) return;

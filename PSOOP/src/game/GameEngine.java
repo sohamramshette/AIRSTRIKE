@@ -1,16 +1,39 @@
+// ==============================================================================
+// File      : PSOOP/src/game/GameEngine.java
+// Subject   : PSOOP-CO1..CO4 | Central Game Coordinator & Simulation Engine
+// Topics    : [TOPIC: Game State Machine] [TOPIC: 60 FPS Delta-Time] [TOPIC: AABB Collision] [TOPIC: Custom Swing Rendering]
+// Game Role : Coordinates all combat entities, physics ticks, HUD overlays, and match lifecycle.
+// ==============================================================================
 package game;
 
 import exception.InvalidGameStateException;
 import model.ArmouredEnemy;
+import model.BoundarySkimmerEnemy;
+import model.BoothGunshipEnemy;
+import model.DroneEnemy;
 import model.Enemy;
 import model.FailSafeEnemy;
+import model.FibonacciSkimmerEnemy;
+import model.FighterEnemy;
+import model.FormationChainEnemy;
+import model.GridSwarmEnemy;
+import model.HashShieldEnemy;
 import model.InterceptorEnemy;
 import model.MorphingEnemy;
+import model.OrbitalRotorEnemy;
 import model.Particle;
+import model.PhongCruiserEnemy;
 import model.Player;
+import model.PolygonCruiserEnemy;
 import model.PowerUp;
 import model.Projectile;
+import model.RailgunDreadnoughtEnemy;
 import model.RammerEnemy;
+import model.RasterSentinelEnemy;
+import model.SubRegSentryEnemy;
+import model.TargetHunterEnemy;
+import model.WarpCruiserEnemy;
+import model.WaveEchelonEnemy;
 import service.AssetManager;
 import service.ScoreCalculator;
 import service.WaveManager;
@@ -109,12 +132,13 @@ public class GameEngine {
     }
 
     /**
+     * [TOPIC: Game State Machine] [TOPIC: Exception Handling]
      * Safely transitions between game states with validation against illegal paths.
      */
     public void setState(GameState newState) throws InvalidGameStateException {
         if (this.state == newState) return;
 
-        // Validation: Cannot transition directly from MENU to PAUSED without starting game
+        // WHY: Reject MENU -> PAUSED directly because no active mission exists to suspend.
         if (this.state == GameState.MENU && newState == GameState.PAUSED) {
             throw new InvalidGameStateException("Cannot pause while in Main Menu", "MENU -> PAUSED");
         }
@@ -126,10 +150,14 @@ public class GameEngine {
         this.state = newState;
     }
 
+    /**
+     * [TOPIC: REST Client] Triggers end-of-match announcer cue and uploads solo telemetry if logged in.
+     */
     private void onGameOver() {
         announcer.AnnouncerManager.getInstance().trigger(announcer.AnnouncerEvent.GAME_OVER, true);
         if (multiplayerMode) return; // Handled atomically by finishMultiplayerMatch()
-        if (matchUploaded) return; // Prevent duplicate submission
+        // WHY: Guard prevents duplicate match records when re-entering or re-rendering GAME_OVER.
+        if (matchUploaded) return;
         matchUploaded = true;
 
         int finalScore = scoreCalculator.getScore();
@@ -189,12 +217,17 @@ public class GameEngine {
         return multiplayerMode;
     }
 
+    /**
+     * [TOPIC: Deterministic PRNG] [TOPIC: Multiplayer Telemetry]
+     * Initializes a seeded 90-second 1v1 score-attack match with shared PRNG parity.
+     */
     public void startMultiplayerGame(long matchSeed, String startedAtIso, database.multiplayer.MultiplayerModels.MultiplayerRoomState room) {
         this.multiplayerMode = true;
         this.multiplayerRoom = room;
         this.multiplayerFinalized = false;
         this.enemyDemoMode = false;
 
+        // WHY: Both 1v1 clients share matchSeed so wave spawns and chaos events unfold identically.
         this.deterministicPRNG = new database.multiplayer.DeterministicPRNG(matchSeed);
         this.waveManager.setPRNG(deterministicPRNG);
         this.chaosScheduler.setPRNG(deterministicPRNG);
@@ -250,7 +283,11 @@ public class GameEngine {
         } catch (InvalidGameStateException ignored) {}
     }
 
+    /**
+     * [TOPIC: Multiplayer Telemetry] Atomically concludes a 1v1 match and submits final score.
+     */
     public synchronized void finishMultiplayerMatch() {
+        // WHY: Synchronized + boolean latch prevents double finalization from timer expiry and life loss racing.
         if (multiplayerFinalized) return;
         multiplayerFinalized = true;
 
@@ -318,11 +355,11 @@ public class GameEngine {
     public void populateDemoFleet() {
         enemies.clear();
         double spacing = screenWidth / 6.0;
-        enemies.add(new ArmouredEnemy(spacing * 1 - 23, 75));     // CO1: Armoured Vanguard
-        enemies.add(new InterceptorEnemy(spacing * 2 - 19, 120)); // CO1: Interceptor Fighter
-        enemies.add(new MorphingEnemy(spacing * 3 - 18, 75));     // CO2: Adaptive Morphing Drone
-        enemies.add(new FailSafeEnemy(spacing * 4 - 20, 120));    // CO3: Fail-Safe Sentry
-        enemies.add(new RammerEnemy(spacing * 5 - 19, 75));       // CO4: Kinetic Battering Ram
+        enemies.add(new ArmouredEnemy(spacing * 1 - 23, 75));          // PSOOP-CO1: Armoured Vanguard
+        enemies.add(new FormationChainEnemy(spacing * 2 - 19, 120, 0)); // PL-CO2: Doubly-Linked Centipede
+        enemies.add(new SubRegSentryEnemy(spacing * 3 - 25, 75));      // COA-CO1: Sub-Register Aegis Sentry
+        enemies.add(new RailgunDreadnoughtEnemy(spacing * 4 - 28, 120));// COA-CO4: 5-Stage CPU Pipeline Railgun
+        enemies.add(new OrbitalRotorEnemy(spacing * 5 - 26, 75));      // CGL-CO2: Affine Matrix Orbital Rotor
     }
 
     public void spawnDemoEnemy(int type) {
@@ -334,6 +371,15 @@ public class GameEngine {
             case 3 -> enemies.add(new MorphingEnemy(spawnX, spawnY));
             case 4 -> enemies.add(new FailSafeEnemy(spawnX, spawnY));
             case 5 -> enemies.add(new RammerEnemy(spawnX, spawnY));
+            case 6 -> enemies.add(new GridSwarmEnemy(spawnX, spawnY));
+            case 7 -> enemies.add(new FormationChainEnemy(spawnX, spawnY, 0));
+            case 8 -> enemies.add(new SubRegSentryEnemy(spawnX, spawnY));
+            case 9 -> enemies.add(new RailgunDreadnoughtEnemy(spawnX, spawnY));
+            case 10 -> enemies.add(new OrbitalRotorEnemy(spawnX, spawnY));
+            case 11 -> enemies.add(new PolygonCruiserEnemy(spawnX, spawnY));
+            case 12 -> enemies.add(new RasterSentinelEnemy(spawnX, spawnY));
+            case 13 -> enemies.add(new WarpCruiserEnemy(spawnX, spawnY));
+            case 14 -> enemies.add(new PhongCruiserEnemy(spawnX, spawnY));
         }
     }
 
@@ -372,10 +418,11 @@ public class GameEngine {
     }
 
     /**
+     * [TOPIC: 60 FPS Delta-Time] [TOPIC: AABB Collision]
      * Central update loop executed every frame delta.
      */
     public void update(double delta) {
-        // Starfield background always scrolls smoothly in all states
+        // WHY: Keep starfield scrolling across menu/pause/game-over screens for seamless visual continuity.
         assetManager.update(delta, screenWidth, screenHeight);
 
         if (state != GameState.PLAYING) {
@@ -503,7 +550,7 @@ public class GameEngine {
             }
         }
 
-        // 9. Clean up inactive dead entities from collections
+        // WHY: Prune inactive entities via removeIf after iteration to prevent ConcurrentModificationException and memory growth.
         enemies.removeIf(e -> !e.isActive());
         projectiles.removeIf(p -> !p.isActive());
         powerUps.removeIf(pu -> !pu.isActive());
@@ -521,6 +568,7 @@ public class GameEngine {
     }
 
     /**
+     * [TOPIC: Custom Swing Rendering]
      * Renders all game entities, starfield, and HUD elements using Graphics2D.
      */
     public void render(Graphics2D g, int width, int height) {
@@ -703,6 +751,62 @@ public class GameEngine {
 
         // --- 5. Center Tactical Desi Announcer Banner ---
         announcer.AnnouncerManager.getInstance().renderHUD(g, screenWidth, screenHeight);
+
+        // --- 6. Active Academic Domain Telemetry Pill ---
+        renderAcademicSubjectHUD(g);
+    }
+
+    private void renderAcademicSubjectHUD(Graphics2D g) {
+        boolean hasPsoop = false;
+        boolean hasPl = false;
+        boolean hasCoa = false;
+        boolean hasCgl = false;
+
+        for (Enemy e : enemies) {
+            if (!e.isActive()) continue;
+            if (e instanceof ArmouredEnemy || e instanceof InterceptorEnemy || e instanceof MorphingEnemy ||
+                e instanceof FailSafeEnemy || e instanceof RammerEnemy || e instanceof DroneEnemy || e instanceof FighterEnemy) {
+                hasPsoop = true;
+            } else if (e instanceof GridSwarmEnemy || e instanceof FormationChainEnemy || e instanceof WaveEchelonEnemy ||
+                       e instanceof TargetHunterEnemy || e instanceof HashShieldEnemy) {
+                hasPl = true;
+            } else if (e instanceof SubRegSentryEnemy || e instanceof FibonacciSkimmerEnemy ||
+                       e instanceof BoothGunshipEnemy || e instanceof RailgunDreadnoughtEnemy) {
+                hasCoa = true;
+            } else if (e instanceof PolygonCruiserEnemy || e instanceof OrbitalRotorEnemy || e instanceof RasterSentinelEnemy ||
+                       e instanceof WarpCruiserEnemy || e instanceof BoundarySkimmerEnemy || e instanceof PhongCruiserEnemy) {
+                hasCgl = true;
+            }
+        }
+
+        int pillW = 440;
+        int pillH = 22;
+        int pillX = (screenWidth - pillW) / 2;
+        int pillY = screenHeight - 28;
+
+        g.setColor(new Color(10, 15, 25, 210));
+        g.fillRoundRect(pillX, pillY, pillW, pillH, 8, 8);
+        g.setColor(new Color(0, 229, 255, 90));
+        g.setStroke(new BasicStroke(1.0f));
+        g.drawRoundRect(pillX, pillY, pillW, pillH, 8, 8);
+
+        g.setFont(new Font("Monospaced", Font.BOLD, 10));
+        int cx = pillX + 12;
+
+        g.setColor(hasPsoop ? new Color(0, 255, 200) : new Color(80, 90, 100));
+        g.drawString("PSOOP [Java]", cx, pillY + 15);
+        cx += 98;
+
+        g.setColor(hasPl ? new Color(56, 189, 248) : new Color(80, 90, 100));
+        g.drawString("PL [C++17]", cx, pillY + 15);
+        cx += 92;
+
+        g.setColor(hasCoa ? new Color(251, 191, 36) : new Color(80, 90, 100));
+        g.drawString("COA [Assembly]", cx, pillY + 15);
+        cx += 115;
+
+        g.setColor(hasCgl ? new Color(244, 114, 182) : new Color(80, 90, 100));
+        g.drawString("CGL [OpenGL]", cx, pillY + 15);
     }
 
     private void renderBanner(Graphics2D g, String mainText, String subText, Color color) {
@@ -1151,20 +1255,65 @@ public class GameEngine {
             String label = "";
             Color col = Color.CYAN;
             if (e instanceof ArmouredEnemy arm) {
-                label = "CO1: Armoured (Armor:" + arm.getArmorRating() + ")";
+                label = "PSOOP-CO1: Armoured (Armor:" + arm.getArmorRating() + ")";
                 col = new Color(0, 220, 230);
             } else if (e instanceof InterceptorEnemy inc) {
-                label = "CO1: Interceptor" + (inc.isDashing() ? " [DASH]" : "");
+                label = "PSOOP-CO1: Interceptor" + (inc.isDashing() ? " [DASH]" : "");
                 col = new Color(255, 180, 50);
             } else if (e instanceof MorphingEnemy morph) {
-                label = "CO2: Morphing [" + morph.getCurrentState() + "]";
+                label = "PSOOP-CO2: Morphing [" + morph.getCurrentState() + "]";
                 col = new Color(180, 100, 255);
             } else if (e instanceof FailSafeEnemy fs) {
-                label = "CO3: Fail-Safe" + (fs.isEmergencyBarrierActive() ? " [BARRIER]" : "");
+                label = "PSOOP-CO3: Fail-Safe" + (fs.isEmergencyBarrierActive() ? " [BARRIER]" : "");
                 col = new Color(50, 220, 150);
             } else if (e instanceof RammerEnemy ram) {
-                label = "CO4: Rammer" + (ram.isCharging() ? " [RAM]" : "");
+                label = "PSOOP-CO4: Rammer" + (ram.isCharging() ? " [RAM]" : "");
                 col = new Color(255, 90, 90);
+            } else if (e instanceof GridSwarmEnemy) {
+                label = "PL-CO1: Spatial Grid Swarm";
+                col = new Color(0, 240, 120);
+            } else if (e instanceof FormationChainEnemy fc) {
+                label = "PL-CO2: Centipede Node [N" + fc.getSegmentIndex() + "]";
+                col = new Color(0, 210, 255);
+            } else if (e instanceof WaveEchelonEnemy) {
+                label = "PL-CO3: Wave Echelon (Queue/Stack)";
+                col = new Color(0, 240, 210);
+            } else if (e instanceof TargetHunterEnemy) {
+                label = "PL-CO4: Hunter (Binary Search/Sort)";
+                col = new Color(255, 60, 80);
+            } else if (e instanceof HashShieldEnemy hs) {
+                label = "PL-CO5: Hash Shield [H" + hs.getActiveHashBucket() + "]";
+                col = new Color(180, 100, 255);
+            } else if (e instanceof SubRegSentryEnemy srs) {
+                label = "COA-CO1: Sentry [" + srs.getCurrentTier() + "]";
+                col = new Color(255, 190, 0);
+            } else if (e instanceof FibonacciSkimmerEnemy fse) {
+                label = "COA-CO2: Fibonacci Skimmer (F=" + fse.getFibValue() + ")";
+                col = new Color(255, 215, 0);
+            } else if (e instanceof BoothGunshipEnemy bge) {
+                label = "COA-CO3: Booth Gunship [" + bge.getBoothCycle() + "/8]";
+                col = new Color(255, 140, 0);
+            } else if (e instanceof RailgunDreadnoughtEnemy rde) {
+                label = "COA-CO4: Railgun [" + rde.getCurrentStage() + (rde.isStallBubble() ? " STALL]" : "]");
+                col = new Color(255, 50, 70);
+            } else if (e instanceof PolygonCruiserEnemy) {
+                label = "CGL-CO1: Polygon Cruiser (CCW)";
+                col = new Color(0, 255, 200);
+            } else if (e instanceof OrbitalRotorEnemy) {
+                label = "CGL-CO2: Orbital Rotor (T*R)";
+                col = new Color(0, 240, 255);
+            } else if (e instanceof RasterSentinelEnemy) {
+                label = "CGL-CO3: Raster Sentinel (Midpoint/Bresenham)";
+                col = new Color(0, 255, 140);
+            } else if (e instanceof WarpCruiserEnemy wce) {
+                label = "CGL-CO4: Warp Cruiser (1/Z=" + String.format("%.2f", 10.0 / wce.getDepthZ()) + ")";
+                col = new Color(100, 140, 255);
+            } else if (e instanceof BoundarySkimmerEnemy bse) {
+                label = "CGL-CO5: Phase Skimmer [Outcode:" + bse.getCurrentOutcode() + "]";
+                col = new Color(255, 60, 220);
+            } else if (e instanceof PhongCruiserEnemy pce) {
+                label = "CGL-CO6: Phong Cruiser (I_spec:" + String.format("%.2f", pce.getSpecularIntensity()) + ")";
+                col = new Color(120, 180, 255);
             }
             if (!label.isEmpty()) {
                 FontMetrics fm = g.getFontMetrics();
@@ -1187,11 +1336,11 @@ public class GameEngine {
 
         g.setColor(new Color(0, 229, 255));
         g.setFont(new Font("SansSerif", Font.BOLD, 12));
-        g.drawString("PSOOP 5-ENEMY ACADEMIC DEMONSTRATION ARENA", 20, 18);
+        g.drawString("ALL 4 SUBJECTS INTEGRATED ACADEMIC DEMONSTRATION ARENA (PSOOP • PL • COA • CGL)", 20, 18);
 
         g.setFont(new Font("SansSerif", Font.PLAIN, 11));
         g.setColor(new Color(200, 225, 245));
-        g.drawString("[1] Armoured (CO1) | [2] Interceptor (CO1) | [3] Morphing (CO2) | [4] Fail-Safe (CO3) | [5] Rammer (CO4) | [C] Clear | [R] Reset | [M] Menu", 20, 36);
+        g.drawString("[1-5] PSOOP Fleet | [6-7] PL Data Structures | [8-9] COA Registers/Pipeline | [0] CGL Rotor | [C] Clear | [R] Reset | [M] Menu", 20, 36);
     }
 
     // Input hooks

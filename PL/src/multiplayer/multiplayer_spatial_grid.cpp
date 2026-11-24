@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_spatial_grid.cpp
+// Subject   : PL-CO1 | Arrays
+// Topics    : [TOPIC: MultiplayerSpatialGrid] [TOPIC: Row-Major Indexing] [TOPIC: Spatial Partitioning]
+// Game Role : Implements 8x8 multiplayer grid insertion, radius queries, and broadphase benchmarks.
+// ==============================================================================
+
 #include "multiplayer_spatial_grid.h"
 #include <cmath>
 #include <algorithm>
@@ -28,6 +35,7 @@ int MultiplayerSpatialGrid::getCellIndex(float x, float y) const {
     int row = static_cast<int>(y / cellHeight_);
     col = clampVal(col, 0, GRID_COLS - 1);
     row = clampVal(row, 0, GRID_ROWS - 1);
+    // WHY: Map (row, col) to linear row-major bucket index (row * COLS + col).
     return row * GRID_COLS + col;
 }
 
@@ -71,6 +79,7 @@ bool MultiplayerSpatialGrid::updateEntityPosition(int id, float newX, float newY
 std::vector<CombatEntity> MultiplayerSpatialGrid::queryNearby(float x, float y, float searchRadius) const {
     std::vector<CombatEntity> nearby;
 
+    // WHY: Restrict cell iteration to the bounding rectangle overlapping [x +- radius, y +- radius].
     int minCol = clampVal(static_cast<int>((x - searchRadius) / cellWidth_), 0, GRID_COLS - 1);
     int maxCol = clampVal(static_cast<int>((x + searchRadius) / cellWidth_), 0, GRID_COLS - 1);
     int minRow = clampVal(static_cast<int>((y - searchRadius) / cellHeight_), 0, GRID_ROWS - 1);
@@ -83,6 +92,7 @@ std::vector<CombatEntity> MultiplayerSpatialGrid::queryNearby(float x, float y, 
             for (const auto& entity : cells_[r][c]) {
                 float dx = entity.x - x;
                 float dy = entity.y - y;
+                // WHY: Compare squared distances to avoid sqrt() per candidate entity.
                 if ((dx * dx + dy * dy) <= radiusSq) {
                     nearby.push_back(entity);
                 }
@@ -121,7 +131,7 @@ MultiplayerSpatialGrid::BenchmarkResult MultiplayerSpatialGrid::runCollisionRedu
         for (int c = 0; c < GRID_COLS; ++c) {
             int n = static_cast<int>(cells_[r][c].size());
             gridChecks += (n * (n - 1)) / 2;
-            // Checks with right and bottom neighbors to avoid duplicates
+            // WHY: Check only right and bottom adjacent cells so every cross-cell boundary pair is counted once.
             if (c + 1 < GRID_COLS) {
                 gridChecks += n * static_cast<int>(cells_[r][c + 1].size());
             }

@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/InstructionsDialog.java
+// Subject   : PSOOP-CO1 | Pilot Flight Manual & Combat Guide Dialog
+// Topics    : [TOPIC: Swing Dialog] [TOPIC: Flight Controls]
+// Game Role : Displays flight bindings, pause/restart shortcuts, and power-up reference.
+// ==============================================================================
 package ui;
 
 import java.awt.BorderLayout;

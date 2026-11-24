@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/main.cpp
+// Subject   : Scene | GLUT Entry Point & Event Loop
+// Topics    : [TOPIC: Double Buffering (glutSwapBuffers)] [TOPIC: Scene Orchestration] [TOPIC: GLUT Callbacks] [TOPIC: Automated Assertions]
+// Game Role : Initializes GLUT double buffering, dispatches screens 0-8, and handles --test/--screenshot modes.
+// ==============================================================================
+
 #include "common/gl_common.h"
 #include "common/font_renderer.hpp"
 #include "common/screenshot.hpp"
@@ -36,6 +43,9 @@ static std::unique_ptr<SpaceCombatScene> combatScene;
 static std::unique_ptr<EnemyDemoScene> enemyDemoScene;
 static std::unique_ptr<MultiplayerBattleScene> multiplayerScene;
 
+// [TOPIC: Scene Orchestration]
+// Purpose: Allocates and initializes all CO1-CO6 demos, combat scene, enemy inspector, and multiplayer visualizer.
+// Game Role: Bootstraps all 9 AIRSTRIKE CGL screen subsystems once GLUT creates an OpenGL context.
 void initModules() {
     primitivesDemo = std::make_unique<SpacePrimitivesDemo>();
     primitivesDemo->init();
@@ -65,6 +75,9 @@ void initModules() {
     multiplayerScene->init();
 }
 
+// [TOPIC: Double Buffering (glutSwapBuffers)]
+// Purpose: Renders the active screen (0-8) into the back buffer and swaps buffers cleanly.
+// Game Role: Eliminates flicker and tearing during interactive 60 FPS AIRSTRIKE rendering.
 void displayCallback() {
     switch (currentScreen) {
         case 1: primitivesDemo->render(windowWidth, windowHeight); break;
@@ -81,15 +94,23 @@ void displayCallback() {
             break;
     }
 
+    // WHY: Present the completed back buffer atomically to prevent frame flicker
     glutSwapBuffers();
 }
 
+// [TOPIC: Viewport Resize Handling]
+// Purpose: Updates tracked window dimensions (clamped >= 1) and binds the full-window OpenGL viewport.
+// Game Role: Prevents divide-by-zero aspect errors and keeps scenes centered when resizing the window.
 void reshapeCallback(int w, int h) {
+    // WHY: Clamp dimensions >= 1 so projection aspect ratio divisions stay well-defined when minimized
     windowWidth = (w > 0) ? w : 1;
     windowHeight = (h > 0) ? h : 1;
     glViewport(0, 0, windowWidth, windowHeight);
 }
 
+// [TOPIC: Frame Loop & Automated Screenshot Capture]
+// Purpose: Steps 15-stage screenshot capture in --screenshot mode or updates the active scene at ~60 FPS.
+// Game Role: Drives continuous animation and automated visual verification across all CGL screens.
 void timerCallback(int value) {
     (void)value;
     float dt = 0.016f; // ~60 FPS
@@ -226,9 +247,13 @@ void timerCallback(int value) {
     }
 
     glutPostRedisplay();
+    // WHY: Re-arm one-shot GLUT timer every 16ms to sustain a ~60 Hz simulation and render loop
     glutTimerFunc(16, timerCallback, 0);
 }
 
+// [TOPIC: GLUT Keyboard Dispatch]
+// Purpose: Switches screens [0-8] or delegates ASCII keys to the active CO demo, EnemyDemoScene, or MultiplayerBattleScene.
+// Game Role: Provides context-sensitive keyboard controls across all AIRSTRIKE CGL screens.
 void keyboardCallback(unsigned char key, int x, int y) {
     (void)x; (void)y;
 
@@ -403,6 +428,9 @@ void keyboardCallback(unsigned char key, int x, int y) {
     }
 }
 
+// [TOPIC: GLUT Special Key Dispatch]
+// Purpose: Routes arrow-key navigation to EnemyDemoScene, player ship, TransformDemo, or camera orbit.
+// Game Role: Handles directional movement and camera/parameter adjustments.
 void specialKeyCallback(int key, int x, int y) {
     (void)x; (void)y;
 
@@ -437,11 +465,15 @@ void specialKeyCallback(int key, int x, int y) {
 
 } // namespace CGL
 
+// [TOPIC: Double Buffering (glutSwapBuffers) / Automated Assertions / GLUT Main Loop]
+// Purpose: Parses --test or --screenshot CLI flags, initializes GLUT double-buffered RGB+Depth window, and starts event loop.
+// Game Role: Entry point for AIRSTRIKE CGL interactive graphics and headless test execution.
 int main(int argc, char** argv) {
     // Check command line arguments
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--test" || arg == "-t" || arg == "test" || arg == "--all") {
+            // WHY: Run pure-C++ mathematical assertions headlessly before initializing any GLUT window
             return CGL::runAllCGLTests();
         }
         if (arg == "--screenshot" || arg == "-s" || arg == "screenshot") {
@@ -455,6 +487,7 @@ int main(int argc, char** argv) {
     std::cout << "Initializing GLUT Window..." << std::endl;
 
     glutInit(&argc, argv);
+    // WHY: Request GLUT_DOUBLE for tear-free buffer swapping alongside RGB color and Z-depth buffers
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(CGL::windowWidth, CGL::windowHeight);
     glutInitWindowPosition(100, 80);

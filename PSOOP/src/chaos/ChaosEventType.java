@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/chaos/ChaosEventType.java
+// Subject   : PSOOP-CO1 / CO2 | Chaos Protocol Event Catalog & Compatibility
+// Topics    : [TOPIC: Enumerations] [TOPIC: Subject CO Matrix] [TOPIC: Conflict Guards]
+// Game Role : Catalogs all 20 Chaos Protocol anomalies, their CO mappings, and conflict rules.
+// ==============================================================================
 package chaos;
 
 import announcer.DialogueCategory;
@@ -295,12 +301,12 @@ public enum ChaosEventType {
     public DialogueCategory getCategory() { return category; }
 
     /**
-     * Determines whether two chaos events can run concurrently without game-breaking conflicts.
+     * [TOPIC: Conflict Guards] Determines whether two chaos events can run concurrently without breaking invariants.
      */
     public boolean isCompatibleWith(ChaosEventType other) {
         if (other == null || other == this) return false;
 
-        // Total Chaos cannot stack with another Total Chaos
+        // WHY: Prevent recursive or contradictory modifiers (e.g., speedup vs slowdown, rapid fire vs jam).
         if (this == TOTAL_CHAOS || other == TOTAL_CHAOS) return false;
 
         // Speed conflicts: Cannot have high speed boost and slow time dilation simultaneously

@@ -1,6 +1,16 @@
+// ==============================================================================
+// File      : PL/tests/test_sorting.cpp
+// Subject   : PL-CO4 | Sorting Unit Tests
+// Topics    : [TOPIC: Bubble Sort] [TOPIC: Selection Sort] [TOPIC: Insertion Sort] [TOPIC: Merge Sort] [TOPIC: Quick Sort]
+// Game Role : Verifies ordering, swap/comparison metrics, and leaderboard ranking across all 5 sorts.
+// ==============================================================================
+
 #include "test_sorting.h"
 #include "../src/sorting/sort_algorithms.h"
 
+// [TOPIC: Sort Verification Helpers]
+// Purpose: Validates monotonic ascending/descending ordering for raw int and PlayerScore arrays.
+// Game Role: Confirms post-conditions for all AIRSTRIKE sorting test cases.
 static bool isSorted(const int arr[], int size, bool ascending = true) {
     for (int i = 0; i < size - 1; ++i) {
         if (ascending ? (arr[i] > arr[i + 1]) : (arr[i] < arr[i + 1])) {
@@ -19,6 +29,9 @@ static bool isScoresSorted(const PlayerScore arr[], int size, bool descending = 
     return true;
 }
 
+// [TOPIC: PL-CO4 Sorting Unit Tests]
+// Purpose: Executes 7 automated checks validating Bubble, Selection, Insertion, Merge, and Quick Sort.
+// Game Role: Guarantees correct high-score ordering and O(N) best-case Bubble Sort early exit.
 TestSummary runSortingTests() {
     TestSummary summary;
     std::cout << "\n======================================================\n";

@@ -1,7 +1,17 @@
+// ==============================================================================
+// File      : PL/tests/test_hashing.cpp
+// Subject   : PL-CO5 | Hashing Unit Tests
+// Topics    : [TOPIC: HashTableChaining] [TOPIC: HashTableProbing] [TOPIC: Tombstone Deletion] [TOPIC: Rehashing]
+// Game Role : Verifies chaining, linear probing, tombstone continuity, and dynamic rehashing.
+// ==============================================================================
+
 #include "test_hashing.h"
 #include "../src/hashing/hash_table_chaining.h"
 #include "../src/hashing/hash_table_probing.h"
 
+// [TOPIC: PL-CO5 Hashing Unit Tests]
+// Purpose: Executes 8 automated checks across HashTableChaining and HashTableProbing.
+// Game Role: Ensures collision handling and load-triggered rehashing work reliably for arsenal assets.
 TestSummary runHashingTests() {
     TestSummary summary;
     std::cout << "\n======================================================\n";

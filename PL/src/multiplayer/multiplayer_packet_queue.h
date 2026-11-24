@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_packet_queue.h
+// Subject   : PL-CO3 | Stack and Queue Applications
+// Topics    : [TOPIC: MultiplayerPacketQueue] [TOPIC: Circular Queue] [TOPIC: FIFO] [TOPIC: Modulo Wrap-Around]
+// Game Role : Buffers incoming multiplayer network packets in a fixed-capacity FIFO ring buffer.
+// ==============================================================================
+
 #ifndef AIRSTRIKE_MULTIPLAYER_PACKET_QUEUE_H
 #define AIRSTRIKE_MULTIPLAYER_PACKET_QUEUE_H
 
@@ -6,18 +13,9 @@
 
 namespace Airstrike::Multiplayer {
 
-/**
- * ==============================================================================
- * Demonstrator for PL-CO3: Circular Queue (FIFO Dispatching)
- *
- * Implements a fixed-capacity ring buffer for multiplayer packet ingestion:
- * - O(1) Enqueue with tail wraparound: rear = (rear + 1) % CAPACITY
- * - O(1) Dequeue with head advance:   front = (front + 1) % CAPACITY
- * - Overflow guard: rejects packets when count == CAPACITY
- * - Underflow guard: returns false when count == 0
- * - Demonstrates zero-allocation streaming event processing
- * ==============================================================================
- */
+// [TOPIC: MultiplayerPacketQueue] [TOPIC: Circular Queue] [TOPIC: FIFO]
+// Purpose: Ring-buffer FIFO queue with O(1) modulo wrap-around enqueue/dequeue and overflow/underflow guards.
+// Game Role: Streams two-player MatchEvent network packets cleanly without runtime reallocation.
 class MultiplayerPacketQueue {
 public:
     static constexpr size_t DEFAULT_CAPACITY = 8;

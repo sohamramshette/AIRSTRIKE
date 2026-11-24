@@ -23,8 +23,7 @@ include_directories(
 
 # Collect source files
 file(GLOB_RECURSE PL_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
 )
 
 # If no sources exist yet, create a dummy or report

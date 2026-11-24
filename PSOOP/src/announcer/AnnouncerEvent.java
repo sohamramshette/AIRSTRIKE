@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/announcer/AnnouncerEvent.java
+// Subject   : PSOOP-CO2 | Tactical Announcer Event Trigger Catalog
+// Topics    : [TOPIC: Enumerations] [TOPIC: Event-Driven Commentary]
+// Game Role : Enumerates combat telemetry triggers consumed by AnnouncerManager.
+// ==============================================================================
 package announcer;
 
 public enum AnnouncerEvent {

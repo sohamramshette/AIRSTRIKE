@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/BossEnemy.java
+// Subject   : PSOOP-CO1 / PSOOP-CO2 | Multi-Phase Milestone Boss Subclass
+// Topics    : [TOPIC: Inheritance] [TOPIC: Method Overloading] [TOPIC: Polymorphism] [TOPIC: FSM State Pattern] [TOPIC: Kinematics]
+// Game Role : Drives milestone boss fights with level scaling, enraged overdrive, and 3 attack phases.
+// ==============================================================================
 package model;
 
 import java.awt.BasicStroke;
@@ -8,8 +14,7 @@ import java.awt.Polygon;
 import java.util.List;
 
 /**
- * Heavy dreadnought command flagship.
- * High health, multi-layered shields, patrol movement, and cyclic attack patterns.
+ * Heavy dreadnought command flagship with phased attacks and enraged overdrive.
  */
 public class BossEnemy extends Enemy {
 
@@ -23,11 +28,17 @@ public class BossEnemy extends Enemy {
     private boolean isEnraged;
     private boolean enrageShieldTriggered;
 
+    /** [TOPIC: Method Overloading] Game Role: Defaults boss encounter scaling to milestone level 3. */
     public BossEnemy(double x, double y, String bossName) {
         this(x, y, bossName, 3);
     }
 
+    /**
+     * [TOPIC: Inheritance] [TOPIC: Method Overloading]
+     * Game Role: Scales boss hull, shield, speed, cooldown, and score across level 3/6/9 tiers.
+     */
     public BossEnemy(double x, double y, String bossName, int level) {
+        // WHY: Tiered ternary parameters ramp flagship durability and cadence at levels 3, 6, and 9+.
         super(x, y, 116, 78,
                 level >= 9 ? 1600 : (level >= 6 ? 950 : 550),
                 level >= 9 ? 650 : (level >= 6 ? 350 : 150),
@@ -55,9 +66,13 @@ public class BossEnemy extends Enemy {
     public boolean isEnraged() { return isEnraged; }
     public int getLevel() { return level; }
 
+    /**
+     * [TOPIC: Method Overriding] [TOPIC: FSM State Pattern] [TOPIC: Kinematics]
+     * Game Role: Updates bounded patrol motion, triggers 45% HP enrage overdrive, and cycles 3 attack phases.
+     */
     @Override
     public void update(double delta) {
-        // Trigger Enraged Overdrive when health drops below 45%
+        // WHY: Below 45% HP, permanently boost speed/fire-rate and trigger a one-time emergency shield surge.
         if (!isEnraged && health <= maxHealth * 0.45) {
             isEnraged = true;
             speed *= 1.35;
@@ -68,7 +83,7 @@ public class BossEnemy extends Enemy {
             }
         }
 
-        // Horizontal patrol across upper sector
+        // WHY: Reverse direction at patrol bounds to keep flagship centered within the upper combat lane.
         if (movingRight) {
             x += speed * delta;
             if (x >= patrolMaxX) {
@@ -86,14 +101,19 @@ public class BossEnemy extends Enemy {
             y += 40.0 * delta;
         }
 
+        // WHY: Rotate across 3 attack phases faster (3.2s vs 4.0s) once enraged.
         phaseTimer += delta;
         double phaseCycle = isEnraged ? 3.2 : 4.0;
         if (phaseTimer >= phaseCycle) {
             phaseTimer = 0.0;
-            attackPhase = (attackPhase + 1) % 3; // Cycle 3 attack patterns
+            attackPhase = (attackPhase + 1) % 3;
         }
     }
 
+    /**
+     * [TOPIC: Polymorphism] [TOPIC: Method Overriding]
+     * Game Role: Executes spread fan, heavy multi-cannon, or player-aimed barrage based on attackPhase.
+     */
     @Override
     public void performAttack(double delta, List<Projectile> projectileList, Player player) {
         if (!canShoot()) return;
@@ -130,7 +150,7 @@ public class BossEnemy extends Enemy {
                 }
             }
             case 2 -> {
-                // Pattern 3: Targeted barrage towards player position
+                // WHY: Normalizes target vector (dx/dist, dy/dist) so aimed shots travel at constant speedMag.
                 double targetX = (player != null) ? player.getCenterX() : centerX;
                 double dx = targetX - centerX;
                 double dy = ((player != null) ? player.getCenterY() : y + 400) - noseY;
@@ -147,11 +167,16 @@ public class BossEnemy extends Enemy {
         }
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Delegates Ship's no-target shoot() contract to performAttack. */
     @Override
     public void shoot(List<Projectile> projectileList) {
         performAttack(0.016, projectileList, null);
     }
 
+    /**
+     * [TOPIC: Method Overriding]
+     * Game Role: Draws dreadnought hull, pulsing core, shields, and top-screen boss HUD bar.
+     */
     @Override
     public void render(Graphics2D g) {
         if (!active) return;

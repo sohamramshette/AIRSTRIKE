@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/tests/test_pl_enemies.cpp
+// Subject   : PL-CO1..CO5 | PL Enemy Systems Unit Tests
+// Topics    : [TOPIC: GridSwarmEnemy] [TOPIC: FormationSquadron] [TOPIC: EchelonDispatcher] [TOPIC: HunterTargeting] [TOPIC: HashShieldController]
+// Game Role : Verifies all five CO-aligned PL enemy subsystems and their core algorithms.
+// ==============================================================================
+
 #include "test_pl_enemies.h"
 #include "../src/arrays/grid_swarm_enemy.h"
 #include "../src/linked_lists/formation_squadron.h"
@@ -5,6 +12,9 @@
 #include "../src/searching/hunter_targeting.h"
 #include "../src/hashing/hash_shield_controller.h"
 
+// [TOPIC: PL Enemy Systems Tests]
+// Purpose: Tests row-major swarm grids, O(1) squadron splitting, circular wrap-around, Binary Search, and tombstones.
+// Game Role: Validates every PL-CO1..CO5 enemy mechanic implemented for AIRSTRIKE.
 TestSummary runPLEnemyTests() {
     TestSummary summary;
     std::cout << "\n--- Testing PL Enemy Implementations (PL-CO1 to PL-CO5) ---\n";

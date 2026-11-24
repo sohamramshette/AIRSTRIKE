@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/CyberCard.java
+// Subject   : PSOOP-CO1 / CO4 | Glassmorphic Swing Card Container
+// Topics    : [TOPIC: Custom Swing Rendering] [TOPIC: Reusable UI Component]
+// Game Role : Provides a rounded dark-glass JPanel with glowing accent border and top sheen.
+// ==============================================================================
 package ui;
 
 import java.awt.BasicStroke;

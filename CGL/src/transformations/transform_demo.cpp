@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/transformations/transform_demo.cpp
+// Subject   : CGL-CO2 | 2D & 3D Geometric Transformations
+// Topics    : [TOPIC: Homogeneous Coordinates] [TOPIC: Affine Matrices (T*R != R*T)] [TOPIC: glPushMatrix/glPopMatrix] [TOPIC: Pivot Rotation]
+// Game Role : Implements 4x4 homogeneous affine math and renders the interactive fighter + escort drone stack.
+// ==============================================================================
+
 #include "transform_demo.hpp"
 #include "common/font_renderer.hpp"
 #include <iomanip>
@@ -16,6 +23,9 @@ void TransformDemo::init() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
+// [TOPIC: Kinematic Animation]
+// Purpose: Advances the escort drone orbital angle at 90 degrees/sec.
+// Game Role: Drives continuous hierarchical satellite motion around the player fighter.
 void TransformDemo::update(float dt) {
     droneOrbitAngle += 90.0f * dt;
     if (droneOrbitAngle >= 360.0f) droneOrbitAngle -= 360.0f;
@@ -71,11 +81,15 @@ void TransformDemo::reset() {
     shearMode = false;
 }
 
+// [TOPIC: Affine Matrices (T*R != R*T) / Homogeneous Coordinates]
+// Purpose: Multiplies two OpenGL column-major 4x4 homogeneous matrices (result = a * b).
+// Game Role: Composes composite affine transforms for pivot rotation and CO2 unit verification.
 void TransformDemo::multiplyMatrix4x4(const float a[16], const float b[16], float result[16]) {
     for (int col = 0; col < 4; ++col) {
         for (int row = 0; row < 4; ++row) {
             float sum = 0.0f;
             for (int k = 0; k < 4; ++k) {
+                // WHY: OpenGL stores 4x4 matrices column-major, so element (row, col) sits at index col*4 + row
                 sum += a[k * 4 + row] * b[col * 4 + k];
             }
             result[col * 4 + row] = sum;
@@ -83,13 +97,20 @@ void TransformDemo::multiplyMatrix4x4(const float a[16], const float b[16], floa
     }
 }
 
+// [TOPIC: Homogeneous Coordinates / Translation Matrix]
+// Purpose: Constructs a 4x4 column-major translation matrix T(tx, ty, tz).
+// Game Role: Represents rigid ship displacement in homogeneous 3D coordinates.
 void TransformDemo::getTranslationMatrix(float tx, float ty, float tz, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+    // WHY: Translation occupies the 4th column (indices 12, 13, 14) so w=1 shifts (x, y, z)
     m[12] = tx;
     m[13] = ty;
     m[14] = tz;
 }
 
+// [TOPIC: Affine Matrices / 3D Euler Rotation Rx]
+// Purpose: Builds a 4x4 column-major rotation matrix around the +X axis by angleDeg.
+// Game Role: Supports 3D pitch verification in CO2 and CO3 cube mesh tests.
 void TransformDemo::getRotationXMatrix(float angleDeg, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = (i % 5 == 0) ? 1.0f : 0.0f;
     float rad = angleDeg * static_cast<float>(M_PI) / 180.0f;
@@ -101,6 +122,9 @@ void TransformDemo::getRotationXMatrix(float angleDeg, float m[16]) {
     m[10] = c;
 }
 
+// [TOPIC: Affine Matrices / 3D Euler Rotation Ry]
+// Purpose: Builds a 4x4 column-major rotation matrix around the +Y axis by angleDeg.
+// Game Role: Supports 3D yaw verification in CO2 and CO3 mesh tests.
 void TransformDemo::getRotationYMatrix(float angleDeg, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = (i % 5 == 0) ? 1.0f : 0.0f;
     float rad = angleDeg * static_cast<float>(M_PI) / 180.0f;
@@ -112,6 +136,9 @@ void TransformDemo::getRotationYMatrix(float angleDeg, float m[16]) {
     m[10] = c;
 }
 
+// [TOPIC: Affine Matrices / 2D Z-Rotation Rz]
+// Purpose: Builds a 4x4 column-major CCW rotation matrix in the XY plane around the +Z axis.
+// Game Role: Computes ship heading orientation for 2D transforms and pivot composition.
 void TransformDemo::getRotationZMatrix(float angleDeg, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = (i % 5 == 0) ? 1.0f : 0.0f;
     float rad = angleDeg * static_cast<float>(M_PI) / 180.0f;
@@ -123,6 +150,9 @@ void TransformDemo::getRotationZMatrix(float angleDeg, float m[16]) {
     m[5] = c;
 }
 
+// [TOPIC: Affine Matrices / Scaling]
+// Purpose: Builds a 4x4 diagonal scaling matrix S(sx, sy, sz).
+// Game Role: Scales craft proportions and implements axis reflections when negative.
 void TransformDemo::getScaleMatrix(float sx, float sy, float sz, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = 0.0f;
     m[0] = sx;
@@ -131,42 +161,62 @@ void TransformDemo::getScaleMatrix(float sx, float sy, float sz, float m[16]) {
     m[15] = 1.0f;
 }
 
+// [TOPIC: Affine Matrices / 2D Shear]
+// Purpose: Builds a 4x4 2D shear matrix offsetting X by shx*y and Y by shy*x.
+// Game Role: Demonstrates non-rigid affine skewing of the fighter silhouette.
 void TransformDemo::getShear2DMatrix(float shx, float shy, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = (i % 5 == 0) ? 1.0f : 0.0f;
     m[4] = shx; // x' = x + shx * y
     m[1] = shy; // y' = y + shy * x
 }
 
+// [TOPIC: Affine Matrices / Reflection]
+// Purpose: Constructs reflection across the X-axis via negative Y scaling.
+// Game Role: Mirrors the spacecraft vertically in the CO2 transform lab.
 void TransformDemo::getReflectionXMatrix(float m[16]) {
     getScaleMatrix(1.0f, -1.0f, 1.0f, m); // Invert Y
 }
 
+// [TOPIC: Affine Matrices / Reflection]
+// Purpose: Constructs reflection across the Y-axis via negative X scaling.
+// Game Role: Mirrors the spacecraft horizontally in the CO2 transform lab.
 void TransformDemo::getReflectionYMatrix(float m[16]) {
     getScaleMatrix(-1.0f, 1.0f, 1.0f, m); // Invert X
 }
 
+// [TOPIC: Pivot Rotation]
+// Purpose: Composes T(px, py) * Rz(angleDeg) * T(-px, -py) around an arbitrary pivot point.
+// Game Role: Rotates the craft around an off-origin waypoint while leaving the pivot invariant.
 void TransformDemo::getArbitraryPivotRotationMatrix(float px, float py, float angleDeg, float m[16]) {
     float tNeg[16], rz[16], tPos[16], temp[16];
     getTranslationMatrix(-px, -py, 0.0f, tNeg);
     getRotationZMatrix(angleDeg, rz);
     getTranslationMatrix(px, py, 0.0f, tPos);
 
+    // WHY: Pivot sandwich shifts pivot to origin, rotates, then restores pivot position
     multiplyMatrix4x4(rz, tNeg, temp);      // rz * tNeg
     multiplyMatrix4x4(tPos, temp, m);       // tPos * (rz * tNeg)
 }
 
+// [TOPIC: Homogeneous Coordinates]
+// Purpose: Applies a 4x4 column-major matrix to column vector (p.x, p.y, p.z, 1) with perspective divide.
+// Game Role: Transforms test vertices in CO2/CO3/CO4 automated assertions.
 Vec3 TransformDemo::transformPoint(const float m[16], const Vec3& p) {
     float x = m[0] * p.x + m[4] * p.y + m[8]  * p.z + m[12];
     float y = m[1] * p.x + m[5] * p.y + m[9]  * p.z + m[13];
     float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14];
     float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
 
+    // WHY: Project back from 4D homogeneous space (x, y, z, w) to 3D Cartesian space when w != 1
     if (std::fabs(w) > 1e-7f && std::fabs(w - 1.0f) > 1e-5f) {
         x /= w; y /= w; z /= w;
     }
     return Vec3(x, y, z);
 }
 
+// [TOPIC: Local Space Geometry]
+// Purpose: Draws the parent starfighter fuselage, delta wings, and twin thrusters in local coordinates.
+// Game Role: Primary craft transformed by the CO2 affine matrix stack.
 void TransformDemo::drawFighter(float size) {
     // Fuselage
     glBegin(GL_TRIANGLES);
@@ -211,6 +261,9 @@ void TransformDemo::drawFighter(float size) {
     glEnd();
 }
 
+// [TOPIC: Hierarchical Child Mesh]
+// Purpose: Draws an escort drone triangle and shield contour around local origin.
+// Game Role: Child node inheriting the parent fighter's transform in the matrix stack.
 void TransformDemo::drawDrone(float size) {
     glBegin(GL_TRIANGLES);
     glColor4f(1.0f, 0.4f, 0.1f, 1.0f);
@@ -233,6 +286,9 @@ void TransformDemo::drawDrone(float size) {
     glLineWidth(1.0f);
 }
 
+// [TOPIC: Affine Matrices (T*R != R*T) / glPushMatrix/glPopMatrix / Pivot Rotation]
+// Purpose: Applies interactive composite, pivot, shear, reflection, and hierarchical transforms and reads back the ModelView matrix.
+// Game Role: Renders the CO2 transformation workbench and live 4x4 matrix telemetry in AIRSTRIKE.
 void TransformDemo::render(int screenWidth, int screenHeight) {
     glClearColor(0.02f, 0.03f, 0.06f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -287,6 +343,7 @@ void TransformDemo::render(int screenWidth, int screenHeight) {
 
     if (pivotMode) {
         // Arbitrary Pivot Point: T(pivot) * R(angle) * T(-pivot)
+        // WHY: OpenGL post-multiplies matrices, so the last call executes on local vertices first
         glTranslatef(pivotX, pivotY, 0.0f);
         glRotatef(angle, 0.0f, 0.0f, 1.0f);
         glTranslatef(-pivotX, -pivotY, 0.0f);
@@ -294,10 +351,12 @@ void TransformDemo::render(int screenWidth, int screenHeight) {
     } else {
         if (orderTR) {
             // T * R: Translation applied, then rotation around local origin
+            // WHY: Post-multiplying R after T produces M = T * R, rotating locally before shifting by (tx, ty)
             glTranslatef(tx, ty, 0.0f);
             glRotatef(angle, 0.0f, 0.0f, 1.0f);
         } else {
             // R * T: Rotation first, causing object to orbit world origin!
+            // WHY: Post-multiplying T after R produces M = R * T, swinging the translated craft around (0, 0)
             glRotatef(angle, 0.0f, 0.0f, 1.0f);
             glTranslatef(tx, ty, 0.0f);
         }
@@ -315,6 +374,7 @@ void TransformDemo::render(int screenWidth, int screenHeight) {
 
     // Shearing
     if (shearMode) {
+        // WHY: Column-major shear matrix places shx at column 1, row 0 (m[4]) so x' = x + shearX * y
         float shearMatrix[16] = {
             1.0f, 0.0f, 0.0f, 0.0f,
             shearX, 1.0f, 0.0f, 0.0f,
@@ -333,6 +393,7 @@ void TransformDemo::render(int screenWidth, int screenHeight) {
 
     // 4. Hierarchical Transformation: Orbiting Escort Drone
     if (hierarchicalMode) {
+        // WHY: Pushing parent ModelView preserves fighter transform while isolating each sibling drone branch
         glPushMatrix(); // Push parent ship transform
         // Drone rotates around parent ship at distance 0.8
         glRotatef(droneOrbitAngle, 0.0f, 0.0f, 1.0f);

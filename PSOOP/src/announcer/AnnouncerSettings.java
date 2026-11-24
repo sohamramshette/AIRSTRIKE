@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/announcer/AnnouncerSettings.java
+// Subject   : PSOOP-CO1 / CO2 | Singleton Announcer Configuration
+// Topics    : [TOPIC: Singleton Pattern] [TOPIC: Encapsulation]
+// Game Role : Stores user preferences for announcer enablement, pack, frequency, and TTS volume.
+// ==============================================================================
 package announcer;
 
 /**
@@ -55,6 +61,7 @@ public class AnnouncerSettings {
     }
 
     public void setVolume(float volume) {
+        // WHY: Clamp volume to normalized [0.0, 1.0] gain range.
         this.volume = Math.max(0.0f, Math.min(1.0f, volume));
     }
 }

@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/ProfileSettingsDialog.java
+// Subject   : PSOOP-CO1 / CO2 | Pilot Dossier & Simulator Settings Dialog
+// Topics    : [TOPIC: Swing Dialog] [TOPIC: Singleton Pattern]
+// Game Role : Displays active pilot session info and configures difficulty and announcer settings.
+// ==============================================================================
 package ui;
 
 import database.SessionManager;
@@ -358,6 +364,7 @@ public class ProfileSettingsDialog extends JDialog {
     }
 
     private void applyAndClose() {
+        // WHY: Apply threat-level HP preset and push announcer pack/frequency directly to singleton settings.
         int idx = difficultyBox.getSelectedIndex();
         if (engine != null && engine.getPlayer() != null) {
             switch (idx) {

@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/arrays/bullet_pool.cpp
+// Subject   : PL-CO1 | Arrays
+// Topics    : [TOPIC: Object Pool] [TOPIC: BulletPool] [TOPIC: Contiguous Memory]
+// Game Role : Implements zero-allocation projectile spawning, movement, and culling for AIRSTRIKE.
+// ==============================================================================
+
 #include "bullet_pool.h"
 #include <iomanip>
 
@@ -5,9 +12,13 @@ BulletPool::BulletPool() : nextId(1) {
     clear();
 }
 
+// [TOPIC: BulletPool] [TOPIC: Slot Reuse]
+// Purpose: Scans fixed contiguous array for an inactive slot and initializes a new projectile.
+// Game Role: Eliminates heap fragmentation during rapid-fire laser volleys.
 int BulletPool::spawn(double x, double y, double vx, double vy, int damage) {
     for (int i = 0; i < MAX_BULLETS; ++i) {
         if (!pool[i].active) {
+            // WHY: Reuse existing pre-allocated struct in place to avoid heap new/delete overhead -> Game: Smooth frame pacing.
             pool[i].id = nextId++;
             pool[i].x = x;
             pool[i].y = y;
@@ -18,7 +29,7 @@ int BulletPool::spawn(double x, double y, double vx, double vy, int damage) {
             return i;
         }
     }
-    return -1; // Pool full (overflow protection)
+    return -1; // WHY: Explicit overflow guard when all MAX_BULLETS slots are live.
 }
 
 bool BulletPool::deactivate(int index) {
@@ -39,13 +50,16 @@ bool BulletPool::deactivateById(int id) {
     return false;
 }
 
+// [TOPIC: BulletPool] [TOPIC: Contiguous Traversal]
+// Purpose: Updates active bullet coordinates linearly in memory and deactivates out-of-bounds slots.
+// Game Role: Moves active shots and automatically reclaims escaped projectiles.
 void BulletPool::update(double dt, double boundWidth, double boundHeight) {
     for (int i = 0; i < MAX_BULLETS; ++i) {
         if (pool[i].active) {
             pool[i].x += pool[i].vx * dt;
             pool[i].y += pool[i].vy * dt;
 
-            // Cull if outside gameplay arena bounds
+            // WHY: Reclaim slots immediately upon exiting arena bounds -> Game: Keeps fixed pool available for fresh shots.
             if (pool[i].x < 0.0 || pool[i].x > boundWidth ||
                 pool[i].y < 0.0 || pool[i].y > boundHeight) {
                 pool[i].active = false;

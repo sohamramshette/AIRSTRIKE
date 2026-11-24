@@ -1,241 +1,224 @@
 # ==============================================================================
-# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO2: MATHEMATICAL SERIES PROGRAMS
-# Implements:
-#   Prog 5. Recursive 64-bit Factorial Calculation (Stack Frame Dynamics)
-#   Prog 6. Iterative 64-bit Fibonacci Series Generation
-# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
+# File    : COA/src/co2_assembly_programs/math_series.s
+# Subject : COA-CO2 | Programs 5 & 6: Factorial & Fibonacci Series
+# Topics  : Recursive Factorial, Stack Frame Unwinding, Iterative Fibonacci
+# Target  : x86-64 (64-bit Windows ABI, GAS Intel Syntax)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
 .align 8
-math_demo_title:
-    .asciz "\n--- CO2 Programs 5 & 6: 64-Bit Factorial & Fibonacci Demonstration ---\n"
-fact_prompt:
-    .asciz "  Enter positive 64-bit integer for Factorial (0 to 20): "
-fact_result_fmt:
-    .asciz "  5. Factorial(%lld) = %lld (Computed recursively via 64-bit stack frames)\n"
-fib_prompt:
-    .asciz "  Enter number of Fibonacci terms to generate (1 to 20): "
-fib_result_hdr:
-    .asciz "  6. Fibonacci Series (%lld terms): [ "
-fib_term_fmt:
-    .asciz "%lld "
-fib_close_fmt:
-    .asciz "]\n"
+math_demo_title: .asciz "\n--- CO2 Programs 5 & 6: 64-Bit Recursive Factorial & Fibonacci ---\n"
+fact_prompt:     .asciz "  Enter integer for Factorial (0..20, default 10): "
+fact_result_fmt: .asciz "  5. Factorial(%lld) = %lld\n"
+fib_prompt:      .asciz "  Enter Fibonacci term count (1..20, default 10): "
+fib_result_hdr:  .asciz "  6. Fibonacci (%lld terms): [ "
+fib_term_fmt:    .asciz "%lld "
+fib_close_fmt:   .asciz "]\n"
 
 .bss
 .align 8
-.lcomm fib_buffer, 160         # Storage for up to 20 terms (20 * 8 bytes = 160 bytes)
+.lcomm fib_buffer, 160          # Up to 20 quadwords (20 * 8 = 160 bytes)
 
 .text
 
-# ==============================================================================
-# Routine: asm_factorial
-# - Small Meaning: Computes n! recursively using genuine 64-bit stack frames.
-# - Long Form    : Assembly 64-Bit Recursive Factorial Calculator
-# - Why We Used It: Models exponential projectile trajectory combinatorial expansion.
-# Calling Convention (Microsoft x64 ABI):
-#   RCX = int64_t n (Non-negative integer, 0..20)
-# Returns:
-#   RAX = 64-bit n! (Up to 20! = 2,432,902,008,176,640,000 fits in 64-bit signed int)
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Recursive Factorial & Stack Frames] asm_factorial
+# Purpose   : Computes n! recursively using per-call stack frames.
+# Game Role : Models wave permutation scaling & proves call-stack unwinding in assembly.
+# Input     : RCX = n (0..20)
+# Output    : RAX = n!
+# ------------------------------------------------------------------------------
 .global asm_factorial
 .global _asm_factorial
 asm_factorial:
 _asm_factorial:
-    # --------------------------------------------------------------------------
-    # PUSH RBP / MOV RBP, RSP / SUB RSP, 32:
-    # - Small Meaning: Establish 64-bit stack frame and reserve shadow space
-    # - Long Form    : Base Pointer Setup and Shadow Stack Allocation
-    # - Why We Used It: Preserves stack alignment and provides storage across recursive calls.
-    # --------------------------------------------------------------------------
     push rbp
-    mov rbp, rsp
-    sub rsp, 32                 # 32-byte caller shadow space
-    push rbx                    # Preserve non-volatile RBX
+    mov  rbp, rsp
+    push rbx                    # WHY: Save each frame's `n` on stack before recursing into factorial(n-1)
+    sub  rsp, 40                # WHY: 1 push (8) + 40 = 48 -> keeps stack 16-byte aligned across recursion
 
-    mov rbx, rcx                # RBX = n (Preserve current n across recursive call)
+    mov  rbx, rcx               # WHY: Store `n` in RBX because RCX gets overwritten by the next call's argument
+    cmp  rbx, 1                 # WHY: Stop recursion at base case (n <= 1 -> return 1) to avoid stack overflow
+    jle  .L_fact_base
 
-    # Base case check: n <= 1 -> return 1
-    cmp rbx, 1
-    jle .L_fact_base_case
+    lea  rcx, [rbx - 1]         # WHY: Compute (n - 1) into Arg1 without altering RBX or RFLAGS
+    call asm_factorial          # WHY: Recurse; returns (n - 1)! in RAX
+    imul rax, rbx               # WHY: Stack unwind step multiplies RAX = (n - 1)! * n
+    jmp  .L_fact_exit
 
-    # Recursive step: factorial(n - 1)
-    lea rcx, [rbx - 1]          # RCX = n - 1 (1st parameter in RCX)
-    call asm_factorial          # Recursive invocation; RAX = factorial(n - 1)
-
-    # --------------------------------------------------------------------------
-    # IMUL RAX, RBX:
-    # - Small Meaning: Multiply recursive result by n (64-bit signed multiplication)
-    # - Long Form    : Signed Integer Multiply Accumulator by Base Register
-    # - Why We Used It: Computes n * factorial(n - 1) directly in 64-bit precision.
-    # --------------------------------------------------------------------------
-    imul rax, rbx
-    jmp .L_fact_exit
-
-.L_fact_base_case:
-    mov rax, 1                  # Base case: 0! = 1, 1! = 1
+.L_fact_base:
+    mov  rax, 1                 # WHY: Mathematical base case 0! = 1 and 1! = 1
 
 .L_fact_exit:
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    add  rsp, 40
+    pop  rbx                    # WHY: Restore caller's `n` from this frame
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: asm_fibonacci
-# - Small Meaning: Generates first n terms of Fibonacci sequence into buffer.
-# - Long Form    : Assembly 64-Bit Iterative Fibonacci Sequence Generator
-# - Why We Used It: Drives rhythmic pulse timings and evasive spiral wave patterns.
-# Calling Convention (Microsoft x64 ABI):
-#   RCX = int64_t* out_arr (Pointer to output buffer)
-#   RDX = int64_t n        (Number of terms to generate)
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Iterative Fibonacci Sequence] asm_fibonacci
+# Purpose   : Generates first n Fibonacci numbers F(0)..F(n-1) into out_arr.
+# Game Role : Core math generator powering Fibonacci Skimmer enemy weaves & weapon rhythm.
+# Inputs    : RCX = int64_t* out_arr, RDX = int64_t n
+# ------------------------------------------------------------------------------
 .global asm_fibonacci
 .global _asm_fibonacci
 asm_fibonacci:
 _asm_fibonacci:
-    push rbp
-    mov rbp, rsp
     push rbx
-    push rsi
     push rdi
 
-    mov rdi, rcx                # RDI = destination buffer pointer
-    mov rcx, rdx                # RCX = number of terms n
+    mov  rdi, rcx
+    mov  rcx, rdx
+    cmp  rcx, 0                 # WHY: Guard against n <= 0 so nothing writes out of bounds
+    jle  .L_fib_done
 
-    cmp rcx, 0
-    jle .L_fib_exit
+    mov  qword ptr [rdi], 0     # WHY: Seed F(0) = 0 directly in memory
+    cmp  rcx, 1
+    je   .L_fib_done
 
-    # First term: F(0) = 0
-    mov qword ptr [rdi], 0
-    cmp rcx, 1
-    je .L_fib_exit
+    mov  qword ptr [rdi + 8], 1 # WHY: Seed F(1) = 1 at +8 bytes
+    cmp  rcx, 2
+    je   .L_fib_done
 
-    # Second term: F(1) = 1
-    mov qword ptr [rdi + 8], 1
-    cmp rcx, 2
-    je .L_fib_exit
-
-    # Iterative calculation for term 3 onwards
-    sub rcx, 2                  # Remaining terms count
-    xor rax, rax                # RAX = F(i-2) = 0
-    mov rbx, 1                  # RBX = F(i-1) = 1
-    add rdi, 16                 # Point to &out_arr[2] (each element is 8 bytes)
+    sub  rcx, 2                 # WHY: First 2 terms already written; compute remaining (n - 2) iteratively
+    xor  rax, rax               # WHY: RAX = F(i-2) = 0 (iterative avoids exponential O(2^n) stack cost!)
+    mov  rbx, 1                 # WHY: RBX = F(i-1) = 1
+    add  rdi, 16                # WHY: Start writing at out_arr[2]
 
 .L_fib_loop:
-    # --------------------------------------------------------------------------
-    # LEA RDX, [RAX + RBX]:
-    # - Small Meaning: Compute F(i) = F(i-2) + F(i-1) in one instruction
-    # - Long Form    : Load Effective Address of Sum
-    # - Why We Used It: Fast addition without modifying condition flags.
-    # --------------------------------------------------------------------------
-    lea rdx, [rax + rbx]        # RDX = next Fibonacci term
-    mov [rdi], rdx              # Store into 64-bit array buffer
+    lea  rdx, [rax + rbx]       # WHY: LEA computes F(i-2) + F(i-1) in 1 instruction without clobbering flags
+    mov  [rdi], rdx             # WHY: Store F(i) into buffer for Skimmer trajectory lookup
+    mov  rax, rbx               # WHY: Slide window: F(i-2) <- F(i-1)
+    mov  rbx, rdx               # WHY: Slide window: F(i-1) <- F(i)
+    add  rdi, 8
+    dec  rcx
+    jnz  .L_fib_loop
 
-    mov rax, rbx                # Slide window: F(i-2) = old F(i-1)
-    mov rbx, rdx                # Slide window: F(i-1) = new F(i)
-
-    add rdi, 8                  # Advance buffer pointer by 8 bytes
-    dec rcx
-    jnz .L_fib_loop
-
-.L_fib_exit:
-    pop rdi
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+.L_fib_done:
+    pop  rdi
+    pop  rbx
     ret
 
-# ==============================================================================
-# Routine: co2_demo_math
-# - Small Meaning: Interactive demonstration runner for Factorial and Fibonacci.
-# - Long Form    : CO2 Demonstration Driver for 64-Bit Mathematical Series
-# - Why We Used It: Provides interactive CLI demonstration with verified edge cases.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# Internal helper: run_math_with_params(RCX = fact_n, RDX = fib_count)
+# ------------------------------------------------------------------------------
+run_math_with_params:
+    push rbp
+    mov  rbp, rsp
+    push rbx
+    push rsi
+    sub  rsp, 32
+
+    mov  rbx, rcx
+    mov  rsi, rdx
+
+    lea  rcx, [rip + math_demo_title]
+    call print_str
+
+    mov  rcx, rbx
+    call asm_factorial
+    lea  rcx, [rip + fact_result_fmt]
+    mov  rdx, rbx
+    mov  r8,  rax
+    call printf
+
+    lea  rcx, [rip + fib_buffer]
+    mov  rdx, rsi
+    call asm_fibonacci
+
+    lea  rcx, [rip + fib_result_hdr]
+    mov  rdx, rsi
+    call printf
+
+    xor  rbx, rbx
+.L_pr_fib:
+    cmp  rbx, rsi
+    jge  .L_pr_fib_end
+    lea  rcx, [rip + fib_term_fmt]
+    lea  r10, [rip + fib_buffer]
+    mov  rdx, [r10 + rbx*8]
+    call printf
+    inc  rbx
+    jmp  .L_pr_fib
+.L_pr_fib_end:
+    lea  rcx, [rip + fib_close_fmt]
+    call print_str
+
+    add  rsp, 32
+    pop  rsi
+    pop  rbx
+    pop  rbp
+    ret
+
+# ------------------------------------------------------------------------------
+# [TOPIC: Interactive Math Series Demo] co2_demo_math
+# Purpose   : Prompts user for Factorial n and Fibonacci count (defaults on out-of-range).
+# Game Role : Interactive sandbox for testing recursion and Fibonacci generation.
+# ------------------------------------------------------------------------------
 .global co2_demo_math
 .global _co2_demo_math
 co2_demo_math:
 _co2_demo_math:
     push rbp
-    mov rbp, rsp
-    sub rsp, 48                 # Shadow space + stack alignment
+    mov  rbp, rsp
     push rbx
     push rsi
-    push rdi
+    sub  rsp, 32
 
-    lea rcx, [rip + math_demo_title]
-    call print_str
-
-    # 5. Factorial
-    lea rcx, [rip + fact_prompt]
-    call print_str
-    call read_int               # Returns input in RAX
-    mov rbx, rax                # RBX = n
-
-    cmp rbx, 0
-    jl .L_fact_default
-    cmp rbx, 20
-    jg .L_fact_default
-    jmp .L_fact_run
-
-.L_fact_default:
-    mov rbx, 10                 # Safe default to 10 if out of range
-
-.L_fact_run:
-    mov rcx, rbx
-    call asm_factorial          # RAX = 10! = 3628800
-
-    lea rcx, [rip + fact_result_fmt]
-    mov rdx, rbx
-    mov r8,  rax
-    call printf
-
-    # 6. Fibonacci
-    lea rcx, [rip + fib_prompt]
+    lea  rcx, [rip + fact_prompt]
     call print_str
     call read_int
-    mov rsi, rax                # RSI = terms count
+    mov  rbx, rax
+    cmp  rbx, 0
+    jl   .L_f_def
+    cmp  rbx, 20                # WHY: 20! is the largest factorial fitting inside signed 64-bit integer
+    jle  .L_f_ok
+.L_f_def:
+    mov  rbx, 10
+.L_f_ok:
 
-    cmp rsi, 1
-    jl .L_fib_default
-    cmp rsi, 20
-    jg .L_fib_default
-    jmp .L_fib_run
-
-.L_fib_default:
-    mov rsi, 10                 # Default to 10 terms
-
-.L_fib_run:
-    lea rcx, [rip + fib_buffer]
-    mov rdx, rsi
-    call asm_fibonacci
-
-    lea rcx, [rip + fib_result_hdr]
-    mov rdx, rsi
-    call printf
-
-    xor rbx, rbx
-.L_print_fib_loop:
-    cmp rbx, rsi
-    jge .L_print_fib_done
-    lea rcx, [rip + fib_term_fmt]
-    lea r10, [rip + fib_buffer]
-    mov rdx, [r10 + rbx*8]
-    call printf
-    inc rbx
-    jmp .L_print_fib_loop
-
-.L_print_fib_done:
-    lea rcx, [rip + fib_close_fmt]
+    lea  rcx, [rip + fib_prompt]
     call print_str
+    call read_int
+    mov  rsi, rax
+    cmp  rsi, 1
+    jl   .L_fib_def
+    cmp  rsi, 20
+    jle  .L_fib_ok
+.L_fib_def:
+    mov  rsi, 10
+.L_fib_ok:
 
-    pop rdi
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    mov  rcx, rbx
+    mov  rdx, rsi
+    call run_math_with_params
+
+    add  rsp, 32
+    pop  rsi
+    pop  rbx
+    pop  rbp
+    ret
+
+# ------------------------------------------------------------------------------
+# [TOPIC: Automated Math Series Demo] co2_demo_math_batch
+# Purpose   : Non-interactive demo computing 10! and 10 Fibonacci terms.
+# Game Role : Runs Programs 5 & 6 cleanly during batch mode.
+# ------------------------------------------------------------------------------
+.global co2_demo_math_batch
+.global _co2_demo_math_batch
+co2_demo_math_batch:
+_co2_demo_math_batch:
+    push rbp
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    mov  rcx, 10
+    mov  rdx, 10
+    call run_math_with_params
+
+    add  rsp, 32
+    pop  rbp
     ret

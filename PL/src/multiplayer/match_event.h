@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/match_event.h
+// Subject   : PL-CO1..CO5 | Multiplayer Core Data Model
+// Topics    : [TOPIC: Multiplayer MatchEvent] [TOPIC: Canonical Event Payload]
+// Game Role : Defines the shared match telemetry event record and fixture generator for AIRSTRIKE.
+// ==============================================================================
+
 #ifndef AIRSTRIKE_MATCH_EVENT_H
 #define AIRSTRIKE_MATCH_EVENT_H
 
@@ -7,10 +14,9 @@
 
 namespace Airstrike::Multiplayer {
 
-/**
- * Common canonical match event data model for native demonstrations.
- * Consumed across PL (C++17), COA (80386 ASM), and CGL (OpenGL).
- */
+// [TOPIC: MatchEvent] [TOPIC: Multiplayer Telemetry Model]
+// Purpose: Encapsulates a timestamped multiplayer match event with player ID, score, and 2D coordinates.
+// Game Role: Serves as the canonical packet/event unit across PL multiplayer data structures.
 struct MatchEvent {
     uint32_t eventId;
     std::string eventType;  // "PLAYER_JOINED", "READY", "MATCH_STARTED", "SCORE_UPDATED", "COLLISION", "MATCH_COMPLETED"
@@ -28,9 +34,9 @@ struct MatchEvent {
         : eventId(id), eventType(type), playerId(player), timestamp(time), score(sc), positionX(x), positionY(y) {}
 };
 
-/**
- * Generates local sample fixtures for multiplayer match demonstrations.
- */
+// [TOPIC: MatchEvent Fixtures]
+// Purpose: Generates deterministic sample MatchEvent telemetry for local multiplayer demos and tests.
+// Game Role: Supplies realistic two-pilot match traces without requiring a live network socket.
 inline std::vector<MatchEvent> getSampleMatchEvents() {
     return {
         MatchEvent(101, "PLAYER_JOINED",   "PILOT-ALPHA", 1731336000100ULL,    0, 250.0f, 520.0f),

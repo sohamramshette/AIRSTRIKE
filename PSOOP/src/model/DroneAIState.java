@@ -1,21 +1,20 @@
+// ==============================================================================
+// File      : PSOOP/src/model/DroneAIState.java
+// Subject   : PSOOP-CO2 | Enum State Pattern for Enemy AI
+// Topics    : [TOPIC: FSM State Pattern] [TOPIC: Polymorphism] [TOPIC: Enum] [TOPIC: Method Overriding]
+// Game Role : Encapsulates MorphingEnemy kinematics, firing, visuals, and transitions across 4 AI states.
+// ==============================================================================
 package model;
 
 import java.awt.Color;
 import java.util.List;
 
 /**
- * State pattern implementation for Adaptive Morphing Drone (PSOOP-CO2).
- *
- * Demonstrates: Solutions to Reduce Complexity through State Pattern.
- * Rather than dispersing complex nested conditionals across the entity update loop,
- * each state encapsulates its own kinematic behavior, offensive patterns,
- * aura presentation, and transition rules.
+ * State-pattern enum driving Adaptive Morphing Drone behaviors without nested conditionals.
  */
 public enum DroneAIState {
 
-    /**
-     * Standard cruising state: weaves laterally while descending at moderate pace.
-     */
+    /** [TOPIC: FSM State Pattern] Game Role: Sweeping patrol until player enters 260px or HP < 40%. */
     PATROL {
         @Override
         public void update(MorphingEnemy drone, double delta, Player player) {
@@ -29,6 +28,7 @@ public enum DroneAIState {
 
         @Override
         public DroneAIState evaluateTransition(MorphingEnemy drone, Player player) {
+            // WHY: Survival transition takes priority over engagement when hull drops below 40%.
             if (drone.getHealth() < drone.getMaxHealth() * 0.40) {
                 return EVADE;
             }
@@ -47,9 +47,7 @@ public enum DroneAIState {
         }
     },
 
-    /**
-     * Aggressive pursuit state: tracks player horizontal corridor and accelerates attack cadence.
-     */
+    /** [TOPIC: FSM State Pattern] Game Role: Tracks player X until overcharge range (<160px) or disengage (>350px). */
     CHASE {
         @Override
         public void update(MorphingEnemy drone, double delta, Player player) {
@@ -68,6 +66,7 @@ public enum DroneAIState {
             }
             if (player != null && player.isActive()) {
                 double dist = Math.hypot(player.getCenterX() - drone.getCenterX(), player.getCenterY() - drone.getCenterY());
+                // WHY: Hysteresis gap (enter <260px, exit >350px) prevents rapid PATROL/CHASE oscillation.
                 if (dist < 160.0 && drone.canOvercharge()) {
                     return OVERCHARGE;
                 }
@@ -86,9 +85,7 @@ public enum DroneAIState {
         }
     },
 
-    /**
-     * Evasive survival state: veers away from player to preserve hull integrity.
-     */
+    /** [TOPIC: FSM State Pattern] Game Role: Withdraws laterally until safe distance (>300px) and HP >= 40%. */
     EVADE {
         @Override
         public void update(MorphingEnemy drone, double delta, Player player) {
@@ -117,9 +114,7 @@ public enum DroneAIState {
         }
     },
 
-    /**
-     * Overcharge state: high-speed surge and rapid micro-burst barrage before cooldown exhaustion.
-     */
+    /** [TOPIC: FSM State Pattern] Game Role: Surges forward with rapid twin bursts until timer expires. */
     OVERCHARGE {
         @Override
         public void update(MorphingEnemy drone, double delta, Player player) {
@@ -133,6 +128,7 @@ public enum DroneAIState {
 
         @Override
         public DroneAIState evaluateTransition(MorphingEnemy drone, Player player) {
+            // WHY: Drops back into EVADE after overcharge burns out so the cooldown window stays safe.
             if (drone.getHealth() < drone.getMaxHealth() * 0.35 || drone.isOverchargeExpired()) {
                 return EVADE;
             }
@@ -145,8 +141,15 @@ public enum DroneAIState {
         }
     };
 
+    /** [TOPIC: Polymorphism] Game Role: Advances state-specific movement over delta seconds. */
     public abstract void update(MorphingEnemy drone, double delta, Player player);
+
+    /** [TOPIC: Polymorphism] Game Role: Executes state-specific firing behavior. */
     public abstract void attack(MorphingEnemy drone, double delta, List<Projectile> projectiles, Player player);
+
+    /** [TOPIC: FSM State Pattern] Game Role: Evaluates and returns the next valid AI state. */
     public abstract DroneAIState evaluateTransition(MorphingEnemy drone, Player player);
+
+    /** Game Role: Supplies the HUD/hull tint representing the active AI state. */
     public abstract Color getAuraColor();
 }

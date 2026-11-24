@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/tests/test_multiplayer.cpp
+// Subject   : PL-CO1..CO5 | Multiplayer Unit Tests
+// Topics    : [TOPIC: MultiplayerSpatialGrid] [TOPIC: MultiplayerEventHistory] [TOPIC: MultiplayerPacketQueue] [TOPIC: MultiplayerLeaderboardSearch] [TOPIC: MultiplayerSessionTable]
+// Game Role : Verifies all five PL multiplayer structures end-to-end against CO1..CO5 invariants.
+// ==============================================================================
+
 #include "test_multiplayer.h"
 #include "../src/multiplayer/match_event.h"
 #include "../src/multiplayer/multiplayer_spatial_grid.h"
@@ -11,6 +18,9 @@
 
 using namespace Airstrike::Multiplayer;
 
+// [TOPIC: PL Multiplayer Integration Tests]
+// Purpose: Executes 14 assertions covering multiplayer grid, event history, packet queue, ranking, and sessions.
+// Game Role: Validates two-player AirStrike backend data structures under collisions, wrap-around, and ties.
 TestSummary runMultiplayerTests() {
     TestSummary summary;
     std::cout << "\n--- Running PL Multiplayer Integration & CO Tests ---\n";

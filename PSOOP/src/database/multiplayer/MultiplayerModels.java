@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/multiplayer/MultiplayerModels.java
+// Subject   : PSOOP-CO1 | Immutable Multiplayer Domain Contracts & Listeners
+// Topics    : [TOPIC: Encapsulation] [TOPIC: Value Object] [TOPIC: Observer Pattern]
+// Game Role : Defines immutable room, presence, telemetry, and leaderboard snapshots for 1v1 mode.
+// ==============================================================================
 package database.multiplayer;
 
 import java.util.Collections;
@@ -5,14 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * ==============================================================================
- * AIRSTRIKE Phase 12 (Part 4): Multiplayer Domain Models & Contracts
- * PACKAGE: database.multiplayer
- *
- * Demonstrates PSOOP-CO1:
- * - Robust object-oriented modeling with complete data encapsulation.
- * - Defensive copy semantics, immutable value objects, and typed listeners.
- * ==============================================================================
+ * Immutable multiplayer domain models, result wrappers, and reactive listener interfaces.
  */
 public final class MultiplayerModels {
 

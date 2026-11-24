@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/game/CollisionManager.java
+// Subject   : PSOOP-CO4 | AABB Collision Detection & Kinetic Resolution
+// Topics    : [TOPIC: AABB Collision] [TOPIC: Polymorphism] [TOPIC: Particle FX]
+// Game Role : Resolves bullet, hull, and power-up collisions and awards score/drops.
+// ==============================================================================
 package game;
 
 import model.Enemy;
@@ -13,8 +19,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * High-performance collision detection and resolution subsystem.
- * Handles AABB intersections across projectiles, ships, and power-up capsules.
+ * [TOPIC: AABB Collision]
+ * High-performance collision detection and resolution subsystem across projectiles, ships, and power-ups.
  */
 public class CollisionManager {
 
@@ -37,6 +43,10 @@ public class CollisionManager {
         checkPlayerBulletsVsEnemies(projectiles, enemies, particles, powerUps, scoreCalculator, waveManager, null);
     }
 
+    /**
+     * [TOPIC: AABB Collision] [TOPIC: Polymorphism]
+     * Resolves player projectile AABB hits against enemies and triggers drops/salvage on kill.
+     */
     public void checkPlayerBulletsVsEnemies(
             List<Projectile> projectiles,
             List<Enemy> enemies,
@@ -52,6 +62,7 @@ public class CollisionManager {
             for (Enemy e : enemies) {
                 if (!e.isActive()) continue;
 
+                // WHY: AABB bounding-box overlap test avoids multi-enemy penetration after a single bullet impact.
                 if (p.intersects(e)) {
                     p.setActive(false);
                     e.takeDamage(p.getDamage());
@@ -77,7 +88,8 @@ public class CollisionManager {
     }
 
     /**
-     * Resolves collisions between enemy projectiles and the player ship.
+     * [TOPIC: AABB Collision]
+     * Resolves enemy projectile hits on the player, granting brief i-frames and resetting streak.
      */
     public void checkEnemyBulletsVsPlayer(
             List<Projectile> projectiles,
@@ -93,6 +105,7 @@ public class CollisionManager {
             if (p.intersects(player)) {
                 p.setActive(false);
                 player.takeDamage(p.getDamage());
+                // WHY: Brief 400 ms invulnerability prevents overlapping bolts from instakilling the player in one tick.
                 player.triggerInvulnerability(400); // 400ms i-frame on bullet impact
                 scoreCalculator.resetStreak();
 
@@ -108,6 +121,7 @@ public class CollisionManager {
     }
 
     /**
+     * [TOPIC: AABB Collision] [TOPIC: Polymorphism]
      * Resolves ship-to-ship ramming collisions between the player and hostile craft.
      */
     public void checkPlayerVsEnemies(
@@ -124,7 +138,7 @@ public class CollisionManager {
             if (!e.isActive()) continue;
 
             if (player.intersects(e)) {
-                // Inflict mutually heavy kinetic collision damage (Prow battering ram delivers specialized damage)
+                // WHY: RammerEnemy applies specialized prow kinetic damage while other craft deal flat 35 hull impact.
                 int kineticDamage = (e instanceof model.RammerEnemy rammer) ? rammer.getProwImpactDamage() : 35;
                 player.takeDamage(kineticDamage);
                 player.triggerInvulnerability(800); // i-frame after ramming
@@ -147,6 +161,7 @@ public class CollisionManager {
     }
 
     /**
+     * [TOPIC: AABB Collision]
      * Resolves player collection of floating power-up enhancements.
      */
     public void checkPlayerVsPowerUps(Player player, List<PowerUp> powerUps, List<Particle> particles, ScoreCalculator scoreCalculator) {

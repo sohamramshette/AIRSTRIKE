@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_event_history.h
+// Subject   : PL-CO2 | Suitable Linked Lists
+// Topics    : [TOPIC: MultiplayerEventHistory] [TOPIC: Doubly Linked List] [TOPIC: Bidirectional Traversal]
+// Game Role : Stores two-player match events for forward replay and reverse audit traversal.
+// ==============================================================================
+
 #ifndef AIRSTRIKE_MULTIPLAYER_EVENT_HISTORY_H
 #define AIRSTRIKE_MULTIPLAYER_EVENT_HISTORY_H
 
@@ -7,9 +14,9 @@
 
 namespace Airstrike::Multiplayer {
 
-/**
- * Doubly Linked List Node for MatchEvent records.
- */
+// [TOPIC: EventNode] [TOPIC: Doubly Linked Node]
+// Purpose: Doubly linked node wrapping one MatchEvent with prev/next replay links.
+// Game Role: Links sequential multiplayer events for forward and backward match inspection.
 struct EventNode {
     MatchEvent event;
     EventNode* prev;
@@ -19,17 +26,9 @@ struct EventNode {
         : event(ev), prev(nullptr), next(nullptr) {}
 };
 
-/**
- * ==============================================================================
- * Demonstrator for PL-CO2: Doubly Linked Lists
- *
- * Implements a genuine bidirectional linked list for match event logging:
- * - O(1) push_back (tail append) and push_front (head prepend)
- * - Forward traversal (chronological history order)
- * - Backward traversal (reverse chronological replay / rewind)
- * - Arbitrary deletion by eventId with pointer relinking
- * ==============================================================================
- */
+// [TOPIC: MultiplayerEventHistory] [TOPIC: Doubly Linked List] [TOPIC: Bidirectional Traversal]
+// Purpose: Bidirectional linked list supporting O(1) append/prepend, pointer-relink deletion, and two-way export.
+// Game Role: Maintains chronological multiplayer combat logs and supports reverse rewind queries.
 class MultiplayerEventHistory {
 public:
     MultiplayerEventHistory();

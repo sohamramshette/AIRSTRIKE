@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/sorting/sort_algorithms.h
+// Subject   : PL-CO4 | Searching and Sorting Techniques
+// Topics    : [TOPIC: Bubble Sort] [TOPIC: Selection Sort] [TOPIC: Insertion Sort] [TOPIC: Merge Sort] [TOPIC: Quick Sort]
+// Game Role : Orders AirStrike pilot leaderboards and benchmarks quadratic vs divide-and-conquer sorts.
+// ==============================================================================
+
 #ifndef SORT_ALGORITHMS_H
 #define SORT_ALGORITHMS_H
 
@@ -5,18 +12,9 @@
 #include <string>
 #include "../searching/search_algorithms.h"
 
-/**
- * AirStrike Leaderboard Sorting Algorithms (PL-CO4).
- * Comprehensive implementation of the 5 canonical sorting algorithms:
- * 1. Bubble Sort
- * 2. Selection Sort
- * 3. Insertion Sort
- * 4. Merge Sort (Divide and Conquer)
- * 5. Quick Sort (Partitioning)
- *
- * Each tracks comparisons, swaps/data moves, execution time, and provides
- * academic complexity metrics for viva examinations.
- */
+// [TOPIC: SortMetrics] [TOPIC: Algorithm Complexity]
+// Purpose: Captures empirical comparisons, swaps, runtime, asymptotic bounds, and stability metadata.
+// Game Role: Powers comparative performance reporting across all 5 AirStrike sorting algorithms.
 struct SortMetrics {
     std::string algorithmName;
     long long comparisons;
@@ -33,15 +31,22 @@ struct SortMetrics {
           bestComplexity(""), avgComplexity(""), worstComplexity(""), spaceComplexity(""), stable(false) {}
 };
 
+// [TOPIC: Sorting Algorithms] [TOPIC: Stability] [TOPIC: Divide and Conquer]
+// Purpose: Exposes Bubble, Selection, Insertion, Merge, and Quick sort for integers and PlayerScore tables.
+// Game Role: Ranks AirStrike high-score leaderboards and generates empirical benchmark tables.
 namespace SortAlgorithms {
-    // Integer Array Sorting
+    // [TOPIC: Integer Array Sorting]
+    // Purpose: Sorts raw integer arrays using all 5 canonical sorting strategies.
+    // Game Role: Benchmarks sorting complexity on numeric telemetry samples.
     SortMetrics bubbleSort(int arr[], int size, bool ascending = true);
     SortMetrics selectionSort(int arr[], int size, bool ascending = true);
     SortMetrics insertionSort(int arr[], int size, bool ascending = true);
     SortMetrics mergeSort(int arr[], int size, bool ascending = true);
     SortMetrics quickSort(int arr[], int size, bool ascending = true);
 
-    // AirStrike Leaderboard PlayerScore Sorting
+    // [TOPIC: Leaderboard Score Sorting]
+    // Purpose: Ranks PlayerScore structs (typically descending) while tracking comparisons and swaps.
+    // Game Role: Produces ordered AirStrike high-score leaderboards for Binary Search lookups.
     SortMetrics bubbleSortScores(PlayerScore arr[], int size, bool descending = true);
     SortMetrics selectionSortScores(PlayerScore arr[], int size, bool descending = true);
     SortMetrics insertionSortScores(PlayerScore arr[], int size, bool descending = true);

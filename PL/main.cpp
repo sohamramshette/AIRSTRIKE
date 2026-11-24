@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/main.cpp
+// Subject   : PL-CO1..CO5 | Programming Laboratory C++17 Harness
+// Topics    : [TOPIC: PL Test Suite] [TOPIC: Arrays] [TOPIC: Linked Lists] [TOPIC: Stack] [TOPIC: Queue] [TOPIC: Searching] [TOPIC: Sorting] [TOPIC: Hashing]
+// Game Role : Runs interactive PL demonstrations, automated unit tests, and native bridge commands for AIRSTRIKE.
+// ==============================================================================
+
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -40,9 +47,9 @@
 #include "tests/test_pl_enemies.h"
 #include "tests/test_multiplayer.h"
 
-// ==========================================
-// Automated Test Runner Function
-// ==========================================
+// [TOPIC: PL Test Suite] [TOPIC: Automated Verification]
+// Purpose: Executes all 9 PL-CO1..CO5 unit test modules and aggregates pass/fail counts.
+// Game Role: Provides automated regression verification for AirStrike's C++17 data structures.
 int runAllTestsAndReport() {
     std::cout << "\n==============================================================================\n";
     std::cout << "        AIRSTRIKE PROGRAMMING LABORATORY - AUTOMATED VERIFICATION SUITE       \n";
@@ -78,9 +85,9 @@ int runAllTestsAndReport() {
     }
 }
 
-// ==========================================
-// Submenu Demonstrations
-// ==========================================
+// [TOPIC: Arrays] [TOPIC: DynamicArray] [TOPIC: BulletPool] [TOPIC: CollisionGrid]
+// Purpose: Interactive CLI submenu showcasing PL-CO1 static, dynamic, pooled, and spatial arrays.
+// Game Role: Demonstrates combat telemetry arrays, projectile reuse, and asteroid broadphase lookup.
 void demoArrays() {
     int choice = 0;
     while (choice != 6) {
@@ -129,6 +136,7 @@ void demoArrays() {
                 dArr.pushBack(300);
                 dArr.print("Filled Initial Capacity");
                 std::cout << "Pushing 4th element to trigger geometric capacity doubling...\n";
+                // WHY: Pushing a 4th item into capacity-3 DynamicArray triggers 2x geometric reallocation.
                 dArr.pushBack(400);
                 dArr.print("After Capacity Expansion");
                 std::cout << "Current capacity: " << dArr.getCapacity() << " (Doubled)\n";
@@ -143,6 +151,7 @@ void demoArrays() {
                 pool.spawn(400.0, 10.0, 0.0, -500.0, 30); // Near boundary
                 pool.printStatus();
                 std::cout << "\nAdvancing physics simulation by dt = 0.05 seconds...\n";
+                // WHY: Advancing dt=0.05 moves the near-edge projectile out of bounds to prove slot culling.
                 pool.update(0.05);
                 pool.printStatus();
                 break;
@@ -156,6 +165,7 @@ void demoArrays() {
                 cGrid.printRadarGrid();
 
                 int hitId = -1;
+                // WHY: Tests only the 3x3 grid window around (155, 105) rather than scanning all asteroids.
                 bool hit = cGrid.testCollision(155.0, 105.0, 10.0, hitId);
                 std::cout << "Broadphase Spatial Collision Query at (155, 105): "
                           << (hit ? "COLLISION DETECTED with Asteroid ID #" + std::to_string(hitId) : "CLEAR") << "\n";
@@ -169,6 +179,9 @@ void demoArrays() {
     }
 }
 
+// [TOPIC: Singly Linked List] [TOPIC: Doubly Linked List] [TOPIC: Circular Linked List]
+// Purpose: Interactive submenu demonstrating flight logs, enemy rosters, and circular weapon wheels.
+// Game Role: Illustrates PL-CO2 pointer-based structures for dynamic AirStrike entities.
 void demoLinkedLists() {
     int choice = 0;
     while (choice != 4) {
@@ -217,6 +230,7 @@ void demoLinkedLists() {
                 wheel.traverse();
 
                 std::cout << "\nCycling through weapons in circular loop:\n";
+                // WHY: Six steps across a 4-weapon ring demonstrate seamless circular wrap-around.
                 for (int i = 0; i < 6; ++i) {
                     const WeaponNode* cur = wheel.cycleNext();
                     std::cout << "Cycle Step " << (i + 1) << " -> Active: " << cur->name
@@ -232,6 +246,9 @@ void demoLinkedLists() {
     }
 }
 
+// [TOPIC: ActionStack] [TOPIC: Stack] [TOPIC: LIFO] [TOPIC: Overflow Underflow]
+// Purpose: Interactive submenu exercising LIFO push, pop, peek, overflow, and underflow guards.
+// Game Role: Demonstrates AirStrike combat action history and undo rollback.
 void demoStack() {
     int choice = 0;
     ActionStack stack(6);
@@ -302,6 +319,9 @@ void demoStack() {
     }
 }
 
+// [TOPIC: WaveQueue] [TOPIC: Circular Queue] [TOPIC: FIFO]
+// Purpose: Interactive submenu demonstrating circular FIFO wave enqueuing and dispatch.
+// Game Role: Simulates chronological AirStrike enemy wave scheduling.
 void demoQueue() {
     int choice = 0;
     WaveQueue queue(5);
@@ -357,6 +377,9 @@ void demoQueue() {
     }
 }
 
+// [TOPIC: Linear Search] [TOPIC: Binary Search]
+// Purpose: Interactive submenu comparing O(N) linear scan against O(log N) binary search.
+// Game Role: Queries AirStrike telemetry and sorted pilot leaderboards with empirical metrics.
 void demoSearching() {
     int choice = 0;
     const int telemetryScores[] = {120, 340, 560, 780, 1050, 1420, 2100, 3500, 4800, 6200};
@@ -406,6 +429,7 @@ void demoSearching() {
                     PlayerScore("COSMIC_ACE", 7800, 12)
                 };
                 SearchAlgorithms::printScores(lb, 5, "Official AirStrike Leaderboard");
+                // WHY: Leaderboard fixture is ordered ascending by score so Binary Search's sorted precondition holds.
                 SearchMetrics m = SearchAlgorithms::binarySearchScores(lb, 5, 2400);
                 std::cout << "Searching for Score 2400: Found Pilot '" << lb[m.index].pilotName
                           << "' in " << m.comparisons << " comparisons.\n";
@@ -429,6 +453,9 @@ void demoSearching() {
     }
 }
 
+// [TOPIC: Bubble Sort] [TOPIC: Selection Sort] [TOPIC: Insertion Sort] [TOPIC: Merge Sort] [TOPIC: Quick Sort]
+// Purpose: Interactive submenu benchmarking all 5 canonical sorting algorithms on identical inputs.
+// Game Role: Ranks AirStrike pilot high scores and outputs comparison/swap complexity tables.
 void demoSorting() {
     int choice = 0;
     while (choice != 4) {
@@ -448,6 +475,7 @@ void demoSorting() {
                 const int sz = sizeof(testData) / sizeof(testData[0]);
                 SortMetrics results[5];
 
+                // WHY: Clone identical unsorted data into 5 separate arrays for a fair head-to-head sort benchmark.
                 int bArr[sz], sArr[sz], iArr[sz], mArr[sz], qArr[sz];
                 for (int i = 0; i < sz; ++i) {
                     bArr[i] = sArr[i] = iArr[i] = mArr[i] = qArr[i] = testData[i];
@@ -488,6 +516,9 @@ void demoSorting() {
     }
 }
 
+// [TOPIC: HashTableChaining] [TOPIC: HashTableProbing] [TOPIC: Tombstone Deletion] [TOPIC: Rehashing]
+// Purpose: Interactive submenu covering chaining, linear probing, tombstones, and dynamic rehashing.
+// Game Role: Demonstrates AirStrike arsenal dictionary lookups under collisions and high load.
 void demoHashing() {
     int choice = 0;
     while (choice != 4) {
@@ -526,6 +557,7 @@ void demoHashing() {
                 probeTable.printTable();
 
                 std::cout << "\nDeleting 'WEAPON_MISSILE' to create a Tombstone marker...\n";
+                // WHY: Removing 'WEAPON_MISSILE' leaves a tombstone so probing for 'SHIELD_DEFLECT' stays unbroken.
                 probeTable.remove("WEAPON_MISSILE");
                 probeTable.printTable();
 
@@ -541,6 +573,7 @@ void demoHashing() {
                 HashTableChaining rehashingTable(3);
                 std::cout << "Initial bucket count: " << rehashingTable.getBucketCount() << "\n";
                 std::cout << "Inserting 6 items to exceed load factor threshold 0.75...\n";
+                // WHY: Inserting 5 keys into 3 initial buckets crosses alpha > 0.75 and triggers dynamic rehashing.
                 rehashingTable.insert("ITEM_A", InventoryItem("A", "Alpha", "COMMON", 1, 10));
                 rehashingTable.insert("ITEM_B", InventoryItem("B", "Beta", "COMMON", 2, 20));
                 rehashingTable.insert("ITEM_C", InventoryItem("C", "Gamma", "RARE", 3, 30));
@@ -557,9 +590,9 @@ void demoHashing() {
     }
 }
 
-// ==========================================
-// PL Enemy Submenu Demonstrations (Phase 8.8)
-// ==========================================
+// [TOPIC: GridSwarmEnemy] [TOPIC: Row-Major Addressing] [TOPIC: Spatial Partitioning]
+// Purpose: Demonstrates 2D spatial sector binning, row-major offsets, 9-cell queries, and scatter mines.
+// Game Role: Showcases the PL-CO1 Spatial Grid Swarm enemy mechanics.
 void demoSpatialGridSwarm() {
     std::cout << "\n==============================================================================\n";
     std::cout << "        PL-CO1: SPATIAL GRID SWARM DEMONSTRATION (2D SPATIAL PARTITIONING)    \n";
@@ -607,6 +640,9 @@ void demoSpatialGridSwarm() {
     swarm.printSwarmGrid();
 }
 
+// [TOPIC: FormationSquadron] [TOPIC: Doubly Linked List] [TOPIC: O(1) List Splitting]
+// Purpose: Demonstrates bidirectional formation assembly, O(1) craft removal, and O(1) wing splitting.
+// Game Role: Showcases the PL-CO2 Formation Squadron Chain enemy mechanics.
 void demoFormationSquadronChain() {
     std::cout << "\n==============================================================================\n";
     std::cout << "     PL-CO2: FORMATION SQUADRON CHAIN DEMONSTRATION (DOUBLY LINKED FLEET)     \n";
@@ -650,6 +686,9 @@ void demoFormationSquadronChain() {
     betaSquad.traverseVanguardToRear();
 }
 
+// [TOPIC: EchelonDispatcher] [TOPIC: Circular Queue] [TOPIC: Modulo Wrap-Around]
+// Purpose: Demonstrates FIFO echelon launches, rear < front wrap-around, and overflow guards.
+// Game Role: Showcases the PL-CO3 Queue Wave Echelon enemy dispatcher.
 void demoQueueWaveEchelon() {
     std::cout << "\n==============================================================================\n";
     std::cout << "        PL-CO3: QUEUE WAVE ECHELON DEMONSTRATION (CIRCULAR FIFO DISPATCHER)   \n";
@@ -682,6 +721,7 @@ void demoQueueWaveEchelon() {
 
     std::cout << "4. Inducing Circular Index Wraparound (rear < front):\n";
     std::cout << "   Enqueueing 3 more echelons into capacity 4 buffer...\n";
+    // WHY: Dequeuing 2 then enqueueing 3 into capacity-4 buffer forces rearIndex < frontIndex wrap-around.
     queue.enqueue(EchelonWaveUnit(4, "Dreadnought-Escorts", 5, 1.5, 2.0));
     queue.enqueue(EchelonWaveUnit(5, "Hyperspace-Strike", 10, 2.2, 1.5));
     queue.enqueue(EchelonWaveUnit(6, "Orbital-Siege", 12, 1.0, 2.5));
@@ -696,6 +736,9 @@ void demoQueueWaveEchelon() {
               << (overflowAttempt ? "UNEXPECTED SUCCESS" : "BLOCKED BY OVERFLOW GUARD [OK]") << "\n";
 }
 
+// [TOPIC: HunterTargeting] [TOPIC: QuickSort] [TOPIC: Binary Search]
+// Purpose: Demonstrates monotonic precondition checking, QuickSort ordering, and duplicate-distance Binary Search.
+// Game Role: Showcases the PL-CO4 Target-Seeking Hunter sniper acquisition pipeline.
 void demoTargetSeekingHunter() {
     std::cout << "\n==============================================================================\n";
     std::cout << "      PL-CO4: TARGET-SEEKING HUNTER DEMONSTRATION (SEARCHING & SORTING)       \n";
@@ -723,6 +766,7 @@ void demoTargetSeekingHunter() {
 
     std::cout << "\n3. Executing QuickSort In-Place Partitioning:\n";
     long long comps = 0, swaps = 0;
+    // WHY: QuickSort establishes monotonic ascending distance order before Binary Search runs.
     hunter.sortByDistanceQuickSort(comps, swaps);
     std::cout << "   QuickSort Completed: " << comps << " comparisons, " << swaps << " swaps performed.\n";
     std::cout << "   Is telemetry array sorted ascending now? "
@@ -755,6 +799,9 @@ void demoTargetSeekingHunter() {
     std::cout << "   Target lock established: " << (locked ? "LOCKED ON TARGET ID #" + std::to_string(hunter.getCurrentLockId()) : "FAILED") << "\n";
 }
 
+// [TOPIC: HashShieldController] [TOPIC: Linear Probing] [TOPIC: Tombstone Deletion] [TOPIC: Rehashing]
+// Purpose: Demonstrates harmonic collisions, tombstone chain preservation, and rehashing past 0.70 load.
+// Game Role: Showcases the PL-CO5 Hash-Shielded Matrix Craft enemy defenses.
 void demoHashShieldedMatrixCraft() {
     std::cout << "\n==============================================================================\n";
     std::cout << "    PL-CO5: HASH-SHIELDED MATRIX CRAFT (OPEN ADDRESSING & TOMBSTONE RECYCLING) \n";
@@ -785,6 +832,7 @@ void demoHashShieldedMatrixCraft() {
 
     std::cout << "4. Tombstone Deletion Demonstration:\n";
     std::cout << "   Kinetic torpedo strikes 'BETA_ABSORBER'! Deactivating harmonic...\n";
+    // WHY: Deactivating 'BETA_ABSORBER' marks a tombstone so 'DELTA_REFLECTOR' stays reachable along its probe chain.
     shield.deactivateHarmonic("BETA_ABSORBER");
     std::cout << "   Post-deactivation Matrix State (Tombstones: " << shield.getTombstoneCount() << "):\n";
     shield.printShieldMatrix();
@@ -804,6 +852,9 @@ void demoHashShieldedMatrixCraft() {
     std::cout << "   New Load Factor = " << std::fixed << std::setprecision(2) << shield.getLoadFactor() << "\n";
 }
 
+// [TOPIC: PL Enemy Systems] [TOPIC: PL-CO1..CO5]
+// Purpose: Interactive submenu dispatching all five CO-aligned PL enemy demonstrations.
+// Game Role: Lets evaluators inspect every PL enemy archetype from a single console menu.
 void demoPLEnemies() {
     int choice = 0;
     while (choice != 6) {
@@ -834,12 +885,35 @@ void demoPLEnemies() {
     }
 }
 
-// ==========================================
-// Main Function & CLI Dispatcher
-// ==========================================
+// [TOPIC: CLI Entry Point] [TOPIC: PL-CO1..CO5]
+// Purpose: Handles headless --ping/--bridge-sort/--test flags or launches the interactive PL menu loop.
+// Game Role: Bridges native C++17 PL algorithms with external callers and runs interactive demos.
 int main(int argc, char* argv[]) {
-    // Check if headless test execution requested via command-line arguments
+    // WHY: Support non-interactive CLI flags so test runners and Java PSOOP bridge can invoke PL headlessly.
     if (argc > 1) {
+        if (std::strcmp(argv[1], "--ping") == 0) {
+            std::cout << "PONG_PL_C++17_ONLINE\n";
+            return 0;
+        }
+        if (std::strcmp(argv[1], "--bridge-sort") == 0) {
+            int count = argc - 2;
+            if (count > 0) {
+                int* nums = new int[count];
+                for (int i = 0; i < count; ++i) {
+                    nums[i] = std::atoi(argv[i + 2]);
+                }
+                SortAlgorithms::quickSort(nums, count, true);
+                std::cout << "SORTED:";
+                for (int i = 0; i < count; ++i) {
+                    std::cout << " " << nums[i];
+                }
+                std::cout << "\n";
+                delete[] nums;
+            } else {
+                std::cout << "SORTED:\n";
+            }
+            return 0;
+        }
         for (int i = 1; i < argc; ++i) {
             if (std::strcmp(argv[i], "--test") == 0 || std::strcmp(argv[i], "-t") == 0 ||
                 std::strcmp(argv[i], "--all") == 0) {
@@ -868,6 +942,7 @@ int main(int argc, char* argv[]) {
         std::cout << "==============================================================================\n";
         std::cout << "Enter selection [1-11]: ";
 
+        // WHY: Clear failbit and discard bad token so non-numeric input cannot cause an infinite loop.
         if (!(std::cin >> choice)) {
             std::cin.clear();
             std::string discard;

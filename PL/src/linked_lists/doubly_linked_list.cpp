@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/linked_lists/doubly_linked_list.cpp
+// Subject   : PL-CO2 | Suitable Linked Lists
+// Topics    : [TOPIC: Doubly Linked List] [TOPIC: O(1) Node Deletion] [TOPIC: Bidirectional Traversal]
+// Game Role : Implements bidirectional enemy squadron management with O(1) node splicing.
+// ==============================================================================
+
 #include "doubly_linked_list.h"
 #include <iomanip>
 
@@ -31,6 +38,7 @@ DoublyLinkedList& DoublyLinkedList::operator=(const DoublyLinkedList& other) {
 void DoublyLinkedList::insertHead(int id, const std::string& type, int health) {
     EnemyNode* newNode = new EnemyNode(id, type, health, nullptr, head);
     if (!head) {
+        // WHY: Empty list sets both head and tail to the sole node to keep endpoint invariants intact.
         head = tail = newNode;
     } else {
         head->prev = newNode;
@@ -64,6 +72,7 @@ bool DoublyLinkedList::insertAt(size_t index, int id, const std::string& type, i
     for (size_t i = 0; i < index; ++i) {
         curr = curr->next;
     }
+    // WHY: Splice both curr->prev->next and curr->prev before curr so backward/forward links stay symmetric.
     EnemyNode* newNode = new EnemyNode(id, type, health, curr->prev, curr);
     curr->prev->next = newNode;
     curr->prev = newNode;
@@ -78,7 +87,7 @@ bool DoublyLinkedList::deleteHead() {
     if (head) {
         head->prev = nullptr;
     } else {
-        tail = nullptr;
+        tail = nullptr; // WHY: Null tail when removing the last remaining node to prevent dangling tail.
     }
     delete temp;
     count--;
@@ -99,6 +108,9 @@ bool DoublyLinkedList::deleteTail() {
     return true;
 }
 
+// [TOPIC: O(1) Node Deletion] [TOPIC: Doubly Linked List]
+// Purpose: Rewires neighbor prev/next pointers directly to unlink node in O(1) time.
+// Game Role: Removes a destroyed enemy craft mid-screen without walking from head.
 void DoublyLinkedList::deleteNode(EnemyNode* node) {
     if (!node) return;
     if (node == head) {
@@ -109,6 +121,7 @@ void DoublyLinkedList::deleteNode(EnemyNode* node) {
         deleteTail();
         return;
     }
+    // WHY: Bridge predecessor and successor directly via prev/next in O(1) -> Game: Instant mid-wing removal.
     node->prev->next = node->next;
     node->next->prev = node->prev;
     delete node;

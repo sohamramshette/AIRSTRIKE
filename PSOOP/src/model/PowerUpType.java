@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/PowerUpType.java
+// Subject   : PSOOP-CO1 | Typed Enumeration for Combat Upgrades
+// Topics    : [TOPIC: Enum] [TOPIC: Encapsulation]
+// Game Role : Pairs each collectible power-up variant with its HUD label and render color.
+// ==============================================================================
 package model;
 
 import java.awt.Color;
@@ -14,6 +20,7 @@ public enum PowerUpType {
     private final String label;
     private final Color color;
 
+    /** [TOPIC: Encapsulation] Game Role: Binds immutable HUD label and tint color to each enum constant. */
     PowerUpType(String label, Color color) {
         this.label = label;
         this.color = color;

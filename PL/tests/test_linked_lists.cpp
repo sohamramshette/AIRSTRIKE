@@ -1,8 +1,18 @@
+// ==============================================================================
+// File      : PL/tests/test_linked_lists.cpp
+// Subject   : PL-CO2 | Linked Lists Unit Tests
+// Topics    : [TOPIC: Singly Linked List] [TOPIC: Doubly Linked List] [TOPIC: Circular Linked List]
+// Game Role : Verifies flight logs, enemy squadron pointer splicing, and cyclic weapon wheel wrap-around.
+// ==============================================================================
+
 #include "test_linked_lists.h"
 #include "../src/linked_lists/singly_linked_list.h"
 #include "../src/linked_lists/doubly_linked_list.h"
 #include "../src/linked_lists/circular_linked_list.h"
 
+// [TOPIC: PL-CO2 Unit Tests]
+// Purpose: Executes 10 automated checks across SinglyLinkedList, DoublyLinkedList, and CircularLinkedList.
+// Game Role: Validates dynamic pointer integrity, deep copying, and ring termination in AIRSTRIKE.
 TestSummary runLinkedListTests() {
     TestSummary summary;
     std::cout << "\n======================================================\n";

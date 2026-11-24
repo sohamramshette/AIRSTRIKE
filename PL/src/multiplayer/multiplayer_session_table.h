@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_session_table.h
+// Subject   : PL-CO5 | Hashing Techniques
+// Topics    : [TOPIC: MultiplayerSessionTable] [TOPIC: Open Addressing] [TOPIC: Linear Probing] [TOPIC: Tombstone Deletion]
+// Game Role : Tracks active multiplayer player sessions by playerId with O(1) lookup and tombstones.
+// ==============================================================================
+
 #ifndef AIRSTRIKE_MULTIPLAYER_SESSION_TABLE_H
 #define AIRSTRIKE_MULTIPLAYER_SESSION_TABLE_H
 
@@ -6,6 +13,9 @@
 
 namespace Airstrike::Multiplayer {
 
+// [TOPIC: PlayerSession Record]
+// Purpose: Holds a connected pilot's room assignment, client type, readiness, ping, and heartbeat.
+// Game Role: Represents an active multiplayer lobby/match session entry.
 struct PlayerSession {
     std::string playerId;
     std::string roomId;
@@ -37,17 +47,9 @@ struct HashEntry {
     HashEntry() : key(""), value(), state(EntryState::EMPTY) {}
 };
 
-/**
- * ==============================================================================
- * Demonstrator for PL-CO5: Hash Tables & Open Addressing
- *
- * Implements a genuine open-addressing hash table with:
- * - Linear probing for collision resolution: (hash + i) % capacity
- * - Tombstones for safe deletions without breaking probe chains
- * - Polynomial string hash function (djb2)
- * - Load factor calculation and stats
- * ==============================================================================
- */
+// [TOPIC: MultiplayerSessionTable] [TOPIC: Open Addressing] [TOPIC: Linear Probing] [TOPIC: Tombstone Deletion] [TOPIC: Rehashing]
+// Purpose: Open-addressing hash map using DJB2 hashing, linear probing, tombstones, and 2x rehashing at 0.75 load.
+// Game Role: Resolves live AirStrike multiplayer sessions by playerId without breaking probe chains on disconnect.
 class MultiplayerSessionTable {
 public:
     explicit MultiplayerSessionTable(size_t capacity = 16);

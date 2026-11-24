@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/SubjectCODialog.java
+// Subject   : PSOOP-CO1..CO4 | Academic Curriculum & 19 Course Outcomes Matrix
+// Topics    : [TOPIC: Subject CO Matrix] [TOPIC: CardLayout Navigation] [TOPIC: Custom Swing Rendering]
+// Game Role : Displays all 19 mapped Course Outcomes (PSOOP, PL, COA, CGL) and launches demo arena.
+// ==============================================================================
 package ui;
 
 import java.awt.BorderLayout;
@@ -112,6 +118,9 @@ public class SubjectCODialog extends JDialog {
         return header;
     }
 
+    /**
+     * [TOPIC: CardLayout Navigation] Switches active subject card and updates tab accent borders.
+     */
     private void selectTab(String subject) {
         cardLayout.show(contentCards, subject);
 
@@ -129,31 +138,70 @@ public class SubjectCODialog extends JDialog {
     }
 
     private JButton createTabButton(String text) {
-        JButton btn = new JButton(text);
+        JButton btn = new JButton(text) {
+            private static final long serialVersionUID = 1L;
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                Theme.enableQuality(g2);
+                int w = getWidth();
+                int h = getHeight();
+
+                // WHY: Paint tab background explicitly because Windows L&F overrides Swing JButton fills with white.
+                g2.setColor(new Color(15, 23, 42));
+                g2.fillRoundRect(0, 0, w, h, 8, 8);
+
+                // Active or hover tint overlay
+                if (getBackground() != null) {
+                    g2.setColor(getBackground());
+                    g2.fillRoundRect(0, 0, w, h, 8, 8);
+                }
+
+                // Border
+                if (getBorder() != null) {
+                    getBorder().paintBorder(this, g2, 0, 0, w, h);
+                }
+
+                // Crisp text
+                java.awt.FontMetrics fm = g2.getFontMetrics(getFont());
+                int tx = (w - fm.stringWidth(getText())) / 2;
+                int ty = (h - fm.getHeight()) / 2 + fm.getAscent();
+                g2.setFont(getFont());
+                g2.setColor(getForeground());
+                g2.drawString(getText(), tx, ty);
+                g2.dispose();
+            }
+        };
         btn.setFont(Theme.BODY_BOLD);
         btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setOpaque(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(140, 32));
-        btn.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        btn.setBorder(BorderFactory.createLineBorder(Theme.BORDER_SUBTLE, 1));
         return btn;
     }
 
     private void resetTabStyle(JButton btn) {
-        btn.setBackground(new Color(22, 31, 56));
-        btn.setForeground(Theme.TEXT_MUTED);
-        btn.setBorder(BorderFactory.createLineBorder(Theme.BORDER_SUBTLE, 1));
+        btn.setBackground(new Color(15, 23, 42)); // Dark solid navy
+        btn.setForeground(new Color(148, 163, 184)); // High-contrast light slate text
+        btn.setBorder(BorderFactory.createLineBorder(new Color(40, 56, 85), 1));
     }
 
     private void setActiveTabStyle(JButton btn, Color accent) {
-        btn.setBackground(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 40));
-        btn.setForeground(Theme.TEXT_WHITE);
-        btn.setBorder(BorderFactory.createLineBorder(accent, 1));
+        btn.setBackground(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 90)); // Glowing accent fill
+        btn.setForeground(Color.WHITE); // Crisp pure white text
+        btn.setBorder(BorderFactory.createLineBorder(accent, 2));
     }
 
     // =========================================================================
     // Subject Panels (PSOOP, PL, COA, CGL)
     // =========================================================================
 
+    /**
+     * [TOPIC: Subject CO Matrix] Builds PSOOP-CO1 through PSOOP-CO4 outcome cards.
+     */
     private JScrollPane buildPsoopPanel() {
         JPanel list = createCoListPanel();
 

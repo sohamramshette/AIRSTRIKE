@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/service/MatchService.java
+// Subject   : PSOOP-CO3 | Cloud Match Persistence & Leaderboard Service
+// Topics    : [TOPIC: REST Client] [TOPIC: Async CompletableFuture] [TOPIC: Row Level Security]
+// Game Role : Saves solo match logs and retrieves personal history and top-10 leaderboards.
+// ==============================================================================
 package service;
 
 import database.SessionManager;
@@ -51,7 +57,7 @@ public class MatchService {
      */
     public CompletableFuture<Boolean> saveMatch(int score, int levelReached, int durationSeconds) {
         if (!sessionManager.isLoggedIn()) {
-            // Guest or offline pilots: matches remain local-only
+            // WHY: Guest/offline sessions have no JWT and must never block gameplay or hit RLS-protected endpoints.
             return CompletableFuture.completedFuture(false);
         }
 

@@ -1,8 +1,16 @@
+// ==============================================================================
+// File      : CGL/src/common/gl_common.h
+// Subject   : Common | OpenGL/GLUT Core Headers & Math Primitives
+// Topics    : [TOPIC: OpenGL/GLUT Setup] [TOPIC: 2D/3D Point & Vector Types] [TOPIC: RGBA Color Model]
+// Game Role : Centralizes platform GL/GLUT headers and lightweight math/color structs across AIRSTRIKE CGL.
+// ==============================================================================
+
 #ifndef GL_COMMON_H
 #define GL_COMMON_H
 
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
+// WHY: Trim legacy Win32 APIs before <windows.h> to prevent macro conflicts with OpenGL headers
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
@@ -20,9 +28,13 @@
 #include <cstdlib>
 
 #ifndef M_PI
+// WHY: MinGW/MSVC do not always expose M_PI without _USE_MATH_DEFINES
 #define M_PI 3.14159265358979323846
 #endif
 
+// [TOPIC: Integer Raster Coordinates]
+// Purpose: Stores discrete 2D screen/grid pixel coordinates.
+// Game Role: Output element type for DDA, Bresenham, Midpoint, and Scanline rasterizers.
 struct Point2D {
     int x;
     int y;
@@ -33,16 +45,23 @@ struct Point2D {
     }
 };
 
+// [TOPIC: 2D Euclidean Vector]
+// Purpose: Stores floating-point 2D coordinates with epsilon equality comparison.
+// Game Role: Represents normalized ship vertices, clipping endpoints, and polygon hulls.
 struct Vec2 {
     float x;
     float y;
     Vec2() : x(0.0f), y(0.0f) {}
     Vec2(float _x, float _y) : x(_x), y(_y) {}
     bool operator==(const Vec2& other) const {
+        // WHY: Tolerance avoids false mismatches after floating-point clipping intersections
         return std::fabs(x - other.x) < 0.001f && std::fabs(y - other.y) < 0.001f;
     }
 };
 
+// [TOPIC: 3D Euclidean Vector]
+// Purpose: Stores 3D world, eye, or NDC coordinates and surface normal/light vectors.
+// Game Role: Represents spacecraft positions, 3D mesh vertices, and Phong lighting vectors.
 struct Vec3 {
     float x;
     float y;
@@ -51,6 +70,9 @@ struct Vec3 {
     Vec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 };
 
+// [TOPIC: RGBA Color Model]
+// Purpose: Stores normalized [0, 1] red, green, blue, and alpha color channels.
+// Game Role: Holds Gouraud vertex colors, HSV conversion outputs, and Phong illumination intensities.
 struct Color4 {
     float r;
     float g;

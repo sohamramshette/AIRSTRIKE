@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/MatchRecord.java
+// Subject   : PSOOP-CO1 | Match Telemetry Record & Formatting
+// Topics    : [TOPIC: Encapsulation] [TOPIC: Method Overloading] [TOPIC: Defensive Programming]
+// Game Role : Represents a persisted gameplay match record with safe duration and date formatting.
+// ==============================================================================
 package model;
 
 import java.time.Instant;
@@ -17,11 +23,17 @@ public class MatchRecord {
     private final int durationSeconds;
     private final String createdAt;
 
+    /** [TOPIC: Method Overloading] Game Role: Constructs a match record when username is omitted. */
     public MatchRecord(String id, String userId, int score, int levelReached, int durationSeconds, String createdAt) {
         this(id, userId, "", score, levelReached, durationSeconds, createdAt);
     }
 
+    /**
+     * [TOPIC: Encapsulation] [TOPIC: Defensive Programming]
+     * Game Role: Initializes an immutable match record with null-safe string fields.
+     */
     public MatchRecord(String id, String userId, String username, int score, int levelReached, int durationSeconds, String createdAt) {
+        // WHY: Coerces null metadata strings to empty strings so UI renderers never throw NullPointerException.
         this.id = id != null ? id : "";
         this.userId = userId != null ? userId : "";
         this.username = username != null ? username : "";
@@ -69,7 +81,8 @@ public class MatchRecord {
     }
 
     /**
-     * Formats ISO 8601 timestamp into a clean human-readable date and time.
+     * [TOPIC: Defensive Programming]
+     * Game Role: Parses ISO-8601 timestamps into local display strings with safe fallback slicing.
      */
     public String getFormattedDate() {
         if (createdAt.isEmpty()) return "N/A";
@@ -79,7 +92,7 @@ public class MatchRecord {
                     .withZone(ZoneId.systemDefault());
             return formatter.format(instant);
         } catch (Exception e) {
-            // Fallback for custom or abbreviated timestamps
+            // WHY: Degrades gracefully to raw date/time substring when backend timestamp format varies.
             if (createdAt.length() >= 16) {
                 return createdAt.substring(0, 10) + " " + createdAt.substring(11, 16);
             }

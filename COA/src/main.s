@@ -1,7 +1,8 @@
 # ==============================================================================
-# AIRSTRIKE 64-BIT ASSEMBLY SUITE — MASTER CONSOLE MENU & DISPATCHER
-# Entry point for the COA Academic Verification System (CO1 through CO4)
-# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
+# File    : COA/src/main.s
+# Subject : COA Master Console Menu & Automated Test Dispatcher
+# Topics  : COA-CO1, COA-CO2, COA-CO3, COA-CO4, CLI Test Runner (--test)
+# Target  : x86-64 (64-bit Windows ABI, GAS Intel Syntax)
 # ==============================================================================
 
 .intel_syntax noprefix
@@ -9,168 +10,134 @@
 .data
 .align 8
 main_banner:
-    .asciz "\n==============================================================================\n        AIRSTRIKE - COMPUTER ORGANIZATION & ARCHITECTURE (COA) IN x86-64       \n               Academic Demonstration & Architecture Verification              \n==============================================================================\n  [1] 64-Bit Architecture Demonstration (CO1: RAX-R15, RFLAGS, SIB Addressing)\n  [2] Assembly Language Programs (CO2: 10 Core 64-Bit x86-64 Programs)\n  [3] Computer Arithmetic Algorithms (CO3: Booth's Algorithm & Restoring Div)\n  [4] Control Unit & Instruction Pipelining (CO4: Hazards, Stalls, Flushes)\n  [5] COA Multiplayer Combat Architecture Demonstrator (CO1 to CO4)\n  [6] Run All Demonstrations & Automated Verification Tests\n  [7] Exit Application\n==============================================================================\n  Enter selection [1-7]: "
+    .asciz "\n==============================================================================\n        AIRSTRIKE - COMPUTER ORGANIZATION & ARCHITECTURE (COA) IN x86-64       \n               Academic Demonstration & Architecture Verification              \n==============================================================================\n  [1] Architecture & Registers (CO1: RAX-AL, RFLAGS, SIB, Aegis Sentry)\n  [2] Assembly Language Programs (CO2: 10 Core Programs & Fibonacci Skimmer)\n  [3] Computer Arithmetic (CO3: Booth Multiply, Restoring Div & Booth Gunship)\n  [4] Control Unit & Pipelining (CO4: Signals, Hazards & Pipelined Railgun)\n  [5] COA Multiplayer Combat Architecture Demonstrator (CO1 to CO4)\n  [6] Run All Demonstrations & Automated Verification Tests\n  [7] Exit Application\n==============================================================================\n  Enter selection [1-7]: "
 
-farewell_msg:
-    .asciz "\nExiting AIRSTRIKE 64-bit Architecture module. Systems offline.\n"
-invalid_msg:
-    .asciz "\n[ERROR] Invalid option. Please select a number between 1 and 7.\n"
+farewell_msg: .asciz "\nExiting AIRSTRIKE COA module. Systems offline.\n"
+invalid_msg:  .asciz "\n[ERROR] Invalid option. Please select a number between 1 and 7.\n"
 
-arg_test1:
-    .asciz "--test"
-arg_test2:
-    .asciz "-t"
-arg_test3:
-    .asciz "--all"
+arg_test1:    .asciz "--test"
+arg_test2:    .asciz "-t"
+arg_test3:    .asciz "--all"
 
 .text
 
-# ==============================================================================
-# Routine: main / _main
-# - Small Meaning: Master 64-bit C-runtime entry point and interactive menu dispatcher.
-# - Long Form    : Main Program Entry Point
-# - Why We Used It: Initializes application, parses command line flags, and dispatches submenus.
-# Calling Convention (Microsoft x64 ABI):
-#   RCX = int64_t argc    (Argument count)
-#   RDX = char**  argv    (Array of argument string pointers)
-# Returns:
-#   RAX = Process exit status code (0 = success)
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Program Entry Point & CLI Dispatch] main
+# Purpose   : Parses --test/-t/--all for automated verification or opens menu.
+# Game Role : Main launcher connecting Java UI/CLI (`coa_runner.exe --test`) to all 4 COs.
+# Inputs    : ECX = argc, RDX = argv
+# Output    : RAX = 0 on success, 1 if any unit test fails
+# ------------------------------------------------------------------------------
 .global main
 .global _main
 main:
 _main:
-    # --------------------------------------------------------------------------
-    # PUSH RBP / MOV RBP, RSP / SUB RSP, 48:
-    # - Small Meaning: Set up 64-bit base pointer and shadow space
-    # - Long Form    : Frame Setup and Caller Shadow Space Allocation
-    # - Why We Used It: Conforms to Microsoft x64 ABI requirement for 16-byte stack alignment.
-    # --------------------------------------------------------------------------
     push rbp
-    mov rbp, rsp
-    sub rsp, 48
-    push rbx
+    mov  rbp, rsp
+    push rbx                    # WHY: Save RBX to hold argv[1] and menu choice across calls
     push rsi
-    push rdi
+    sub  rsp, 32                # WHY: Reserve 32-byte shadow space for C calls (strcmp, printf)
 
-    # Check for command line arguments: argc = RCX, argv = RDX
-    cmp rcx, 1
-    jle .L_main_menu_loop       # No arguments provided, jump to interactive menu
+    cmp  ecx, 1                 # WHY: Use 32-bit ECX because C `int argc` may leave upper bits of RCX dirty
+    jle  .L_main_menu_loop      # WHY: No CLI args -> enter interactive user menu
 
-    # Inspect argv[1]
-    mov rsi, rdx                # RSI = argv
-    mov rbx, [rsi + 8]          # RBX = argv[1] (64-bit pointer at offset +8)
-    test rbx, rbx
-    jz .L_main_menu_loop
+    mov  rsi, rdx               # WHY: RSI = char** argv base pointer
+    mov  rbx, [rsi + 8]         # WHY: Offset +8 skips argv[0] (program path) to grab 64-bit pointer argv[1]
+    test rbx, rbx               # WHY: Guard against null argv[1] pointer
+    jz   .L_main_menu_loop
 
-    # strcmp(argv[1], "--test")
-    mov rcx, rbx
-    lea rdx, [rip + arg_test1]
+    mov  rcx, rbx
+    lea  rdx, [rip + arg_test1] # WHY: Compare argv[1] against "--test" (used by Java NativeBridge & CI)
+    call strcmp
+    test eax, eax               # WHY: strcmp returns 0 on exact match -> sets ZF=1
+    jz   .L_headless_test
+
+    mov  rcx, rbx
+    lea  rdx, [rip + arg_test2] # WHY: Also support short flag "-t"
     call strcmp
     test eax, eax
-    jz .L_headless_test
+    jz   .L_headless_test
 
-    # strcmp(argv[1], "-t")
-    mov rcx, rbx
-    lea rdx, [rip + arg_test2]
+    mov  rcx, rbx
+    lea  rdx, [rip + arg_test3] # WHY: Also support "--all" flag
     call strcmp
     test eax, eax
-    jz .L_headless_test
+    jz   .L_headless_test
 
-    # strcmp(argv[1], "--all")
-    mov rcx, rbx
-    lea rdx, [rip + arg_test3]
-    call strcmp
-    test eax, eax
-    jz .L_headless_test
-
-    jmp .L_main_menu_loop
+    jmp  .L_main_menu_loop
 
 .L_headless_test:
-    # --------------------------------------------------------------------------
-    # CALL CO1_RUN_ALL through CO4_RUN_ALL:
-    # - Small Meaning: Automated non-interactive test execution
-    # - Long Form    : Call Course Outcome Automated Test Suites
-    # - Why We Used It: Executes complete CI/CD verification without terminal blocking.
-    # --------------------------------------------------------------------------
-    call co1_run_all
-    call co2_run_all
-    call co3_run_all
-    call co4_run_all
-    jmp .L_main_exit
+    call run_all_coa_tests      # WHY: Run all 65 PASS/FAIL assertions headlessly and propagate exit code in RAX
+    jmp  .L_main_exit
 
 .L_main_menu_loop:
-    lea rcx, [rip + main_banner]
+    lea  rcx, [rip + main_banner]
     call print_str
 
-    call read_int               # Returns selection in RAX
-    mov rbx, rax
+    call read_int               # WHY: Read user choice [1-7] into RAX
+    mov  rbx, rax
 
-    cmp rbx, 1
-    je .L_opt1_arch
-    cmp rbx, 2
-    je .L_opt2_programs
-    cmp rbx, 3
-    je .L_opt3_arithmetic
-    cmp rbx, 4
-    je .L_opt4_control_pipe
-    cmp rbx, 5
-    je .L_opt5_multiplayer
-    cmp rbx, 6
-    je .L_opt6_run_all
-    cmp rbx, 7
-    je .L_opt7_exit
-    cmp rbx, -1
-    je .L_opt7_exit
+    cmp  rbx, 1                 # WHY: Route [1..4] to CO1..CO4, [5] to Multiplayer, [6] to Full Suite, [7] Exit
+    je   .L_opt1_co1
+    cmp  rbx, 2
+    je   .L_opt2_co2
+    cmp  rbx, 3
+    je   .L_opt3_co3
+    cmp  rbx, 4
+    je   .L_opt4_co4
+    cmp  rbx, 5
+    je   .L_opt5_multiplayer
+    cmp  rbx, 6
+    je   .L_opt6_run_all
+    cmp  rbx, 7
+    je   .L_opt7_exit
+    cmp  rbx, -1                # WHY: Exit gracefully if stdin stream hits EOF
+    je   .L_opt7_exit
 
-    lea rcx, [rip + invalid_msg]
+    lea  rcx, [rip + invalid_msg]
     call print_str
-    jmp .L_main_menu_loop
+    jmp  .L_main_menu_loop
 
-.L_opt1_arch:
+.L_opt1_co1:
     call co1_menu_loop
-    jmp .L_main_menu_loop
+    jmp  .L_main_menu_loop
 
-.L_opt2_programs:
+.L_opt2_co2:
     call co2_menu_loop
-    jmp .L_main_menu_loop
+    jmp  .L_main_menu_loop
 
-.L_opt3_arithmetic:
+.L_opt3_co3:
     call co3_menu_loop
-    jmp .L_main_menu_loop
+    jmp  .L_main_menu_loop
 
-.L_opt4_control_pipe:
+.L_opt4_co4:
     call co4_menu_loop
-    jmp .L_main_menu_loop
+    jmp  .L_main_menu_loop
 
 .L_opt5_multiplayer:
     call coa_demo_multiplayer
     call pause_key
-    jmp .L_main_menu_loop
+    jmp  .L_main_menu_loop
 
 .L_opt6_run_all:
-    # Run all CO demonstrations, Enemy demonstrations, and test verification
+    # WHY: Run every CO demo, every academic enemy, multiplayer, and 65 tests in one pass for live demos
     call co1_run_all
     call co2_run_all
     call co3_run_all
     call co4_run_all
-    call coa_demo_aegis_sentry
-    call coa_demo_fibonacci_skimmer
-    call coa_demo_booth_gunship
-    call coa_demo_pipelined_railgun
     call coa_demo_multiplayer
+    call run_all_coa_tests
     call pause_key
-    jmp .L_main_menu_loop
+    jmp  .L_main_menu_loop
 
 .L_opt7_exit:
-    lea rcx, [rip + farewell_msg]
+    lea  rcx, [rip + farewell_msg]
     call print_str
-    xor eax, eax                # Return 0
+    xor  eax, eax               # WHY: Zeroing EAX returns exit code 0 (success) to OS
 
 .L_main_exit:
-    pop rdi
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    add  rsp, 32
+    pop  rsi
+    pop  rbx
+    pop  rbp
     ret

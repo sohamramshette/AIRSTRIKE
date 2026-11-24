@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_spatial_grid.h
+// Subject   : PL-CO1 | Arrays
+// Topics    : [TOPIC: MultiplayerSpatialGrid] [TOPIC: 2D Spatial Grid] [TOPIC: Row-Major Indexing] [TOPIC: Broadphase Collision]
+// Game Role : Partitions Player 1, Player 2, and enemy fleets into an 8x8 grid for fast proximity queries.
+// ==============================================================================
+
 #ifndef AIRSTRIKE_MULTIPLAYER_SPATIAL_GRID_H
 #define AIRSTRIKE_MULTIPLAYER_SPATIAL_GRID_H
 
@@ -7,6 +14,9 @@
 
 namespace Airstrike::Multiplayer {
 
+// [TOPIC: CombatEntity]
+// Purpose: Represents a multiplayer ship or enemy position and bounding radius in arena space.
+// Game Role: Stored inside MultiplayerSpatialGrid sectors for Player 1 / Player 2 proximity checks.
 struct CombatEntity {
     int id;
     std::string name;
@@ -16,18 +26,9 @@ struct CombatEntity {
     float radius;
 };
 
-/**
- * ==============================================================================
- * Demonstrator for PL-CO1: 2D Arrays and Spatial Partitioning
- *
- * Implements an 8x8 uniform grid partitioning the 800x650 viewport into
- * 64 distinct spatial buckets. Demonstrates:
- * 1. O(1) cell coordinate calculation using row-major indexing: cell = row * COLS + col
- * 2. Independent location updates for Player 1 and Player 2.
- * 3. Fast localized nearby-entity querying.
- * 4. Reduction of collision checks from O(N * M) to O(K) where K << N.
- * ==============================================================================
- */
+// [TOPIC: MultiplayerSpatialGrid] [TOPIC: 2D Spatial Grid] [TOPIC: Spatial Partitioning]
+// Purpose: 8x8 uniform spatial grid partitioning an 800x650 arena with row-major indexing and broadphase benchmarks.
+// Game Role: Reduces two-player collision checks from O(N^2) pairwise scans to localized sector lookups.
 class MultiplayerSpatialGrid {
 public:
     static constexpr int GRID_COLS = 8;

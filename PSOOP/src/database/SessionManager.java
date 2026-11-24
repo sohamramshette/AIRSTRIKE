@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/SessionManager.java
+// Subject   : PSOOP-CO1 / CO3 | Thread-Safe Singleton Session Manager
+// Topics    : [TOPIC: Singleton Pattern] [TOPIC: Threading/Swing EDT] [TOPIC: Observer Pattern]
+// Game Role : Tracks active pilot credentials safely across background and EDT threads.
+// ==============================================================================
 package database;
 
 import java.util.List;
@@ -109,6 +115,7 @@ public class SessionManager {
             }
         };
 
+        // WHY: Marshal listener callbacks onto Swing EDT so UI panels can safely mutate labels/buttons.
         if (SwingUtilities.isEventDispatchThread()) {
             notifier.run();
         } else {

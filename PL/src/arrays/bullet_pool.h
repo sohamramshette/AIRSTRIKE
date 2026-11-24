@@ -1,13 +1,18 @@
+// ==============================================================================
+// File      : PL/src/arrays/bullet_pool.h
+// Subject   : PL-CO1 | Arrays
+// Topics    : [TOPIC: Object Pool] [TOPIC: Static Array] [TOPIC: Contiguous Memory] [TOPIC: Projectile Pooling]
+// Game Role : Pre-allocates fixed projectile slots to prevent runtime heap allocation during combat.
+// ==============================================================================
+
 #ifndef BULLET_POOL_H
 #define BULLET_POOL_H
 
 #include <iostream>
 
-/**
- * AirStrike Fixed-Size Bullet Pool (PL-CO1).
- * High-performance object pooling pattern using static array allocation.
- * Avoids dynamic allocation overhead during combat frames.
- */
+// [TOPIC: Bullet Entity] [TOPIC: Contiguous Struct Layout]
+// Purpose: Stores projectile kinematics, damage, and active-slot flag in a cache-friendly struct.
+// Game Role: Represents a single player or enemy laser shot inside BulletPool.
 struct Bullet {
     int id;
     double x;
@@ -20,6 +25,9 @@ struct Bullet {
     Bullet() : id(0), x(0.0), y(0.0), vx(0.0), vy(0.0), damage(0), active(false) {}
 };
 
+// [TOPIC: BulletPool] [TOPIC: Static Array] [TOPIC: Object Pool]
+// Purpose: Manages a fixed MAX_BULLETS array of reusable Bullet slots with overflow protection.
+// Game Role: Recycles laser projectiles across frames without new/delete overhead.
 class BulletPool {
 public:
     static constexpr int MAX_BULLETS = 32;
@@ -31,16 +39,17 @@ private:
 public:
     BulletPool();
 
-    // Spawns a bullet from pre-allocated pool; returns slot index or -1 if pool exhausted
+    // [TOPIC: Pool Allocation]
+    // Purpose: Claims the first inactive slot and assigns projectile state, or returns -1 if full.
+    // Game Role: Fires a new weapon projectile during active gameplay.
     int spawn(double x, double y, double vx, double vy, int damage);
 
-    // Deactivates bullet by slot index
     bool deactivate(int index);
-
-    // Deactivates bullet by unique bullet ID
     bool deactivateById(int id);
 
-    // Advances active bullet positions and culls out-of-bounds bullets
+    // [TOPIC: Pool Simulation & Culling]
+    // Purpose: Integrates active projectile positions by dt and frees slots that exit arena bounds.
+    // Game Role: Advances laser fire each frame and reclaims off-screen bullet slots.
     void update(double dt, double boundWidth = 800.0, double boundHeight = 600.0);
 
     // Returns count of currently active bullets

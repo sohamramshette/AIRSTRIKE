@@ -1,18 +1,19 @@
+// ==============================================================================
+// File      : PL/src/arrays/grid_swarm_enemy.h
+// Subject   : PL-CO1 | Arrays
+// Topics    : [TOPIC: GridSwarmEnemy] [TOPIC: 2D Array] [TOPIC: Row-Major Addressing] [TOPIC: Spatial Partitioning]
+// Game Role : Manages swarm drones and scatter mines across an 8x8 spatial sector grid.
+// ==============================================================================
+
 #ifndef GRID_SWARM_ENEMY_H
 #define GRID_SWARM_ENEMY_H
 
 #include <iostream>
 #include <cmath>
 
-/**
- * Spatial Grid Swarm Enemy (PL-CO1).
- *
- * Demonstrates:
- * - 2D Array Contiguous Memory Representation & Row-Major Addressing:
- *   Offset(i, j) = (i * COLS + j) * sizeof(Element)
- * - Spatial Partitioning for O(1) Sector Binning & Local Entity Queries
- * - Boundary Condition Handling & Swarm Dispersion into Adjacent Cells
- */
+// [TOPIC: SwarmDrone Entity]
+// Purpose: Stores a swarm drone's world position, cached sector coordinates, health, and active flag.
+// Game Role: Represents one drone or dispersed sub-munition tracked by GridSwarmEnemy.
 struct SwarmDrone {
     int droneId;
     double x;
@@ -27,6 +28,9 @@ struct SwarmDrone {
         : droneId(id), x(posX), y(posY), sectorRow(r), sectorCol(c), health(hp), active(true) {}
 };
 
+// [TOPIC: GridSwarmEnemy] [TOPIC: Row-Major Addressing] [TOPIC: Spatial Partitioning]
+// Purpose: Partitions up to 32 swarm drones into an 8x8 cell array for O(1) sector binning and local queries.
+// Game Role: Drives the PL-CO1 Spatial Grid Swarm enemy and its debris scatter mechanic.
 class GridSwarmEnemy {
 public:
     static constexpr int GRID_ROWS = 8;
@@ -46,20 +50,28 @@ public:
     GridSwarmEnemy();
     ~GridSwarmEnemy() = default;
 
-    // Coordinate mapping & row-major indexing
+    // [TOPIC: Row-Major Addressing]
+    // Purpose: Maps coordinates to grid indices and computes linear row-major offset (i * COLS + j).
+    // Game Role: Demonstrates contiguous 2D memory layout for sector lookups.
     void getSector(double x, double y, int& outRow, int& outCol) const;
     static size_t calculateRowMajorOffset(int row, int col);
 
-    // Drone lifecycle & kinematics
+    // [TOPIC: Swarm Lifecycle & Re-Binning]
+    // Purpose: Spawns, removes, and moves drones while maintaining accurate cell occupancy buckets.
+    // Game Role: Keeps swarm spatial indices synchronized as drones fly across sector boundaries.
     bool spawnDrone(int droneId, double x, double y, int health = 20);
     bool removeDrone(int droneId);
     bool moveDrone(int droneId, double newX, double newY);
 
-    // Nearby entity lookup using adjacent cell scanning
+    // [TOPIC: Local Proximity Query]
+    // Purpose: Scans the 3x3 adjacent sector window to collect drones within searchRadius.
+    // Game Role: Enables localized cluster targeting without full-array traversal.
     int findNearbyDrones(double targetX, double targetY, double searchRadius,
                          int outIds[], int maxResults) const;
 
-    // Dispersion & Debris fragmentation
+    // [TOPIC: Swarm Dispersion]
+    // Purpose: Spawns radial scatter sub-mines around an origin into surrounding grid cells.
+    // Game Role: Implements the Spatial Grid Swarm's hull-breach debris scatter attack.
     int disperseScatterMines(double originX, double originY, int count, int outMineIds[]);
 
     // State queries

@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/MultiplayerDialog.java
+// Subject   : PSOOP-CO2 / CO4 | 1v1 Multiplayer Lobby & Matchmaking Dialog
+// Topics    : [TOPIC: CardLayout Navigation] [TOPIC: Threading/Swing EDT] [TOPIC: WebSocket/Phoenix]
+// Game Role : Manages room creation, code entry, live pilot readiness, and match countdown handoff.
+// ==============================================================================
 package ui;
 
 import database.SessionManager;
@@ -14,9 +20,11 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -47,16 +55,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 /**
- * ==============================================================================
- * AIRSTRIKE Phase 12 (Part 4): Java Swing 1v1 Multiplayer Lobby Dialog
- * PACKAGE: ui
- *
- * Implements:
- * - Phase 9 Cyber-Military Dark Glassmorphic Design System.
- * - Sub-view navigation: Main Menu -> Join Code Entry -> Dual-Pilot Waiting Lobby.
- * - Non-blocking asynchronous network operations outside the Swing EDT.
- * - Thread-safe EDT UI updates via SwingUtilities.invokeLater.
- * ==============================================================================
+ * Modal 1v1 multiplayer lobby orchestrating room creation, code entry, presence, and countdown launch.
  */
 public class MultiplayerDialog extends JDialog {
     private static final long serialVersionUID = 1L;
@@ -365,12 +364,35 @@ public class MultiplayerDialog extends JDialog {
         leftCode.add(lobbyRoomCodeLabel);
         codeBanner.add(leftCode, BorderLayout.WEST);
 
-        copyCodeBtn = new JButton("COPY INVITATION");
+        copyCodeBtn = new JButton("COPY INVITATION") {
+            private static final long serialVersionUID = 1L;
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                Theme.enableQuality(g2);
+                int w = getWidth();
+                int h = getHeight();
+                g2.setColor(new Color(18, 26, 44));
+                g2.fillRoundRect(0, 0, w, h, 6, 6);
+                g2.setColor(Theme.CYAN_PRIMARY);
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 6, 6);
+                FontMetrics fm = g2.getFontMetrics(getFont());
+                int tx = (w - fm.stringWidth(getText())) / 2;
+                int ty = (h - fm.getHeight()) / 2 + fm.getAscent();
+                g2.setFont(getFont());
+                g2.setColor(getForeground());
+                g2.drawString(getText(), tx, ty);
+                g2.dispose();
+            }
+        };
         copyCodeBtn.setFont(Theme.MONO_SMALL);
-        copyCodeBtn.setBackground(Theme.BG_INPUT);
         copyCodeBtn.setForeground(Theme.CYAN_PRIMARY);
-        copyCodeBtn.setBorder(BorderFactory.createLineBorder(Theme.CYAN_PRIMARY, 1));
         copyCodeBtn.setFocusPainted(false);
+        copyCodeBtn.setContentAreaFilled(false);
+        copyCodeBtn.setBorderPainted(false);
+        copyCodeBtn.setOpaque(false);
+        copyCodeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        copyCodeBtn.setPreferredSize(new Dimension(140, 28));
         copyCodeBtn.addActionListener(e -> {
             String code = lobbyRoomCodeLabel.getText();
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(code), null);
@@ -588,6 +610,7 @@ public class MultiplayerDialog extends JDialog {
     }
 
     private void handleDialogClose() {
+        // WHY: Stop countdown timer and notify room/presence cleanup so opponents do not hang in stale rooms.
         if (mpCountdownTimer != null) {
             mpCountdownTimer.stop();
             mpCountdownTimer = null;

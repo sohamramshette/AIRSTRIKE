@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/common/image_loader.hpp
+// Subject   : Common | BMP Loader & Writer
+// Topics    : [TOPIC: BMP Loader] [TOPIC: 24-bit BMP Texture Mapping] [TOPIC: BGR-to-RGB Conversion]
+// Game Role : Declares zero-dependency 24/32-bit uncompressed BMP I/O for AIRSTRIKE textures and exports.
+// ==============================================================================
+
 #ifndef IMAGE_LOADER_HPP
 #define IMAGE_LOADER_HPP
 
@@ -6,27 +13,14 @@
 
 namespace CGL {
 
-/**
- * @brief Robust loader for uncompressed 24-bit and 32-bit BMP image files.
- * Zero external dependencies. Converts BGR(A) to RGB for standard OpenGL upload.
- * 
- * @param filepath Path to the image file.
- * @param width Output parameter: image width in pixels.
- * @param height Output parameter: image height in pixels.
- * @param rgbData Output parameter: raw RGB byte buffer (width * height * 3).
- * @return true if successfully loaded, false on missing or invalid file.
- */
+// [TOPIC: BMP Loader / 24-bit BMP Texture Mapping]
+// Purpose: Loads an uncompressed 24-bit or 32-bit BMP file into an OpenGL-compatible RGB buffer.
+// Game Role: Supplies local hull and planetary textures (space_hull.bmp, alien_surface.bmp) in CO6 scenes.
 bool loadBMP(const std::string& filepath, int& width, int& height, std::vector<unsigned char>& rgbData);
 
-/**
- * @brief Saves an RGB byte buffer as an uncompressed 24-bit Windows Bitmap (.bmp) file.
- * 
- * @param filepath Destination path.
- * @param width Image width in pixels.
- * @param height Image height in pixels.
- * @param rgbData RGB byte buffer (width * height * 3).
- * @return true if successfully saved, false otherwise.
- */
+// [TOPIC: 24-bit BMP Export]
+// Purpose: Serializes a raw RGB byte buffer to an uncompressed 24-bit Windows BMP file.
+// Game Role: Enables saving generated texture buffers or rendered images from AIRSTRIKE.
 bool saveBMP(const std::string& filepath, int width, int height, const std::vector<unsigned char>& rgbData);
 
 } // namespace CGL

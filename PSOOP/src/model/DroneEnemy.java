@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/DroneEnemy.java
+// Subject   : PSOOP-CO1 | Fast Ramming Scout Subclass
+// Topics    : [TOPIC: Inheritance] [TOPIC: Polymorphism] [TOPIC: Method Overriding] [TOPIC: Kinematics]
+// Game Role : Implements a fast, unshielded sine-weaving drone that attacks strictly by ramming.
+// ==============================================================================
 package model;
 
 import java.awt.BasicStroke;
@@ -8,12 +14,15 @@ import java.util.List;
 
 /**
  * Fast, lightweight scout craft.
- * Low health, high speed, performs rapid reconnaissance sweeps.
  */
 public class DroneEnemy extends Enemy {
 
     private final double initialX;
 
+    /**
+     * [TOPIC: Inheritance]
+     * Game Role: Spawns a rapid scout craft (HP 30, speed 200) anchored around its spawn X.
+     */
     public DroneEnemy(double x, double y) {
         // width 32, height 32, health 30, shield 0, speed 200, cooldown 9999, score 100
         super(x, y, 32, 32, 30, 0, 200.0, 9999, 100);
@@ -21,23 +30,37 @@ public class DroneEnemy extends Enemy {
         this.vy = speed;
     }
 
+    /**
+     * [TOPIC: Method Overriding] [TOPIC: Kinematics]
+     * Game Role: Integrates fast downward travel combined with high-frequency sine weaving.
+     */
     @Override
     public void update(double delta) {
         flightTimer += delta * 4.5;
         y += vy * delta;
-        x = initialX + Math.sin(flightTimer) * 35.0; // Rapid sine weave
+        // WHY: Oscillates +/-35px around initialX so drones dodge straight player fire during descent.
+        x = initialX + Math.sin(flightTimer) * 35.0;
     }
 
+    /**
+     * [TOPIC: Polymorphism] [TOPIC: Method Overriding]
+     * Game Role: Intentional no-op because scouts threaten the player strictly via kinetic ramming.
+     */
     @Override
     public void performAttack(double delta, List<Projectile> projectileList, Player player) {
-        // Drones do not shoot; they attack via ramming trajectory
+        // WHY: Drones carry no ranged weapons and rely on contact collision instead.
     }
 
+    /** [TOPIC: Method Overriding] Game Role: No-op satisfying Ship's abstract weapon contract. */
     @Override
     public void shoot(List<Projectile> projectileList) {
         // No projectile firing
     }
 
+    /**
+     * [TOPIC: Method Overriding]
+     * Game Role: Draws downward-pointing angular dart geometry and red optic sensor.
+     */
     @Override
     public void render(Graphics2D g) {
         if (!active) return;

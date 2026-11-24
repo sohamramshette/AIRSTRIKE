@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/common/screenshot.cpp
+// Subject   : Common | OpenGL Screenshot Capture
+// Topics    : [TOPIC: glReadPixels] [TOPIC: GL_PACK_ALIGNMENT] [TOPIC: 24-bit BMP Export]
+// Game Role : Captures rendered OpenGL color buffers into uncompressed 24-bit BMP files for AIRSTRIKE.
+// ==============================================================================
+
 #include "screenshot.hpp"
 #include <fstream>
 #include <vector>
@@ -10,6 +17,9 @@
 
 namespace CGL {
 
+// [TOPIC: Filesystem Helper]
+// Purpose: Creates each intermediate directory segment along the target path.
+// Game Role: Prepares output folders prior to saving AIRSTRIKE framebuffer captures.
 void ensureDirectoryExists(const std::string& path) {
     std::string currentPath = "";
     for (size_t i = 0; i < path.length(); ++i) {
@@ -27,6 +37,7 @@ void ensureDirectoryExists(const std::string& path) {
     }
 }
 
+// WHY: Pack combined 54-byte BMP file+info header without compiler struct alignment padding
 #pragma pack(push, 1)
 struct BMPHeader {
     uint16_t bfType{0x4D42}; // 'BM'
@@ -49,11 +60,15 @@ struct BMPHeader {
 };
 #pragma pack(pop)
 
+// [TOPIC: glReadPixels / 24-bit BMP Export]
+// Purpose: Reads tightly packed RGB pixels from OpenGL and writes a bottom-up padded 24-bit BMP file.
+// Game Role: Saves visual snapshots of CO1-CO6 demos, enemy tabs, and multiplayer viewports.
 bool captureScreenshot(const std::string& filepath, int width, int height) {
     if (width <= 0 || height <= 0) return false;
 
     ensureDirectoryExists(filepath);
 
+    // WHY: BMP scanlines must be padded to a 4-byte boundary even when pixel rows are not
     int rowPadding = (4 - (width * 3) % 4) % 4;
     int rowStride = width * 3 + rowPadding;
     uint32_t imageSize = static_cast<uint32_t>(rowStride * height);
@@ -65,6 +80,7 @@ bool captureScreenshot(const std::string& filepath, int width, int height) {
     header.biSizeImage = imageSize;
 
     std::vector<uint8_t> rgbBuffer(width * height * 3);
+    // WHY: Default OpenGL pack alignment is 4, which would skew RGB readback on non-4-divisible widths
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgbBuffer.data());
 
@@ -77,6 +93,7 @@ bool captureScreenshot(const std::string& filepath, int width, int height) {
     out.write(reinterpret_cast<const char*>(&header), sizeof(header));
 
     std::vector<uint8_t> rowBuffer(rowStride, 0);
+    // WHY: Both glReadPixels and positive-height BMP store rows bottom-to-top, so only BGR swizzle is needed
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int srcIndex = (y * width + x) * 3;

@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/chaos/ChaosScheduler.java
+// Subject   : PSOOP-CO2 / CO4 | Chaos Protocol Event Scheduler & Physics Modifiers
+// Topics    : [TOPIC: Chaos Protocol] [TOPIC: Deterministic PRNG] [TOPIC: State Restoration] [TOPIC: HUD Rendering]
+// Game Role : Schedules pre-event warnings, dual anomalies, continuous force fields, and cleanup.
+// ==============================================================================
 package chaos;
 
 import announcer.AnnouncerManager;
@@ -68,9 +74,10 @@ public class ChaosScheduler {
     }
 
     /**
-     * Resets scheduler state to pristine initial values, ensuring all entity invariants are restored.
+     * [TOPIC: State Restoration] Resets scheduler state and restores player invariants.
      */
     public void reset(GameEngine engine) {
+        // WHY: Ensure speed, cooldown, inversion, and invulnerability never leak across restarted runs.
         if (engine != null && engine.getPlayer() != null) {
             restorePlayerState(engine.getPlayer());
         }
@@ -80,7 +87,8 @@ public class ChaosScheduler {
     }
 
     /**
-     * Primary tick executed every frame delta from GameEngine.
+     * [TOPIC: Chaos Protocol] [TOPIC: Deterministic PRNG]
+     * Advances event countdowns, warning-to-active transitions, and cleanup per frame.
      */
     public void update(double delta, GameEngine engine) {
         if (!enabled || engine == null) return;
@@ -103,7 +111,7 @@ public class ChaosScheduler {
                         triggerEvent(primary, engine);
                     }
                 }
-                // Schedule next interval
+                // WHY: Use shared DeterministicPRNG in multiplayer so both players face identical chaos timing.
                 nextEventTimer = minInterval + (prng != null ? prng.nextFloat() : random.nextDouble()) * (maxInterval - minInterval);
             }
         }
@@ -228,7 +236,8 @@ public class ChaosScheduler {
     }
 
     /**
-     * Stochastically selects a compatible, non-repeated event fitting current progression.
+     * [TOPIC: Chaos Protocol] [TOPIC: Conflict Guards]
+     * Stochastically selects a compatible, non-repeated event fitting current sector difficulty.
      */
     public ChaosEventType pickEligibleEvent(int currentLevel) {
         List<ChaosEventType> candidates = new ArrayList<>();
@@ -343,7 +352,7 @@ public class ChaosScheduler {
     }
 
     /**
-     * Executes one-time discrete actions when the event transitions from warning to active.
+     * [TOPIC: Chaos Protocol] Executes one-time activation mutations when warning countdown ends.
      */
     private void applyInitialActivationEffect(ActiveChaosEvent event, GameEngine engine) {
         Player player = engine.getPlayer();
@@ -444,7 +453,7 @@ public class ChaosScheduler {
     }
 
     /**
-     * Applies continuous per-frame forces (e.g. gravity wells, magnetic bullet guidance).
+     * [TOPIC: 60 FPS Delta-Time] Applies continuous per-frame forces (gravity well, homing, time warp).
      */
     private void applyContinuousEffect(ActiveChaosEvent event, double delta, GameEngine engine) {
         Player player = engine.getPlayer();
@@ -461,6 +470,7 @@ public class ChaosScheduler {
                 if (player != null && player.isActive()) {
                     double dx = cx - player.getCenterX();
                     double dy = cy - player.getCenterY();
+                    // WHY: Floor distance at 30px to avoid division-by-zero / extreme impulse near singularity center.
                     double dist = Math.max(30.0, Math.sqrt(dx * dx + dy * dy));
                     player.setX(player.getX() + (dx / dist) * pullStrength);
                     player.setY(player.getY() + (dy / dist) * pullStrength);
@@ -523,7 +533,7 @@ public class ChaosScheduler {
     }
 
     /**
-     * Cleanly restores entity variables upon event termination.
+     * [TOPIC: State Restoration] Restores cached player attributes upon event expiration.
      */
     private void cleanupEventEffect(ActiveChaosEvent event, GameEngine engine) {
         Player player = engine.getPlayer();
@@ -564,7 +574,7 @@ public class ChaosScheduler {
     }
 
     /**
-     * High-visibility glassmorphic HUD indicator rendering.
+     * [TOPIC: HUD Rendering] Draws glassmorphic Chaos Protocol warning/active pills.
      */
     public void renderHUD(Graphics2D g, int screenWidth, int screenHeight) {
         if (!enabled || activeEvents.isEmpty()) return;

@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/multiplayer/MultiplayerPresenceService.java
+// Subject   : PSOOP-CO4 | Phoenix Channels Realtime WebSocket Client
+// Topics    : [TOPIC: WebSocket/Phoenix] [TOPIC: Singleton Pattern] [TOPIC: Observer Pattern]
+// Game Role : Maintains Supabase Realtime room channels for presence tracking and 10 Hz broadcasts.
+// ==============================================================================
 package database.multiplayer;
 
 import database.SimpleJson;
@@ -26,17 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * ==============================================================================
- * AIRSTRIKE Phase 12 (Part 4): Supabase Realtime WebSocket Presence Service
- * PACKAGE: database.multiplayer
- *
- * Implements Phoenix Channels Protocol v1.0.0 over native Java WebSocket (SE 11+):
- * - Phoenix channel join with auth token injection.
- * - 30-second periodic Phoenix heartbeat.
- * - Ephemeral Presence tracking ('presence_state' and 'presence_diff').
- * - Ephemeral Broadcast dispatcher ('GUEST_JOINED', 'READY_CHANGE', 'ROOM_CANCELLED').
- * - Graceful leave and network reconnect handling.
- * ==============================================================================
+ * Supabase Realtime Phoenix Channels client over Java WebSocket for presence and broadcasts.
  */
 public class MultiplayerPresenceService {
 
@@ -169,7 +165,7 @@ public class MultiplayerPresenceService {
         String json = SimpleJson.toJson(joinMsg);
         ws.sendText(json, true);
 
-        // Start periodic heartbeat
+        // WHY: Send Phoenix heartbeats every 25s (< 30s server timeout) to keep the WebSocket alive across lobbies/matches.
         startHeartbeat(ws);
     }
 
@@ -342,6 +338,7 @@ public class MultiplayerPresenceService {
 
         @Override
         public CompletionStage<?> onText(WebSocket ws, CharSequence data, boolean last) {
+            // WHY: Buffer fragmented WebSocket frames until `last` is true before parsing JSON.
             textBuffer.append(data);
             if (last) {
                 String completeMessage = textBuffer.toString();

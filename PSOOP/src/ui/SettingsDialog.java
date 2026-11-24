@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/SettingsDialog.java
+// Subject   : PSOOP-CO1 | Legacy Mission Threat Settings Dialog
+// Topics    : [TOPIC: Swing Dialog]
+// Game Role : Configures baseline threat-level player hull presets prior to launch.
+// ==============================================================================
 package ui;
 
 import game.GameEngine;
@@ -85,12 +91,8 @@ public class SettingsDialog extends JDialog {
 
         panel.add(form, BorderLayout.CENTER);
 
-        JButton saveBtn = new JButton("SAVE & CONFIRM");
-        saveBtn.setFont(new Font("SansSerif", Font.BOLD, 13));
-        saveBtn.setBackground(new Color(0, 180, 255));
-        saveBtn.setForeground(Color.WHITE);
-        saveBtn.setFocusPainted(false);
-        saveBtn.setPreferredSize(new Dimension(160, 36));
+        CyberButton saveBtn = CyberButton.hero("✓   SAVE & CONFIRM");
+        saveBtn.setPreferredSize(new Dimension(200, 38));
         saveBtn.addActionListener(e -> applyAndClose());
 
         JPanel btnPanel = new JPanel();

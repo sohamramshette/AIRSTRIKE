@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/announcer/CommentaryFrequency.java
+// Subject   : PSOOP-CO1 | Announcer Cadence Preset Enumeration
+// Topics    : [TOPIC: Enumerations] [TOPIC: Rate Limiting]
+// Game Role : Defines minimum cooldown and random banter interval presets.
+// ==============================================================================
 package announcer;
 
 public enum CommentaryFrequency {

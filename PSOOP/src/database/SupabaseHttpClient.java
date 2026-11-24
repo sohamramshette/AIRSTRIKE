@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/SupabaseHttpClient.java
+// Subject   : PSOOP-CO3 / CO4 | Asynchronous HTTPS REST Client
+// Topics    : [TOPIC: REST Client] [TOPIC: Async CompletableFuture] [TOPIC: Security Guards]
+// Game Role : Dispatches non-blocking HTTPS GET/POST calls with Supabase apikey and JWT headers.
+// ==============================================================================
 package database;
 
 import java.net.URI;
@@ -10,13 +16,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Asynchronous HTTPS client for communicating with Supabase Auth and PostgREST endpoints.
- *
- * Implements security requirements:
- * - Built on standard Java HttpClient (Java 26 / SE 11+).
- * - Enforces HTTPS.
- * - Injects standard Supabase apikey and optional Authorization Bearer headers.
- * - Never logs raw Bearer tokens or plaintext credentials.
+ * [TOPIC: REST Client] [TOPIC: Async CompletableFuture]
+ * Asynchronous HTTP/2 client for Supabase Auth and PostgREST endpoints.
  */
 public class SupabaseHttpClient {
 
@@ -43,11 +44,12 @@ public class SupabaseHttpClient {
     }
 
     /**
-     * Executes an asynchronous POST request with optional extra headers.
+     * [TOPIC: REST Client] Executes an asynchronous POST request with optional extra headers.
      */
     public CompletableFuture<HttpResponse<String>> post(String endpointPath, String jsonBody,
                                                        String bearerToken, Map<String, String> extraHeaders) {
         if (!config.isConfigured()) {
+            // WHY: Fail fast with a completed failed future when offline/unconfigured instead of throwing synchronously.
             return CompletableFuture.failedFuture(
                     new IllegalStateException("Supabase configuration is missing or incomplete.")
             );
@@ -62,6 +64,7 @@ public class SupabaseHttpClient {
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json");
 
+            // WHY: Inject user JWT only when authenticated; anonymous endpoints rely on apikey alone.
             if (bearerToken != null && !bearerToken.trim().isEmpty()) {
                 builder.header("Authorization", "Bearer " + bearerToken.trim());
             }
@@ -89,7 +92,7 @@ public class SupabaseHttpClient {
     }
 
     /**
-     * Executes an asynchronous GET request with optional extra headers.
+     * [TOPIC: REST Client] Executes an asynchronous GET request with optional extra headers.
      */
     public CompletableFuture<HttpResponse<String>> get(String endpointPath, String bearerToken,
                                                       Map<String, String> extraHeaders) {

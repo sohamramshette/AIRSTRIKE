@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/game/GameCanvas.java
+// Subject   : PSOOP-CO4 | Double-Buffered Swing Gameplay Surface
+// Topics    : [TOPIC: Custom Swing Rendering] [TOPIC: Threading/Swing EDT] [TOPIC: Input Handling]
+// Game Role : Captures keyboard/mouse input and delegates Graphics2D rendering to GameEngine.
+// ==============================================================================
 package game;
 
 import exception.InvalidGameStateException;
@@ -13,8 +19,8 @@ import java.awt.event.KeyEvent;
 import javax.swing.JPanel;
 
 /**
+ * [TOPIC: Custom Swing Rendering] [TOPIC: Input Handling]
  * Double-buffered Swing rendering canvas for active space combat gameplay.
- * Handles keyboard dispatching and antialiased rendering calls.
  */
 public class GameCanvas extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -35,6 +41,9 @@ public class GameCanvas extends JPanel {
         setupFocusHandlers();
     }
 
+    /**
+     * [TOPIC: Input Handling] Registers mouse hit-testing and focus-loss key resets.
+     */
     private void setupFocusHandlers() {
         // Regain keyboard focus and handle interactive Pause & Game Over button clicks
         addMouseListener(new java.awt.event.MouseAdapter() {
@@ -85,7 +94,7 @@ public class GameCanvas extends JPanel {
             }
         });
 
-        // Clear active input flags if canvas loses focus
+        // WHY: Clearing movement and fire flags on focus loss prevents stuck ship motion when Alt-Tabbing.
         addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
             public void focusLost(java.awt.event.FocusEvent e) {
@@ -101,6 +110,9 @@ public class GameCanvas extends JPanel {
         });
     }
 
+    /**
+     * [TOPIC: Input Handling] Binds flight, firing, demo spawn, and pause hotkeys.
+     */
     private void setupInputBindings() {
         addKeyListener(new KeyAdapter() {
             @Override
@@ -129,6 +141,18 @@ public class GameCanvas extends JPanel {
                     engine.spawnDemoEnemy(4);
                 } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_5 || code == KeyEvent.VK_NUMPAD5)) {
                     engine.spawnDemoEnemy(5);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_6 || code == KeyEvent.VK_NUMPAD6)) {
+                    engine.spawnDemoEnemy(6);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_7 || code == KeyEvent.VK_NUMPAD7)) {
+                    engine.spawnDemoEnemy(7);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_8 || code == KeyEvent.VK_NUMPAD8)) {
+                    engine.spawnDemoEnemy(8);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_9 || code == KeyEvent.VK_NUMPAD9)) {
+                    engine.spawnDemoEnemy(9);
+                } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_0 || code == KeyEvent.VK_NUMPAD0)) {
+                    engine.spawnDemoEnemy(10);
+                } else if (code == KeyEvent.VK_B && mainWindow != null) {
+                    mainWindow.showNativeBridgeDialog();
                 } else if (engine.isEnemyDemoMode() && (code == KeyEvent.VK_C)) {
                     engine.clearDemoEnemies();
                 } else if (code == KeyEvent.VK_P) {
@@ -191,13 +215,17 @@ public class GameCanvas extends JPanel {
         });
     }
 
+    /**
+     * [TOPIC: Custom Swing Rendering] [TOPIC: Threading/Swing EDT]
+     * Paints the combat scene on the EDT with antialiasing enabled.
+     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
         Graphics2D g2d = (Graphics2D) g;
 
-        // High quality rendering hints
+        // WHY: Smooth vector ship hulls and HUD text at high-DPI/scaled resolutions.
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 

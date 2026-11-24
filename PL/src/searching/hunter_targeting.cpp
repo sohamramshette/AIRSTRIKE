@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/searching/hunter_targeting.cpp
+// Subject   : PL-CO4 | Searching and Sorting Techniques
+// Topics    : [TOPIC: HunterTargeting] [TOPIC: QuickSort] [TOPIC: MergeSort] [TOPIC: Binary Search]
+// Game Role : Implements radar sorting, precondition checks, binary lock search, and duplicate scans.
+// ==============================================================================
+
 #include "hunter_targeting.h"
 #include <iomanip>
 #include <algorithm>
@@ -31,7 +38,11 @@ bool TargetSeekingHunter::isTelemetrySorted() const {
     return isSortedAscending(targets, targetCount);
 }
 
+// [TOPIC: QuickSort] [TOPIC: Lomuto Partition]
+// Purpose: Partitions targets[low..high] around rightmost pivot distance in-place.
+// Game Role: Splits radar telemetry into closer and farther sub-ranges for O(N log N) sorting.
 int TargetSeekingHunter::partition(int low, int high, long long& comparisons, long long& swaps) {
+    // WHY: Lomuto partition anchors pivot at high so elements <= pivot compact to [low..i].
     int pivot = targets[high].threatDistance;
     int i = low - 1;
 
@@ -63,6 +74,9 @@ void TargetSeekingHunter::sortByDistanceQuickSort(long long& outComparisons, lon
     internalQuickSort(0, targetCount - 1, outComparisons, outSwaps);
 }
 
+// [TOPIC: MergeSort] [TOPIC: Stable Merge]
+// Purpose: Merges two sorted telemetry sub-ranges using auxiliary buffer temp while preserving ties.
+// Game Role: Guarantees O(N log N) worst-case radar ordering regardless of initial target positions.
 void TargetSeekingHunter::merge(int left, int mid, int right, TargetTelemetry temp[],
                                 long long& comparisons, long long& moves) {
     int i = left;
@@ -71,6 +85,7 @@ void TargetSeekingHunter::merge(int left, int mid, int right, TargetTelemetry te
 
     while (i <= mid && j <= right) {
         comparisons++;
+        // WHY: Use <= so equal-distance targets from left subarray stay ahead (stable sort).
         if (targets[i].threatDistance <= targets[j].threatDistance) {
             temp[k++] = targets[i++];
         } else {
@@ -98,6 +113,7 @@ void TargetSeekingHunter::merge(int left, int mid, int right, TargetTelemetry te
 void TargetSeekingHunter::internalMergeSort(int left, int right, TargetTelemetry temp[],
                                            long long& comparisons, long long& moves) {
     if (left < right) {
+        // WHY: Overflow-safe midpoint halving balances recursion depth at O(log N).
         int mid = left + (right - left) / 2;
         internalMergeSort(left, mid, temp, comparisons, moves);
         internalMergeSort(mid + 1, right, temp, comparisons, moves);
@@ -113,8 +129,11 @@ void TargetSeekingHunter::sortByDistanceMergeSort(long long& outComparisons, lon
     internalMergeSort(0, targetCount - 1, temp, outComparisons, outMoves);
 }
 
+// [TOPIC: Binary Search] [TOPIC: Precondition Validation] [TOPIC: Mid Overflow Prevention]
+// Purpose: Checks sorted precondition and binary-searches threatDistance in O(log N).
+// Game Role: Acquires firing lock on a target matching queryDistance.
 HunterSearchMetrics TargetSeekingHunter::binarySearchTarget(int queryDistance) const {
-    // Precondition Verification (PL-CO4 Requirement)
+    // WHY: Binary search assumes monotonic order; warn explicitly if called on unsorted telemetry.
     if (!isTelemetrySorted()) {
         std::cerr << "[WARNING: Precondition Violation] Array not sorted! Binary search results undefined.\n";
     }
@@ -125,6 +144,7 @@ HunterSearchMetrics TargetSeekingHunter::binarySearchTarget(int queryDistance) c
 
     while (left <= right) {
         comps++;
+        // WHY: Overflow-safe midpoint calculation prevents integer wrap-around on large bounds.
         int mid = left + (right - left) / 2;
         if (targets[mid].threatDistance == queryDistance) {
             return HunterSearchMetrics(mid, comps, true);
@@ -149,9 +169,11 @@ HunterSearchMetrics TargetSeekingHunter::linearSearchTarget(int queryDistance) c
     return HunterSearchMetrics(-1, comps, false);
 }
 
+// [TOPIC: Binary Search] [TOPIC: Duplicate Range Expansion]
+// Purpose: Uses Binary Search to hit one match, then expands left/right across equal distances.
+// Game Role: Collects all enemy/player targets sharing the exact same radar range band.
 int TargetSeekingHunter::findAllTargetsAtDistance(int queryDistance, int outIndices[],
                                                   int maxResults, int& outComparisons) const {
-    // Locate any matching instance via Binary Search
     HunterSearchMetrics match = binarySearchTarget(queryDistance);
     outComparisons = match.comparisons;
     if (!match.found) return 0;
@@ -159,14 +181,13 @@ int TargetSeekingHunter::findAllTargetsAtDistance(int queryDistance, int outIndi
     int count = 0;
     int mid = match.targetIndex;
 
-    // Scan backwards for duplicate threat distances
+    // WHY: Binary search may land on any duplicate; rewind to first equal element before collecting.
     int first = mid;
     while (first >= 0 && targets[first].threatDistance == queryDistance) {
         first--;
     }
     first++; // First index with queryDistance
 
-    // Collect all consecutive matches
     int curr = first;
     while (curr < targetCount && targets[curr].threatDistance == queryDistance && count < maxResults) {
         outIndices[count++] = curr;

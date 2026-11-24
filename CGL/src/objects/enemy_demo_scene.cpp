@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/objects/enemy_demo_scene.cpp
+// Subject   : Scene | Interactive CO1-CO6 Enemy Showcase
+// Topics    : [TOPIC: Scene Orchestration] [TOPIC: OpenGL State Isolation] [TOPIC: HUD Font Renderer] [TOPIC: CO1-CO6 Enemy Demos]
+// Game Role : Coordinates interactive CO1-CO6 enemy inspection tabs, state isolation, and telemetry HUD rendering.
+// ==============================================================================
+
 #include "enemy_demo_scene.hpp"
 #include "common/font_renderer.hpp"
 #include <cmath>
@@ -16,6 +23,9 @@ EnemyDemoScene::EnemyDemoScene()
       co6GouraudShading(true), co6TextureActive(true), co6Shininess(48.0f),
       co6LightAngle(45.0f), co6ModelRotX(15.0f), co6ModelRotY(0.0f) {}
 
+// [TOPIC: Scene Orchestration]
+// Purpose: Initializes all six enemy instances and resets inspection parameters to defaults.
+// Game Role: Prepares Screen 7 Enemy Demonstrator at startup.
 void EnemyDemoScene::init() {
     polygonCruiser.init();
     orbitalRotor.init();
@@ -33,6 +43,9 @@ void EnemyDemoScene::selectEnemy(int index) {
     }
 }
 
+// [TOPIC: Interactive Reset]
+// Purpose: Restores the active CO enemy's inspection parameters and synchronizes model state.
+// Game Role: Handles [R] reset inside Screen 7 for whichever enemy tab is selected.
 void EnemyDemoScene::resetCurrentDemonstration() {
     switch (selectedEnemy) {
         case 0:
@@ -81,6 +94,9 @@ void EnemyDemoScene::resetCurrentDemonstration() {
     }
 }
 
+// [TOPIC: Enemy Kinematic Dispatch]
+// Purpose: Steps animation and synchronizes HUD-controlled parameters for the active enemy.
+// Game Role: Updates only the selected CO enemy each frame.
 void EnemyDemoScene::update(float dt) {
     animTime += dt;
 
@@ -117,6 +133,9 @@ void EnemyDemoScene::update(float dt) {
     }
 }
 
+// [TOPIC: Contextual Input Routing]
+// Purpose: Processes ASCII keyboard toggles (wireframe, pulse, radius, projection, shading, shininess).
+// Game Role: Enables live per-CO parameter inspection on Screen 7.
 void EnemyDemoScene::handleKey(unsigned char key) {
     if (key >= '1' && key <= '6') {
         selectEnemy(key - '1');
@@ -189,6 +208,9 @@ void EnemyDemoScene::handleKey(unsigned char key) {
     }
 }
 
+// [TOPIC: Special Arrow Key Routing]
+// Purpose: Maps GLUT arrow keys to rotation/scale, orbit speed, laser target, depth Z, skimmer move, or light azimuth.
+// Game Role: Provides intuitive arrow-key manipulation per selected enemy tab.
 void EnemyDemoScene::handleSpecialKey(int key) {
     switch (selectedEnemy) {
         case 0: // CO1: Polygon Cruiser
@@ -244,12 +266,16 @@ void EnemyDemoScene::handleSpecialKey(int key) {
     }
 }
 
+// [TOPIC: OpenGL State Isolation / Scene Orchestration]
+// Purpose: Resets global lighting/texture/depth flags before rendering the selected enemy and resets again before HUD.
+// Game Role: Prevents OpenGL state leakage between 2D unlit, pixel-space, and 3D Phong enemies.
 void EnemyDemoScene::render(int width, int height) {
     glViewport(0, 0, width, height);
     glClearColor(0.04f, 0.06f, 0.10f, 1.0f); // Deep slate space background
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Disable unwanted global states
+    // WHY: Explicitly clear lighting/texturing/depth flags so switching from CO6 to CO1-CO5 never leaks state
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
@@ -264,6 +290,7 @@ void EnemyDemoScene::render(int width, int height) {
     }
 
     // Always clean up state before HUD
+    // WHY: Ensure polygon fill mode and fixed-function 3D states are reset before drawing 2D HUD overlays
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
@@ -276,6 +303,9 @@ void EnemyDemoScene::render(int width, int height) {
 // -------------------------------------------------------------
 // 1. CGL-CO1: Geometric Polygon Cruiser
 // -------------------------------------------------------------
+// [TOPIC: CO1 PolygonCruiser Showcase]
+// Purpose: Sets aspect-corrected 2D ortho coordinates, draws grid, toggles wireframe, and renders PolygonCruiser.
+// Game Role: Displays Tab [1] CO1 enemy inspection.
 void EnemyDemoScene::renderCO1PolygonCruiser(int width, int height) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -320,6 +350,9 @@ void EnemyDemoScene::renderCO1PolygonCruiser(int width, int height) {
 // -------------------------------------------------------------
 // 2. CGL-CO2: Orbital Rotor Drone
 // -------------------------------------------------------------
+// [TOPIC: CO2 OrbitalRotor Showcase]
+// Purpose: Draws an orbital reference ring and delegates rendering to OrbitalRotorDrone.
+// Game Role: Displays Tab [2] CO2 hierarchical transformation enemy inspection.
 void EnemyDemoScene::renderCO2OrbitalRotor(int width, int height) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -352,6 +385,9 @@ void EnemyDemoScene::renderCO2OrbitalRotor(int width, int height) {
 // -------------------------------------------------------------
 // 3. CGL-CO3: Bresenham Shield Sentinel
 // -------------------------------------------------------------
+// [TOPIC: CO3 RasterSentinel Showcase]
+// Purpose: Centers RasterSentinel at screen midpoints and delegates 1:1 pixel-space rendering.
+// Game Role: Displays Tab [3] CO3 integer rasterization enemy inspection.
 void EnemyDemoScene::renderCO3RasterSentinel(int width, int height) {
     // RasterSentinel handles its own screen-space pixel projection (0 to W, 0 to H)
     rasterSentinel.setCenter(width / 2, height / 2);
@@ -361,6 +397,9 @@ void EnemyDemoScene::renderCO3RasterSentinel(int width, int height) {
 // -------------------------------------------------------------
 // 4. CGL-CO4: Depth-Diving Warp Cruiser
 // -------------------------------------------------------------
+// [TOPIC: CO4 WarpCruiser Showcase]
+// Purpose: Renders Z-depth tunnel rings from -50 to -10 and invokes WarpCruiser in Perspective or Ortho.
+// Game Role: Displays Tab [4] CO4 1/Z foreshortening vs orthographic invariance inspection.
 void EnemyDemoScene::renderCO4WarpCruiser(int width, int height) {
     glEnable(GL_DEPTH_TEST);
 
@@ -414,6 +453,9 @@ void EnemyDemoScene::renderCO4WarpCruiser(int width, int height) {
 // -------------------------------------------------------------
 // 5. CGL-CO5: Boundary Phase Skimmer
 // -------------------------------------------------------------
+// [TOPIC: CO5 BoundarySkimmer Showcase]
+// Purpose: Sets aspect-corrected 2D orthographic space, draws arena crosshairs, and renders BoundarySkimmer.
+// Game Role: Displays Tab [5] CO5 clipping boundary enemy inspection.
 void EnemyDemoScene::renderCO5BoundarySkimmer(int width, int height) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -444,6 +486,9 @@ void EnemyDemoScene::renderCO5BoundarySkimmer(int width, int height) {
 // -------------------------------------------------------------
 // 6. CGL-CO6: Specular Phong Cruiser
 // -------------------------------------------------------------
+// [TOPIC: CO6 PhongCruiser Showcase]
+// Purpose: Configures 3D perspective camera, applies interactive pitch/yaw, and renders PhongCruiser.
+// Game Role: Displays Tab [6] CO6 Blinn-Phong lighting and BMP texturing enemy inspection.
 void EnemyDemoScene::renderCO6PhongCruiser(int width, int height) {
     glEnable(GL_DEPTH_TEST);
 
@@ -478,6 +523,9 @@ void EnemyDemoScene::renderCO6PhongCruiser(int width, int height) {
 // -------------------------------------------------------------
 // HUD Overlay System
 // -------------------------------------------------------------
+// [TOPIC: HUD Font Renderer]
+// Purpose: Renders the 6-tab enemy selector bar, live mathematical telemetry, and bottom controls legend.
+// Game Role: Exposes real-time CO1-CO6 parameters (Shoelace area, orbit angle, 1/Z factor, TBRL bits, shininess).
 void EnemyDemoScene::renderHUD(int width, int height) {
     beginHUD(width, height);
 
@@ -585,6 +633,7 @@ void EnemyDemoScene::renderHUD(int width, int height) {
             concept = "Syllabus Concept: Cohen-Sutherland 4-bit Outcodes & Sutherland-Hodgman Polygon Clipping";
             Vec2 p1 = boundarySkimmer.getSkimmerPos();
             int c1 = 0;
+            // WHY: Compute live 4-bit TBRL outcode (Top=8, Bottom=4, Right=2, Left=1) for HUD telemetry display
             if (p1.y > co5WindowSize) c1 |= 8;
             if (p1.y < -co5WindowSize) c1 |= 4;
             if (p1.x > co5WindowSize) c1 |= 2;

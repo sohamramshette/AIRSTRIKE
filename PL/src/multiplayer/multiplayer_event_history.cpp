@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_event_history.cpp
+// Subject   : PL-CO2 | Suitable Linked Lists
+// Topics    : [TOPIC: MultiplayerEventHistory] [TOPIC: Doubly Linked List] [TOPIC: Pointer Relinking]
+// Game Role : Implements O(1) append/prepend, relink deletion, and forward/reverse log traversal.
+// ==============================================================================
+
 #include "multiplayer_event_history.h"
 
 namespace Airstrike::Multiplayer {
@@ -49,6 +56,7 @@ bool MultiplayerEventHistory::removeById(uint32_t eventId) {
     EventNode* curr = head_;
     while (curr) {
         if (curr->event.eventId == eventId) {
+            // WHY: Patch predecessor/head_ and successor/tail_ independently to handle all boundary cases cleanly.
             if (curr->prev) {
                 curr->prev->next = curr->next;
             } else {
@@ -72,6 +80,7 @@ bool MultiplayerEventHistory::removeById(uint32_t eventId) {
 
 std::vector<MatchEvent> MultiplayerEventHistory::traverseForward() const {
     std::vector<MatchEvent> result;
+    // WHY: Pre-reserve size_ to avoid vector reallocations while copying the linked chain.
     result.reserve(size_);
     EventNode* curr = head_;
     while (curr) {
@@ -83,6 +92,7 @@ std::vector<MatchEvent> MultiplayerEventHistory::traverseForward() const {
 
 std::vector<MatchEvent> MultiplayerEventHistory::traverseBackward() const {
     std::vector<MatchEvent> result;
+    // WHY: Pre-reserve size_ for single-allocation reverse replay export from tail_ to head_.
     result.reserve(size_);
     EventNode* curr = tail_;
     while (curr) {

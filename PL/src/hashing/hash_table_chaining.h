@@ -1,20 +1,19 @@
+// ==============================================================================
+// File      : PL/src/hashing/hash_table_chaining.h
+// Subject   : PL-CO5 | Hashing Techniques
+// Topics    : [TOPIC: HashTableChaining] [TOPIC: Separate Chaining] [TOPIC: DJB2 Hash] [TOPIC: Rehashing]
+// Game Role : Indexes AirStrike space arsenal items by string ID with O(1) average lookup.
+// ==============================================================================
+
 #ifndef HASH_TABLE_CHAINING_H
 #define HASH_TABLE_CHAINING_H
 
 #include <iostream>
 #include <string>
 
-/**
- * Hash Table with Separate Chaining (PL-CO5).
- * Application: AirStrike Space Arsenal & Inventory Registry.
- *
- * Collision Resolution: Each bucket holds a singly linked list of collided key-value pairs.
- * Features:
- * - DJB2 polynomial hash function
- * - Load factor tracking (items / buckets)
- * - Automatic dynamic rehashing when load factor > 0.75
- * - Explicit collision counter for academic viva verification
- */
+// [TOPIC: InventoryItem Record]
+// Purpose: Stores an arsenal item's ID, name, rarity tier, attack bonus, and credit price.
+// Game Role: Value payload mapped in AirStrike inventory and upgrade hash tables.
 struct InventoryItem {
     std::string itemId;
     std::string name;
@@ -27,6 +26,9 @@ struct InventoryItem {
         : itemId(id), name(n), rarity(r), attackBonus(atk), creditValue(val) {}
 };
 
+// [TOPIC: ChainNode] [TOPIC: Separate Chaining]
+// Purpose: Singly linked bucket node storing a key-value pair and collision chain pointer.
+// Game Role: Links colliding arsenal item keys inside a shared bucket list.
 struct ChainNode {
     std::string key;
     InventoryItem item;
@@ -36,6 +38,9 @@ struct ChainNode {
         : key(k), item(val), next(n) {}
 };
 
+// [TOPIC: HashTableChaining] [TOPIC: Separate Chaining] [TOPIC: Load Factor] [TOPIC: Rehashing]
+// Purpose: Closed-addressing hash table using DJB2 hashing, bucket linked lists, and auto-rehashing at alpha > 0.75.
+// Game Role: Drives the AirStrike Space Arsenal & Inventory Registry dictionary.
 class HashTableChaining {
 public:
     static constexpr size_t INITIAL_BUCKETS = 7;
@@ -54,11 +59,15 @@ public:
     explicit HashTableChaining(size_t initialBuckets = INITIAL_BUCKETS);
     ~HashTableChaining();
 
-    // Prevent inadvertent shallow copy
+    // [TOPIC: Deep Copy Semantics]
+    // Purpose: Re-inserts every bucket chain entry into an independent bucket array.
+    // Game Role: Safely clones arsenal hash tables without aliasing bucket pointers.
     HashTableChaining(const HashTableChaining& other);
     HashTableChaining& operator=(const HashTableChaining& other);
 
-    // Operations
+    // [TOPIC: Hash Dictionary Operations]
+    // Purpose: Inserts/updates with rehash check, searches bucket chain, or unlinks by key.
+    // Game Role: Registers, queries, and retires player weapon/upgrade entries in O(1) avg time.
     bool insert(const std::string& key, const InventoryItem& item);
     bool search(const std::string& key, InventoryItem& outItem) const;
     bool remove(const std::string& key);

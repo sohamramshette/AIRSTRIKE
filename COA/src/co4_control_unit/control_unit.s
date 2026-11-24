@@ -1,8 +1,10 @@
 # ==============================================================================
-# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO4: CONTROL UNIT & SIGNALS
-# Demonstrates Instruction Fetch, Decode, Execute, and Control Signal Generation
-# Satisfies Course Outcome: COA-CO4 (Control Unit Architecture & Micro-operations)
-# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
+# File    : COA/src/co4_control_unit/control_unit.s
+# Subject : COA-CO4 | Control Unit Organization & Control Signal Matrix
+# Topics  : Control Unit, Hardwired vs Microprogrammed Control, Opcode Decoding,
+#           Control Signals (RegDst, ALUSrc, MemToReg, RegWrite, MemRead,
+#           MemWrite, Branch, ALUOp), Instruction Cycle
+# Target  : x86-64 (64-bit Windows ABI, GAS Intel Syntax)
 # ==============================================================================
 
 .intel_syntax noprefix
@@ -10,10 +12,9 @@
 .data
 .align 8
 cu_header:
-    .asciz "\n==============================================================================\n      CO4: CONTROL UNIT & INSTRUCTION DECODING (64-BIT SIMULATION)            \n==============================================================================\n"
+    .asciz "\n==============================================================================\n      CO4: CONTROL UNIT & CONTROL SIGNAL GENERATION MATRIX                    \n==============================================================================\n"
 cu_desc:
-    .asciz "  [Educational Microarchitecture Datapath Model (Patterson & Hennessy)]\n  This model demonstrates how instruction opcodes decode into internal control wires\n  governing register writes, ALU source multiplexing, and 64-bit memory operations.\n\n  + Academic Datapath Control Signals Table:\n"
-
+    .asciz "  Datapath Control Signals (1=Asserted, 0=Deasserted, X=Don't Care):\n\n"
 cu_table_hdr:
     .asciz "  +-----------+--------+--------+----------+----------+---------+----------+--------+--------+\n  | Inst Type | RegDst | ALUSrc | MemToReg | RegWrite | MemRead | MemWrite | Branch | ALUOp  |\n  +-----------+--------+--------+----------+----------+---------+----------+--------+--------+\n"
 cu_row_fmt:
@@ -21,189 +22,126 @@ cu_row_fmt:
 cu_table_footer:
     .asciz "  +-----------+--------+--------+----------+----------+---------+----------+--------+--------+\n"
 cu_note:
-    .asciz "  [Academic Note] 'X' represents Don't Care condition in control signal logic.\n\n--- ARCHITECTURAL CLARIFICATION: EDUCATIONAL MODEL VS 64-BIT x86-64 HARDWARE ---\n  1. Signals like RegDst, ALUSrc, MemToReg, RegWrite belong to an abstract academic\n     single-cycle datapath model. Genuine x86-64 microarchitectures (Intel Core / AMD Zen)\n     do NOT operate on monolithic single-cycle control buses.\n  2. Modern 64-bit x86-64 Processors Use Advanced Superscalar Microarchitectures:\n     - Instruction Fetch Unit (IFU): Fetches up to 32/64 bytes/cycle from L1 Instruction Cache.\n     - Macro-op Pre-decoders & Decoders: Translates complex CISC instructions into RISC-like Micro-ops (uOps).\n     - Micro-op Queue & Branch Predictor: Multi-level TAGE / Neural branch prediction.\n     - Out-of-Order (OoO) Engine: Allocates uOps to Reservation Stations and Reorder Buffer (ROB).\n     - Execution Ports: Multiple parallel ALUs, Vector/SIMD (AVX-512) pipelines, and Address Generation Units (AGUs).\n     - Load/Store Queues (LSQ): Dispatches speculative 64-bit memory reads and out-of-order writes safely.\n==============================================================================\n"
+    .asciz "  Control Unit Trade-offs:\n    - Hardwired      : Combinational logic gates (fastest, fixed ISA).\n    - Microprogrammed: Control ROM microinstructions (flexible, slower).\n    - Modern x86-64  : Decodes CISC instructions into RISC-like micro-ops (uOps).\n==============================================================================\n"
 
-# Instruction Names
-str_rtype:
-    .asciz "R-Type   "
-str_lw:
-    .asciz "MOV/LD   "
-str_sw:
-    .asciz "MOV/ST   "
-str_beq:
-    .asciz "JE/CMP   "
-str_jmp:
-    .asciz "JMP      "
+str_rtype:    .asciz "R-Type   "
+str_lw:       .asciz "MOV/LD   "
+str_sw:       .asciz "MOV/ST   "
+str_beq:      .asciz "JE/CMP   "
+str_jmp:      .asciz "JMP      "
 
-# Control signal values
-str_0:
-    .asciz "0"
-str_1:
-    .asciz "1"
-str_x:
-    .asciz "X"
-str_alu_r:
-    .asciz "FUNCT "
-str_alu_add:
-    .asciz "ADD   "
-str_alu_sub:
-    .asciz "SUB   "
-str_alu_none:
-    .asciz "NONE  "
+str_0:        .asciz "0"
+str_1:        .asciz "1"
+str_x:        .asciz "X"
+str_alu_r:    .asciz "FUNCT "
+str_alu_add:  .asciz "ADD   "
+str_alu_sub:  .asciz "SUB   "
+str_alu_none: .asciz "NONE  "
+
+# Packed Control Signal Bitmasks (Bit7=RegDst .. Bit0=ALUOpActive)
+.align 8
+cu_signal_masks:
+    .quad 0x91                  # 0: R-Type -> RegDst, RegWrite, ALUOp
+    .quad 0x79                  # 1: LW     -> ALUSrc, MemToReg, RegWrite, MemRead, ALUOp
+    .quad 0x45                  # 2: SW     -> ALUSrc, MemWrite, ALUOp
+    .quad 0x03                  # 3: BEQ    -> Branch, ALUOp
+    .quad 0x00                  # 4: JMP    -> Control unit changes PC directly (no ALU/RegWrite)
+
+.align 8
+cu_table_rows:
+    .quad str_rtype, str_1, str_0, str_0, str_1, str_0, str_0, str_0, str_alu_r
+    .quad str_lw,    str_0, str_1, str_1, str_1, str_1, str_0, str_0, str_alu_add
+    .quad str_sw,    str_x, str_1, str_x, str_0, str_0, str_1, str_0, str_alu_add
+    .quad str_beq,   str_x, str_0, str_x, str_0, str_0, str_0, str_1, str_alu_sub
+    .quad str_jmp,   str_x, str_x, str_x, str_0, str_0, str_0, str_0, str_alu_none
 
 .text
 
-# ==============================================================================
-# Routine: co4_demo_control_unit
-# - Small Meaning: Displays Control Unit theory, signals table, and x86-64 microarchitecture analysis.
-# - Long Form    : CO4 Control Unit Architecture and Instruction Decoding Driver
-# - Why We Used It: Validates control signal matrix for academic curriculum and oral vivas.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Control Signal Decoder] coa_decode_control_signals
+# Purpose   : Maps opcode ID (0=R-Type, 1=LW, 2=SW, 3=BEQ, 4=JMP) to control bits.
+# Game Role : Models how the CPU's Control Unit routes signals for weapon & movement ops.
+# Input     : RCX = opcode ID (0..4)
+# Output    : RAX = packed 8-bit control word (or -1 if invalid opcode)
+# ------------------------------------------------------------------------------
+.global coa_decode_control_signals
+.global _coa_decode_control_signals
+coa_decode_control_signals:
+_coa_decode_control_signals:
+    cmp  rcx, 0                 # WHY: Bounds-check opcode ID before indexing ROM table
+    jl   .L_cu_invalid
+    cmp  rcx, 4
+    jg   .L_cu_invalid
+
+    lea  r10, [rip + cu_signal_masks] # WHY: Control ROM lookup converts opcode -> control bus word in 1 step
+    mov  rax, [r10 + rcx*8]
+    ret
+
+.L_cu_invalid:
+    mov  rax, -1                # WHY: Return -1 sentinel on illegal opcode
+    ret
+
+# ------------------------------------------------------------------------------
+# [TOPIC: Control Unit Demo] co4_demo_control_unit
+# Purpose   : Prints the Control Signal Truth Table and Hardwired vs Microprogrammed notes.
+# Game Role : Shows which CPU wires (RegWrite, MemRead, Branch) turn ON per instruction.
+# ------------------------------------------------------------------------------
 .global co4_demo_control_unit
 .global _co4_demo_control_unit
 co4_demo_control_unit:
 _co4_demo_control_unit:
-    # --------------------------------------------------------------------------
-    # PUSH RBP / MOV RBP, RSP / SUB RSP, 112:
-    # - Small Meaning: Set up 64-bit frame and allocate stack space for up to 10 printf arguments
-    # - Long Form    : Base Pointer Setup and Multi-Argument Stack Shadow Allocation
-    # - Why We Used It: Microsoft x64 ABI requires RCX, RDX, R8, R9 for 1st 4 args, remaining on stack.
-    # --------------------------------------------------------------------------
     push rbp
-    mov rbp, rsp
-    sub rsp, 112
+    mov  rbp, rsp
     push rbx
     push rsi
-    push rdi
+    sub  rsp, 96
 
-    lea rcx, [rip + cu_header]
+    lea  rcx, [rip + cu_header]
+    call print_str
+    lea  rcx, [rip + cu_desc]
+    call print_str
+    lea  rcx, [rip + cu_table_hdr]
     call print_str
 
-    lea rcx, [rip + cu_desc]
+    xor  rsi, rsi
+    lea  rbx, [rip + cu_table_rows]
+
+.L_cu_print_loop:
+    cmp  rsi, 5                 # WHY: Loop cleanly over 5 instruction types using table instead of 5 copy-pasted blocks
+    jge  .L_cu_print_done
+
+    imul r10, rsi, 72           # WHY: Each row stores 9 pointers * 8 bytes = 72 bytes
+    lea  r11, [rbx + r10]
+
+    lea  rcx, [rip + cu_row_fmt]
+    mov  rdx, [r11 + 0]
+    mov  r8,  [r11 + 8]
+    mov  r9,  [r11 + 16]
+    mov  rax, [r11 + 24]
+    mov  [rsp + 32], rax
+    mov  rax, [r11 + 32]
+    mov  [rsp + 40], rax
+    mov  rax, [r11 + 40]
+    mov  [rsp + 48], rax
+    mov  rax, [r11 + 48]
+    mov  [rsp + 56], rax
+    mov  rax, [r11 + 56]
+    mov  [rsp + 64], rax
+    mov  rax, [r11 + 64]
+    mov  [rsp + 72], rax
+    call printf
+
+    inc  rsi
+    jmp  .L_cu_print_loop
+
+.L_cu_print_done:
+    lea  rcx, [rip + cu_table_footer]
+    call print_str
+    lea  rcx, [rip + cu_note]
     call print_str
 
-    lea rcx, [rip + cu_table_hdr]
-    call print_str
-
-    # --------------------------------------------------------------------------
-    # 1. R-Type (ADD, SUB, AND, OR):
-    # RegDst=1, ALUSrc=0, MemToReg=0, RegWrite=1, MemRead=0, MemWrite=0, Branch=0, ALUOp=FUNCT
-    # --------------------------------------------------------------------------
-    lea rcx, [rip + cu_row_fmt] # 1st arg in RCX
-    lea rdx, [rip + str_rtype]   # 2nd arg in RDX: Inst Type
-    lea r8,  [rip + str_1]       # 3rd arg in R8 : RegDst
-    lea r9,  [rip + str_0]       # 4th arg in R9 : ALUSrc
-    lea rax, [rip + str_0]
-    mov [rsp + 32], rax         # 5th arg: MemToReg
-    lea rax, [rip + str_1]
-    mov [rsp + 40], rax         # 6th arg: RegWrite
-    lea rax, [rip + str_0]
-    mov [rsp + 48], rax         # 7th arg: MemRead
-    lea rax, [rip + str_0]
-    mov [rsp + 56], rax         # 8th arg: MemWrite
-    lea rax, [rip + str_0]
-    mov [rsp + 64], rax         # 9th arg: Branch
-    lea rax, [rip + str_alu_r]
-    mov [rsp + 72], rax         # 10th arg: ALUOp
-    call printf
-
-    # --------------------------------------------------------------------------
-    # 2. MOV/LD (Load):
-    # RegDst=0, ALUSrc=1, MemToReg=1, RegWrite=1, MemRead=1, MemWrite=0, Branch=0, ALUOp=ADD
-    # --------------------------------------------------------------------------
-    lea rcx, [rip + cu_row_fmt]
-    lea rdx, [rip + str_lw]
-    lea r8,  [rip + str_0]
-    lea r9,  [rip + str_1]
-    lea rax, [rip + str_1]
-    mov [rsp + 32], rax
-    lea rax, [rip + str_1]
-    mov [rsp + 40], rax
-    lea rax, [rip + str_1]
-    mov [rsp + 48], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 56], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 64], rax
-    lea rax, [rip + str_alu_add]
-    mov [rsp + 72], rax
-    call printf
-
-    # --------------------------------------------------------------------------
-    # 3. MOV/ST (Store):
-    # RegDst=X, ALUSrc=1, MemToReg=X, RegWrite=0, MemRead=0, MemWrite=1, Branch=0, ALUOp=ADD
-    # --------------------------------------------------------------------------
-    lea rcx, [rip + cu_row_fmt]
-    lea rdx, [rip + str_sw]
-    lea r8,  [rip + str_x]
-    lea r9,  [rip + str_1]
-    lea rax, [rip + str_x]
-    mov [rsp + 32], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 40], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 48], rax
-    lea rax, [rip + str_1]
-    mov [rsp + 56], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 64], rax
-    lea rax, [rip + str_alu_add]
-    mov [rsp + 72], rax
-    call printf
-
-    # --------------------------------------------------------------------------
-    # 4. JE/CMP (Branch):
-    # RegDst=X, ALUSrc=0, MemToReg=X, RegWrite=0, MemRead=0, MemWrite=0, Branch=1, ALUOp=SUB
-    # --------------------------------------------------------------------------
-    lea rcx, [rip + cu_row_fmt]
-    lea rdx, [rip + str_beq]
-    lea r8,  [rip + str_x]
-    lea r9,  [rip + str_0]
-    lea rax, [rip + str_x]
-    mov [rsp + 32], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 40], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 48], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 56], rax
-    lea rax, [rip + str_1]
-    mov [rsp + 64], rax
-    lea rax, [rip + str_alu_sub]
-    mov [rsp + 72], rax
-    call printf
-
-    # --------------------------------------------------------------------------
-    # 5. JMP (Unconditional Jump):
-    # RegDst=X, ALUSrc=X, MemToReg=X, RegWrite=0, MemRead=0, MemWrite=0, Branch=0, ALUOp=NONE
-    # --------------------------------------------------------------------------
-    lea rcx, [rip + cu_row_fmt]
-    lea rdx, [rip + str_jmp]
-    lea r8,  [rip + str_x]
-    lea r9,  [rip + str_x]
-    lea rax, [rip + str_x]
-    mov [rsp + 32], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 40], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 48], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 56], rax
-    lea rax, [rip + str_0]
-    mov [rsp + 64], rax
-    lea rax, [rip + str_alu_none]
-    mov [rsp + 72], rax
-    call printf
-
-    lea rcx, [rip + cu_table_footer]
-    call print_str
-
-    lea rcx, [rip + cu_note]
-    call print_str
-
-    pop rdi
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    add  rsp, 96
+    pop  rsi
+    pop  rbx
+    pop  rbp
     ret

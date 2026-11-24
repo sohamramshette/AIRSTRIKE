@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/AuthDialog.java
+// Subject   : PSOOP-CO3 / CO4 | Pilot Login & Registration Modal Dialog
+// Topics    : [TOPIC: Threading/Swing EDT] [TOPIC: Input Validation] [TOPIC: CardLayout Navigation]
+// Game Role : Collects login/signup credentials, delegates to AuthService, and updates UI on EDT.
+// ==============================================================================
 package ui;
 
 import database.SessionManager;
@@ -9,6 +15,9 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -282,22 +291,22 @@ public class AuthDialog extends JDialog {
     public void selectTab(String tabName) {
         cardLayout.show(cardsPanel, tabName);
         if ("LOGIN".equals(tabName)) {
-            tabLoginBtn.setBackground(new Color(0, 229, 255, 40));
-            tabLoginBtn.setForeground(Theme.CYAN_PRIMARY);
-            tabLoginBtn.setBorder(BorderFactory.createLineBorder(Theme.CYAN_PRIMARY, 1));
+            tabLoginBtn.setBackground(new Color(0, 229, 255, 90));
+            tabLoginBtn.setForeground(Color.WHITE);
+            tabLoginBtn.setBorder(BorderFactory.createLineBorder(Theme.CYAN_PRIMARY, 2));
 
-            tabRegisterBtn.setBackground(Theme.BG_INPUT);
-            tabRegisterBtn.setForeground(Theme.TEXT_MUTED);
-            tabRegisterBtn.setBorder(BorderFactory.createLineBorder(Theme.BORDER_SUBTLE, 1));
+            tabRegisterBtn.setBackground(new Color(15, 23, 42));
+            tabRegisterBtn.setForeground(new Color(148, 163, 184));
+            tabRegisterBtn.setBorder(BorderFactory.createLineBorder(new Color(40, 56, 85), 1));
             loginEmailField.requestFocusInWindow();
         } else {
-            tabRegisterBtn.setBackground(new Color(52, 211, 153, 40));
-            tabRegisterBtn.setForeground(Theme.EMERALD_STATUS);
-            tabRegisterBtn.setBorder(BorderFactory.createLineBorder(Theme.EMERALD_STATUS, 1));
+            tabRegisterBtn.setBackground(new Color(52, 211, 153, 90));
+            tabRegisterBtn.setForeground(Color.WHITE);
+            tabRegisterBtn.setBorder(BorderFactory.createLineBorder(Theme.EMERALD_STATUS, 2));
 
-            tabLoginBtn.setBackground(Theme.BG_INPUT);
-            tabLoginBtn.setForeground(Theme.TEXT_MUTED);
-            tabLoginBtn.setBorder(BorderFactory.createLineBorder(Theme.BORDER_SUBTLE, 1));
+            tabLoginBtn.setBackground(new Color(15, 23, 42));
+            tabLoginBtn.setForeground(new Color(148, 163, 184));
+            tabLoginBtn.setBorder(BorderFactory.createLineBorder(new Color(40, 56, 85), 1));
             regCallsignField.requestFocusInWindow();
         }
         clearStatus();
@@ -320,6 +329,7 @@ public class AuthDialog extends JDialog {
         setBusy(true, "Transmitting clearance to Starfleet Command...");
 
         authService.login(email, pass).thenAccept(result -> {
+            // WHY: Async HTTP response arrives on background pool; Swing component updates require EDT.
             SwingUtilities.invokeLater(() -> {
                 setBusy(false, null);
                 if (result.isSuccess()) {
@@ -393,11 +403,45 @@ public class AuthDialog extends JDialog {
     }
 
     private JButton createTabButton(String text) {
-        JButton btn = new JButton(text);
+        JButton btn = new JButton(text) {
+            private static final long serialVersionUID = 1L;
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                Theme.enableQuality(g2);
+                int w = getWidth();
+                int h = getHeight();
+
+                // Custom solid dark background - NEVER white!
+                g2.setColor(new Color(15, 23, 42));
+                g2.fillRoundRect(0, 0, w, h, 6, 6);
+
+                if (getBackground() != null) {
+                    g2.setColor(getBackground());
+                    g2.fillRoundRect(0, 0, w, h, 6, 6);
+                }
+
+                if (getBorder() != null) {
+                    getBorder().paintBorder(this, g2, 0, 0, w, h);
+                }
+
+                FontMetrics fm = g2.getFontMetrics(getFont());
+                int tx = (w - fm.stringWidth(getText())) / 2;
+                int ty = (h - fm.getHeight()) / 2 + fm.getAscent();
+                g2.setFont(getFont());
+                g2.setColor(getForeground());
+                g2.drawString(getText(), tx, ty);
+                g2.dispose();
+            }
+        };
         btn.setFont(Theme.BODY_BOLD);
         btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setOpaque(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+        btn.setPreferredSize(new Dimension(160, 34));
+        btn.setBorder(BorderFactory.createLineBorder(Theme.BORDER_SUBTLE, 1));
         return btn;
     }
 
@@ -437,6 +481,7 @@ public class AuthDialog extends JDialog {
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
+        btn.setOpaque(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setHorizontalAlignment(SwingConstants.CENTER);
         return btn;

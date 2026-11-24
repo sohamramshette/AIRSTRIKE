@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/objects/space_scene.cpp
+// Subject   : Scene | Integrated CO1-CO6 Space Combat Scene
+// Topics    : [TOPIC: Scene Orchestration] [TOPIC: Hierarchical Matrix Stack] [TOPIC: Cohen-Sutherland Clipping] [TOPIC: HUD Font Renderer]
+// Game Role : Orchestrates real-time combat rendering combining CO1-CO6 geometry, transforms, clipping, lighting, and radar PIP.
+// ==============================================================================
+
 #include "space_scene.hpp"
 #include "common/font_renderer.hpp"
 #include "algorithms/raster_algorithms.hpp"
@@ -20,6 +27,9 @@ SpaceCombatScene::~SpaceCombatScene() {
     if (planetTexId != 0) glDeleteTextures(1, &planetTexId);
 }
 
+// [TOPIC: Scene Orchestration]
+// Purpose: Enables depth/alpha blending, builds procedural planet texture, and seeds 6 rotating asteroids.
+// Game Role: Prepares all CO1-CO6 resources for Screen 0 combat.
 void SpaceCombatScene::init() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -49,6 +59,9 @@ void SpaceCombatScene::init() {
     }
 }
 
+// [TOPIC: CO6 Procedural Texture Mapping]
+// Purpose: Generates a 128x128 planetary RGB texture and uploads it with bilinear filtering.
+// Game Role: Textures the background rotating celestial planet in SpaceCombatScene.
 void SpaceCombatScene::createProceduralTextures() {
     int texDim = 128;
     std::vector<unsigned char> texData;
@@ -63,12 +76,16 @@ void SpaceCombatScene::createProceduralTextures() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
+// [TOPIC: Frame Animation & Decay]
+// Purpose: Advances drone orbit, asteroid rotation, laser cooldown, and banking roll decay.
+// Game Role: Updates real-time flight and combat kinematics at 60 FPS.
 void SpaceCombatScene::update(float dt) {
     animTime += dt;
     droneOrbitAngle += 100.0f * dt;
     if (droneOrbitAngle >= 360.0f) droneOrbitAngle -= 360.0f;
 
     // Decay player roll back towards 0
+    // WHY: Exponentially damps banking angle back toward level flight when lateral input stops
     playerRoll *= (1.0f - dt * 4.0f);
 
     // Update asteroids
@@ -86,11 +103,15 @@ void SpaceCombatScene::update(float dt) {
     }
 }
 
+// [TOPIC: Combat Bounds Clamping & Banking]
+// Purpose: Translates the player starfighter within combatBounds and sets roll tilt.
+// Game Role: Keeps the craft inside the CO5 clipping boundary rectangle while banking.
 void SpaceCombatScene::movePlayer(float dx, float dy) {
     playerX += dx;
     playerY += dy;
 
     // Clamp inside combat bounds
+    // WHY: Maintain a 0.8-unit hull margin inside combatBounds so wingtips stay inside the arena
     if (playerX < combatBounds.xmin + 0.8f) playerX = combatBounds.xmin + 0.8f;
     if (playerX > combatBounds.xmax - 0.8f) playerX = combatBounds.xmax - 0.8f;
     if (playerY < combatBounds.ymin + 0.8f) playerY = combatBounds.ymin + 0.8f;
@@ -119,6 +140,9 @@ void SpaceCombatScene::reset() {
     animTime = 0.0f;
 }
 
+// [TOPIC: CO1 GL_POINTS / CO6 Textured Planet]
+// Purpose: Plots a multi-color 3D starfield and renders a UV-mapped rotating planet sphere.
+// Game Role: Draws the deep-space backdrop behind the combat arena.
 void SpaceCombatScene::renderSkyboxStars() {
     // CO1: GL_POINTS starfield
     glPointSize(2.0f);
@@ -158,6 +182,7 @@ void SpaceCombatScene::renderSkyboxStars() {
             for (int j = 0; j <= slices; ++j) {
                 float theta = 2.0f * static_cast<float>(M_PI) * (static_cast<float>(j) / slices);
                 float u = static_cast<float>(j) / slices;
+                // WHY: Spherical coordinates (phi, theta) map directly onto unit sphere normals and (u, v) texcoords
                 float nx1 = std::sin(phi1) * std::cos(theta);
                 float ny1 = std::cos(phi1);
                 float nz1 = std::sin(phi1) * std::sin(theta);
@@ -176,6 +201,9 @@ void SpaceCombatScene::renderSkyboxStars() {
     glPopMatrix();
 }
 
+// [TOPIC: CO3 3D Meshes / CO6 Phong Lighting]
+// Purpose: Lights and rotates each AsteroidEntity with GL_LIGHT0 and per-asteroid diffuse materials.
+// Game Role: Renders 3D shaded obstacles across depth in SpaceCombatScene.
 void SpaceCombatScene::renderAsteroids() {
     // CO3 & CO6: 3D Asteroid Meshes with Lighting & Rotation
     glEnable(GL_LIGHTING);
@@ -208,8 +236,12 @@ void SpaceCombatScene::renderAsteroids() {
     glDisable(GL_LIGHTING);
 }
 
+// [TOPIC: CO2 Hierarchical Matrix Stack]
+// Purpose: Applies orbit rotation, radial offset, and self-spin inside a pushed matrix for each drone.
+// Game Role: Renders twin escort wingmen revolving around the player fighter.
 void SpaceCombatScene::renderEscortDrone(float offsetAngle) {
     // CO2: Hierarchical Matrix Stack for Escort Drones
+    // WHY: Push isolates each drone's R_orbit * T_arm * R_spin relative to the player's matrix
     glPushMatrix();
     glRotatef(droneOrbitAngle + offsetAngle, 0.0f, 0.0f, 1.0f);
     glTranslatef(1.3f, 0.0f, 0.0f);
@@ -238,6 +270,9 @@ void SpaceCombatScene::renderEscortDrone(float offsetAngle) {
     glPopMatrix();
 }
 
+// [TOPIC: CO1 Primitives & CO2 Parent-Child Hierarchy]
+// Purpose: Translates/rolls the player fighter, renders hull/thrusters, and draws child drones and shield.
+// Game Role: Primary controllable aircraft in SpaceCombatScene.
 void SpaceCombatScene::renderPlayerCraft() {
     glPushMatrix();
     // CO2 Transformations: Translate and Rotate
@@ -295,6 +330,9 @@ void SpaceCombatScene::renderPlayerCraft() {
     glPopMatrix();
 }
 
+// [TOPIC: CO1 GL_TRIANGLE_FAN & GL_LINE_LOOP]
+// Purpose: Renders a pulsing translucent shield fan and wireframe ring around the player fighter.
+// Game Role: Visualizes toggleable deflector protection in SpaceCombatScene.
 void SpaceCombatScene::renderEnergyShield() {
     // CO1 & CO3: GL_TRIANGLE_FAN Energy Bubble calculated using Midpoint Circle math
     glBegin(GL_TRIANGLE_FAN);
@@ -323,6 +361,9 @@ void SpaceCombatScene::renderEnergyShield() {
     glLineWidth(1.0f);
 }
 
+// [TOPIC: Cohen-Sutherland Clipping]
+// Purpose: Fires twin player laser segments and truncates them at combatBounds via cohenSutherlandClip().
+// Game Role: Ensures player laser bolts stop cleanly at the combat arena boundary.
 void SpaceCombatScene::renderLaserBeams() {
     if (!laserActive) return;
 
@@ -332,6 +373,7 @@ void SpaceCombatScene::renderLaserBeams() {
 
     LineSegment clippedLeft, clippedRight;
     int c1 = 0, c2 = 0;
+    // WHY: Clip long +12-unit laser rays against combatBounds.ymax so beams terminate at the top sector border
     bool leftOk = ClippingAlgorithmsDemo::cohenSutherlandClip(leftLaser, combatBounds, clippedLeft, c1, c2);
     bool rightOk = ClippingAlgorithmsDemo::cohenSutherlandClip(rightLaser, combatBounds, clippedRight, c1, c2);
 
@@ -353,6 +395,9 @@ void SpaceCombatScene::renderLaserBeams() {
     glLineWidth(1.0f);
 }
 
+// [TOPIC: Orthographic Radar PIP / glViewport / glScissor]
+// Purpose: Isolates a top-right orthographic viewport with glScissor to plot player/asteroid blips.
+// Game Role: Provides a CO4 dual-projection picture-in-picture radar inside the perspective combat scene.
 void SpaceCombatScene::renderTacticalRadarPIP(int screenWidth, int screenHeight) {
     // CO4: Viewport & Orthographic Tactical Radar Overlay in Top-Right Corner
     int radarW = 200;
@@ -361,6 +406,7 @@ void SpaceCombatScene::renderTacticalRadarPIP(int screenWidth, int screenHeight)
     int radarY = screenHeight - radarH - 20;
 
     glViewport(radarX, radarY, radarW, radarH);
+    // WHY: Scissor test restricts glClear to the 200x160 PIP box instead of wiping the main 3D scene
     glScissor(radarX, radarY, radarW, radarH);
     glEnable(GL_SCISSOR_TEST);
 
@@ -412,6 +458,7 @@ void SpaceCombatScene::renderTacticalRadarPIP(int screenWidth, int screenHeight)
     glDisable(GL_SCISSOR_TEST);
 
     // Border around radar
+    // WHY: Restore full-window viewport before drawing the PIP frame and HUD label
     glViewport(0, 0, screenWidth, screenHeight);
     beginHUD(screenWidth, screenHeight);
     glColor3f(0.3f, 0.7f, 1.0f);
@@ -428,6 +475,9 @@ void SpaceCombatScene::renderTacticalRadarPIP(int screenWidth, int screenHeight)
     endHUD();
 }
 
+// [TOPIC: Scene Orchestration / CO1-CO6 Integration / HUD Font Renderer]
+// Purpose: Executes the full CO1-CO6 render pass: perspective camera, bounds, skybox, asteroids, lasers, player, PIP, and HUD.
+// Game Role: Main display routine for Screen 0 (Integrated Space Combat System).
 void SpaceCombatScene::render(int screenWidth, int screenHeight) {
     glClearColor(0.015f, 0.02f, 0.04f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

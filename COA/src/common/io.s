@@ -1,335 +1,313 @@
 # ==============================================================================
-# AIRSTRIKE 64-BIT ASSEMBLY SUITE — COMMON I/O UTILITIES
-# Implements Formatted String, Integer, Hexadecimal, and Binary Console Display
-# Satisfies Course Outcome: Cross-Module Common Support Library
-# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
+# File    : COA/src/common/io.s
+# Subject : COA Common I/O Support Library
+# Topics  : Console Print, Hexadecimal, Binary Output, Integer Input (x64 ABI)
+# Target  : x86-64 (64-bit Windows ABI, GAS Intel Syntax)
 # ==============================================================================
 
 .intel_syntax noprefix
 
 .data
 .align 8
-fmt_str:
-    .asciz "%s"
-fmt_int64:
-    .asciz "%lld"
-fmt_uint64:
-    .asciz "%llu"
-fmt_hex8:
-    .asciz "0x%02llX"
-fmt_hex16:
-    .asciz "0x%04llX"
-fmt_hex32:
-    .asciz "0x%08llX"
-fmt_hex64:
-    .asciz "0x%016llX"
-fmt_nl:
-    .asciz "\n"
-fmt_prompt_pause:
-    .asciz "\n[Press ENTER to continue...]"
-bin_zero:
-    .asciz "0"
-bin_one:
-    .asciz "1"
+fmt_str:          .asciz "%s"
+fmt_int64:        .asciz "%lld"
+fmt_uint64:       .asciz "%llu"
+fmt_hex8:         .asciz "0x%02llX"
+fmt_hex64:        .asciz "0x%016llX"
+fmt_nl:           .asciz "\n"
+fmt_prompt_pause: .asciz "\n[Press ENTER to continue...]"
 
 .bss
 .align 8
-.lcomm input_buffer, 128
 .lcomm input_val_64, 8
 
 .text
 
-# ==============================================================================
-# Routine: print_str / _print_str
-# - Small Meaning: Prints a null-terminated string to stdout.
-# - Long Form    : Assembly 64-Bit Print String
-# - Why We Used It: Fast console string output conforming to Microsoft x64 ABI.
-# Calling Convention (Microsoft x64 ABI):
-#   RCX = const char* str (String pointer)
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Console String Output] print_str
+# Purpose   : Prints a null-terminated string to stdout.
+# Game Role : Displays COA mission menus, battle logs, and enemy status banners.
+# Input     : RCX = const char* str
+# ------------------------------------------------------------------------------
 .global print_str
 .global _print_str
 print_str:
 _print_str:
     push rbp
-    mov rbp, rsp
-    sub rsp, 32                 # 32 bytes caller shadow space
-    # --------------------------------------------------------------------------
-    # MOV RDX, RCX / LEA RCX, [RIP + FMT_STR]:
-    # - Small Meaning: Shift string pointer into 2nd argument (RDX) and load format string
-    # - Long Form    : Move Register C to D / Load Effective Address of Format String
-    # - Why We Used It: printf expects format in RCX, string argument in RDX.
-    # --------------------------------------------------------------------------
-    mov rdx, rcx
-    lea rcx, [rip + fmt_str]
+    mov  rbp, rsp
+    sub  rsp, 32                # WHY: Reserve 32-byte Windows x64 shadow space required before calling C functions
+
+    mov  rdx, rcx               # WHY: Shift string pointer to Arg2 (RDX) because printf needs format string in Arg1
+    lea  rcx, [rip + fmt_str]   # WHY: Load "%s" via RIP-relative addressing to prevent format-string bugs & stay PIC
     call printf
-    mov rsp, rbp
-    pop rbp
+
+    add  rsp, 32
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: print_int / _print_int
-# - Small Meaning: Prints signed 64-bit quadword integer.
-# - Long Form    : Assembly 64-Bit Print Signed Integer
-# - Why We Used It: Formats telemetry coordinates, score tallies, and health points.
-# Calling Convention (Microsoft x64 ABI):
-#   RCX = int64_t val
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Signed Integer Output] print_int
+# Purpose   : Prints a 64-bit signed integer (%lld).
+# Game Role : Outputs player score deltas, negative damage values, and HP balance.
+# Input     : RCX = int64_t val
+# ------------------------------------------------------------------------------
 .global print_int
 .global _print_int
 print_int:
 _print_int:
     push rbp
-    mov rbp, rsp
-    sub rsp, 32
-    mov rdx, rcx
-    lea rcx, [rip + fmt_int64]
+    mov  rbp, rsp
+    sub  rsp, 32                # WHY: Reserve Windows x64 shadow space & keep stack 16-byte aligned
+
+    mov  rdx, rcx               # WHY: Move integer into Arg2 (RDX) for printf("%lld", val)
+    lea  rcx, [rip + fmt_int64] # WHY: Load 64-bit signed format specifier
     call printf
-    mov rsp, rbp
-    pop rbp
+
+    add  rsp, 32
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: print_uint / _print_uint
-# - Small Meaning: Prints unsigned 64-bit integer.
-# - Long Form    : Assembly 64-Bit Print Unsigned Integer
-# - Why We Used It: Formats clock cycle counts, memory addresses, and bitmasks.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Unsigned Integer Output] print_uint
+# Purpose   : Prints a 64-bit unsigned integer (%llu).
+# Game Role : Outputs cycle counters, memory addresses, and unsigned shield totals.
+# Input     : RCX = uint64_t val
+# ------------------------------------------------------------------------------
 .global print_uint
 .global _print_uint
 print_uint:
 _print_uint:
     push rbp
-    mov rbp, rsp
-    sub rsp, 32
-    mov rdx, rcx
-    lea rcx, [rip + fmt_uint64]
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    mov  rdx, rcx
+    lea  rcx, [rip + fmt_uint64] # WHY: Unsigned %llu prevents large values from printing as negative
     call printf
-    mov rsp, rbp
-    pop rbp
+
+    add  rsp, 32
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: print_hex64 / _print_hex64
-# - Small Meaning: Prints 64-bit value in hexadecimal notation (0x%016llX).
-# - Long Form    : Assembly 64-Bit Print Hexadecimal Quadword
-# - Why We Used It: Displays 64-bit pointer registers (RAX, RSP, RIP) in clean hex.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Hexadecimal Output] print_hex64
+# Purpose   : Prints a 64-bit value in 16-digit hexadecimal (0x...).
+# Game Role : Shows 64-bit ship status masks and CPU register snapshots.
+# Input     : RCX = uint64_t val
+# ------------------------------------------------------------------------------
 .global print_hex64
 .global _print_hex64
 print_hex64:
 _print_hex64:
     push rbp
-    mov rbp, rsp
-    sub rsp, 32
-    mov rdx, rcx
-    lea rcx, [rip + fmt_hex64]
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    mov  rdx, rcx
+    lea  rcx, [rip + fmt_hex64] # WHY: %016llX pads with leading zeros so all 64 bits align visually
     call printf
-    mov rsp, rbp
-    pop rbp
+
+    add  rsp, 32
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: print_hex8 / _print_hex8
-# - Small Meaning: Prints 8-bit low-byte in hex (0x%02X).
-# - Long Form    : Assembly 64-Bit Print Hexadecimal Byte
-# - Why We Used It: Inspects sub-register byte values (AL, BL, CL, DL, R8B).
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Hexadecimal Byte Output] print_hex8
+# Purpose   : Prints the lowest 8 bits in 2-digit hexadecimal (0x..).
+# Game Role : Inspects Aegis Sentry 8-bit shield bytes (AH / AL).
+# Input     : CL = uint8_t val
+# ------------------------------------------------------------------------------
 .global print_hex8
 .global _print_hex8
 print_hex8:
 _print_hex8:
     push rbp
-    mov rbp, rsp
-    sub rsp, 32
-    movzx rdx, cl
-    lea rcx, [rip + fmt_hex8]
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    movzx rdx, cl               # WHY: Zero-extend 8-bit CL -> 64-bit RDX so upper garbage bits don't corrupt hex output
+    lea  rcx, [rip + fmt_hex8]
     call printf
-    mov rsp, rbp
-    pop rbp
+
+    add  rsp, 32
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: print_bin8 / _print_bin8
-# - Small Meaning: Prints 8-bit binary string (e.g. 01011010).
-# - Long Form    : Assembly 64-Bit Print Binary Byte
-# - Why We Used It: Visualizes condition flags, Booth table columns, and opcode masks.
-# Calling Convention (Microsoft x64 ABI):
-#   RCX = uint64_t val (Low 8 bits printed)
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Binary Output] print_bin8
+# Purpose   : Prints an 8-bit value in binary (MSB to LSB) using SHL + Carry Flag.
+# Game Role : Draws live 8-bit binary registers (A, Q) in Booth & Division tables.
+# Input     : CL = uint8_t val
+# ------------------------------------------------------------------------------
 .global print_bin8
 .global _print_bin8
 print_bin8:
 _print_bin8:
     push rbp
-    mov rbp, rsp
-    sub rsp, 48
-    push rbx
-    push rsi
+    mov  rbp, rsp
+    push rbx                    # WHY: Preserve non-volatile RBX across putchar calls
+    push rsi                    # WHY: Preserve RSI (2 pushes = 16 bytes -> keeps RSP aligned)
+    sub  rsp, 32
 
-    mov bl, cl                  # BL holds the 8-bit value
-    mov rsi, 8                  # 8-bit loop counter
+    mov  bl, cl                 # WHY: Save 8-bit value in callee-saved BL because putchar overwrites RCX
+    mov  rsi, 8                 # WHY: Loop 8 times to print bit 7 down to bit 0
 
 .L_bin8_loop:
-    # --------------------------------------------------------------------------
-    # SHL BL, 1:
-    # - Small Meaning: Shift Most Significant Bit into Carry Flag (CF)
-    # - Long Form    : Shift Logical Left Byte by 1
-    # - Why We Used It: Tests bits sequentially from MSB (bit 7) down to LSB (bit 0).
-    # --------------------------------------------------------------------------
-    shl bl, 1
-    jc .L_bin8_one
-    mov rcx, '0'
+    shl  bl, 1                  # WHY: Shifts top bit into Carry Flag (CF) so we can test it with jc (no mask needed)
+    jc   .L_bin8_one            # WHY: Branch to print '1' if CF=1, else fall through to print '0'
+    mov  ecx, '0'
     call putchar
-    jmp .L_bin8_next
+    jmp  .L_bin8_next
 
 .L_bin8_one:
-    mov rcx, '1'
+    mov  ecx, '1'
     call putchar
 
 .L_bin8_next:
-    dec rsi
-    jnz .L_bin8_loop
+    dec  rsi                    # WHY: Count down remaining bits and set ZF=1 when all 8 bits are printed
+    jnz  .L_bin8_loop
 
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    add  rsp, 32
+    pop  rsi
+    pop  rbx
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: print_bin64 / _print_bin64
-# - Small Meaning: Prints 64-bit binary string with space delimiters every 8 bits.
-# - Long Form    : Assembly 64-Bit Print Binary Quadword
-# - Why We Used It: Visualizes full 64-bit status registers and subsystem bitmasks.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Binary Output] print_bin64
+# Purpose   : Prints a 64-bit value in binary with a space every 8 bits.
+# Game Role : Visualizes all 64 spacecraft subsystem status flags bit-by-bit.
+# Input     : RCX = uint64_t val
+# ------------------------------------------------------------------------------
 .global print_bin64
 .global _print_bin64
 print_bin64:
 _print_bin64:
     push rbp
-    mov rbp, rsp
-    sub rsp, 48
+    mov  rbp, rsp
     push rbx
     push rsi
+    sub  rsp, 32
 
-    mov rbx, rcx                # RBX holds the 64-bit value
-    mov rsi, 64                 # 64-bit loop counter
+    mov  rbx, rcx               # WHY: Store 64-bit mask in callee-saved RBX
+    mov  rsi, 64                # WHY: Print all 64 bits from MSB (bit 63) to LSB (bit 0)
 
 .L_bin64_loop:
-    shl rbx, 1                  # Shift MSB into Carry Flag
-    jc .L_bin64_one
-    mov rcx, '0'
+    shl  rbx, 1                 # WHY: Shift MSB into CF to inspect one bit per cycle
+    jc   .L_bin64_one
+    mov  ecx, '0'
     call putchar
-    jmp .L_bin64_sep
+    jmp  .L_bin64_sep
 
 .L_bin64_one:
-    mov rcx, '1'
+    mov  ecx, '1'
     call putchar
 
 .L_bin64_sep:
-    dec rsi
-    jz .L_bin64_done
+    dec  rsi
+    jz   .L_bin64_done          # WHY: Stop after bit 0 without printing a trailing space
 
-    # Print space separator every 8 bits
-    mov rax, rsi
-    test rax, 7
-    jnz .L_bin64_loop
-
-    mov rcx, ' '
+    test rsi, 7                 # WHY: Fast bitwise check for (rsi % 8 == 0) to separate bytes visually
+    jnz  .L_bin64_loop
+    mov  ecx, ' '
     call putchar
-    jmp .L_bin64_loop
+    jmp  .L_bin64_loop
 
 .L_bin64_done:
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    add  rsp, 32
+    pop  rsi
+    pop  rbx
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: print_nl / _print_nl
-# - Small Meaning: Prints a single newline character to stdout.
-# - Long Form    : Assembly 64-Bit Print Newline
-# - Why We Used It: Flushes current line and advances cursor.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Newline Output] print_nl
+# Purpose   : Prints a single newline character.
+# Game Role : Formats console telemetry tables cleanly.
+# ------------------------------------------------------------------------------
 .global print_nl
 .global _print_nl
 print_nl:
 _print_nl:
     push rbp
-    mov rbp, rsp
-    sub rsp, 32
-    lea rcx, [rip + fmt_nl]
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    lea  rcx, [rip + fmt_nl]
     call printf
-    mov rsp, rbp
-    pop rbp
+
+    add  rsp, 32
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: read_int / _read_int
-# - Small Meaning: Reads signed 64-bit integer from console stdin via scanf.
-# - Long Form    : Assembly 64-Bit Read Console Integer
-# - Why We Used It: Collects interactive menu choices and arithmetic operands.
-# Returns:
-#   RAX = 64-bit signed integer read, or -1 on EOF/error.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Integer Input] read_int
+# Purpose   : Reads a 64-bit signed integer from stdin and flushes trailing chars.
+# Game Role : Captures player menu choices and custom math inputs safely.
+# Output    : RAX = integer read, or -1 on invalid input / EOF
+# ------------------------------------------------------------------------------
 .global read_int
 .global _read_int
 read_int:
 _read_int:
     push rbp
-    mov rbp, rsp
-    sub rsp, 48
-    push rbx
+    mov  rbp, rsp
+    sub  rsp, 32
 
-    lea rcx, [rip + fmt_int64]
-    lea rdx, [rip + input_val_64]
+    lea  rcx, [rip + fmt_int64]    # WHY: Arg1 = "%lld" format
+    lea  rdx, [rip + input_val_64] # WHY: Arg2 = address in .bss where scanf stores user's number
     call scanf
 
-    cmp rax, 1
-    je .L_read_valid
+    cmp  eax, 1                 # WHY: scanf returns 1 only when a valid number was matched
+    je   .L_read_flush
 
-    # Failed or EOF reached
-    mov qword ptr [rip + input_val_64], -1
-    mov rax, -1
-    jmp .L_read_exit
+    cmp  eax, -1                # WHY: Check for EOF (-1) so piped/batch runs exit instead of looping forever
+    je   .L_read_eof
+.L_bad_flush:
+    call getchar                # WHY: Drain invalid non-numeric input up to newline so menu won't infinite-loop
+    cmp  eax, 10
+    je   .L_read_eof
+    cmp  eax, -1
+    je   .L_read_eof
+    jmp  .L_bad_flush
 
-.L_read_valid:
-    # Flush trailing characters in line buffer until newline or EOF
-.L_flush_loop:
-    call getchar
-    cmp rax, 10                 # '\n'
-    je .L_flush_done
-    cmp rax, -1                 # EOF
-    je .L_flush_done
-    jmp .L_flush_loop
+.L_read_eof:
+    mov  rax, -1                # WHY: Signal invalid/EOF to caller
+    jmp  .L_read_exit
 
-.L_flush_done:
-    mov rax, [rip + input_val_64]
+.L_read_flush:
+    call getchar                # WHY: Consume leftover '\n' so later pause_key() calls actually wait
+    cmp  eax, 10
+    je   .L_read_ok
+    cmp  eax, -1
+    je   .L_read_ok
+    jmp  .L_read_flush
+
+.L_read_ok:
+    mov  rax, [rip + input_val_64] # WHY: Load scanned 64-bit integer into RAX return register
 
 .L_read_exit:
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    add  rsp, 32
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: pause_key / _pause_key
-# - Small Meaning: Displays prompt and waits for user to press ENTER.
-# - Long Form    : Assembly 64-Bit Console Pause Key Waiter
-# - Why We Used It: Halts screen execution between demonstration modules.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Console Pause] pause_key
+# Purpose   : Prompts user to press ENTER before returning to menu.
+# Game Role : Lets players inspect combat telemetry before screen clears/scrolls.
+# ------------------------------------------------------------------------------
 .global pause_key
 .global _pause_key
 pause_key:
 _pause_key:
     push rbp
-    mov rbp, rsp
-    sub rsp, 32
-    lea rcx, [rip + fmt_prompt_pause]
+    mov  rbp, rsp
+    sub  rsp, 32
+
+    lea  rcx, [rip + fmt_prompt_pause]
     call printf
-    call getchar
-    mov rsp, rbp
-    pop rbp
+    call getchar                # WHY: Block until user presses ENTER
+
+    add  rsp, 32
+    pop  rbp
     ret

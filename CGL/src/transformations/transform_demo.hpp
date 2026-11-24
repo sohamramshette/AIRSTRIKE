@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/transformations/transform_demo.hpp
+// Subject   : CGL-CO2 | 2D & 3D Geometric Transformations
+// Topics    : [TOPIC: Homogeneous Coordinates] [TOPIC: Affine Matrices (T*R != R*T)] [TOPIC: glPushMatrix/glPopMatrix] [TOPIC: Pivot Rotation]
+// Game Role : Declares the CO2 affine transformation workbench, matrix stack demo, and 4x4 matrix math helpers.
+// ==============================================================================
+
 #ifndef TRANSFORM_DEMO_HPP
 #define TRANSFORM_DEMO_HPP
 
@@ -6,16 +13,16 @@
 
 namespace CGL {
 
-/**
- * @brief Class demonstrating CGL-CO2: Geometric Transformations.
- * Covers Translation, Rotation, Scaling, Reflection, Shearing,
- * Composite Transformations (T*R vs R*T), Arbitrary Pivot Point,
- * and Hierarchical Matrix Stacks (glPushMatrix / glPopMatrix).
- */
+// [TOPIC: Homogeneous Coordinates / Affine Matrices (T*R != R*T) / glPushMatrix/glPopMatrix / Pivot Rotation]
+// Purpose: Demonstrates translation, rotation, scaling, reflection, shear, composite order, pivot rotation, and hierarchical stacks.
+// Game Role: Interactive CO2 screen driving a fighter with orbiting escort drones and live 4x4 ModelView HUD readout.
 class TransformDemo {
 public:
     TransformDemo();
 
+    // [TOPIC: Matrix Stack & Interactive Controls]
+    // Purpose: Initializes blend state, advances drone orbit, and renders the fighter/drones with live matrix HUD.
+    // Game Role: Runs the interactive CO2 Transformation Showcase in AIRSTRIKE.
     void init();
     void render(int screenWidth, int screenHeight);
     void update(float dt);
@@ -42,7 +49,9 @@ public:
     bool isShearMode() const { return shearMode; }
     int getReflectionMode() const { return reflectionMode; }
 
-    // Math helpers for verification
+    // [TOPIC: Homogeneous Coordinates / Affine Matrices (T*R != R*T) / Pivot Rotation]
+    // Purpose: Column-major 4x4 affine matrix builders, multiplication, and point transformation helpers.
+    // Game Role: Powers headless CO2 coordinate verification tests without requiring an OpenGL context.
     static void multiplyMatrix4x4(const float a[16], const float b[16], float result[16]);
     static void getTranslationMatrix(float tx, float ty, float tz, float m[16]);
     static void getRotationXMatrix(float angleDeg, float m[16]);
@@ -70,6 +79,9 @@ private:
     float pivotX, pivotY;
     float droneOrbitAngle;
 
+    // [TOPIC: Hierarchical Child Geometry]
+    // Purpose: Emits local-space vertices for the parent starfighter and escort drone meshes.
+    // Game Role: Draws the transformed craft and orbiting wingmen inside matrix stack scopes.
     void drawFighter(float size);
     void drawDrone(float size);
 };

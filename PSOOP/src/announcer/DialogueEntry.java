@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/announcer/DialogueEntry.java
+// Subject   : PSOOP-CO1 | Immutable Announcer Dialogue Model
+// Topics    : [TOPIC: Encapsulation] [TOPIC: Value Object]
+// Game Role : Holds one announcer line, its category, priority, and matching triggers.
+// ==============================================================================
 package announcer;
 
 import java.util.Collections;

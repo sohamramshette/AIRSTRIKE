@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/arrays/grid_swarm_enemy.cpp
+// Subject   : PL-CO1 | Arrays
+// Topics    : [TOPIC: GridSwarmEnemy] [TOPIC: Row-Major Addressing] [TOPIC: Spatial Partitioning]
+// Game Role : Implements 2D spatial sector binning, movement re-bucketing, and mine dispersion.
+// ==============================================================================
+
 #include "grid_swarm_enemy.h"
 #include <iomanip>
 #include <algorithm>
@@ -21,8 +28,11 @@ void GridSwarmEnemy::clear() {
     }
 }
 
+// [TOPIC: Row-Major Addressing]
+// Purpose: Computes linear element offset (row * GRID_COLS + col) for 2D row-major layout.
+// Game Role: Exposes the underlying memory index formula used by the 8x8 swarm sector table.
 size_t GridSwarmEnemy::calculateRowMajorOffset(int row, int col) {
-    // Address formula: Base + (row * COLS + col) * sizeof(Element)
+    // WHY: C++ stores 2D arrays row-by-row so element (row, col) sits at Base + (row * COLS + col) * sizeof(T).
     return static_cast<size_t>(row * GRID_COLS + col);
 }
 
@@ -30,7 +40,7 @@ void GridSwarmEnemy::getSector(double x, double y, int& outRow, int& outCol) con
     double cellW = ARENA_WIDTH / GRID_COLS;
     double cellH = ARENA_HEIGHT / GRID_ROWS;
 
-    // Boundary clamping
+    // WHY: Clamp just below arena bounds so x / cellW cannot produce index GRID_COLS on exact edge hits.
     if (x < 0.0) x = 0.0;
     if (x >= ARENA_WIDTH) x = ARENA_WIDTH - 0.001;
     if (y < 0.0) y = 0.0;
@@ -130,7 +140,7 @@ bool GridSwarmEnemy::moveDrone(int droneId, double newX, double newY) {
             int newR = 0, newC = 0;
             getSector(newX, newY, newR, newC);
 
-            // If sector changed, update spatial partitioning
+            // WHY: Only update 3D occupancy array when drone crosses a sector boundary -> Game: Avoids needless re-binning each tick.
             if (oldR != newR || oldC != newC) {
                 if (cellCounts[newR][newC] >= MAX_PER_CELL) {
                     return false; // Target cell saturated
@@ -145,6 +155,7 @@ bool GridSwarmEnemy::moveDrone(int droneId, double newX, double newY) {
                     }
                 }
                 if (idxInCell != -1) {
+                    // WHY: Left-shift bucket entries to keep cellOccupancy[oldR][oldC] densely packed.
                     for (int k = idxInCell; k < cellCounts[oldR][oldC] - 1; ++k) {
                         cellOccupancy[oldR][oldC][k] = cellOccupancy[oldR][oldC][k + 1];
                     }
@@ -167,6 +178,9 @@ bool GridSwarmEnemy::moveDrone(int droneId, double newX, double newY) {
     return false;
 }
 
+// [TOPIC: Spatial Partitioning] [TOPIC: Local Proximity Search]
+// Purpose: Inspects the 3x3 surrounding sectors and collects drone IDs within searchRadius.
+// Game Role: Speeds up local swarm queries for AirStrike radial targeting.
 int GridSwarmEnemy::findNearbyDrones(double targetX, double targetY, double searchRadius,
                                      int outIds[], int maxResults) const {
     int centerR = 0, centerC = 0;
@@ -175,7 +189,7 @@ int GridSwarmEnemy::findNearbyDrones(double targetX, double targetY, double sear
     int foundCount = 0;
     double radiusSq = searchRadius * searchRadius;
 
-    // Check center sector and all 8 surrounding neighboring sectors
+    // WHY: Scan only the 3x3 sector neighborhood instead of all MAX_SWARM_DRONES -> Game: O(1) localized query.
     for (int dr = -1; dr <= 1; ++dr) {
         int r = centerR + dr;
         if (r < 0 || r >= GRID_ROWS) continue;
@@ -189,6 +203,7 @@ int GridSwarmEnemy::findNearbyDrones(double targetX, double targetY, double sear
                 const SwarmDrone* d = getDroneById(id);
                 if (d && d->active) {
                     double distSq = (d->x - targetX) * (d->x - targetX) + (d->y - targetY) * (d->y - targetY);
+                    // WHY: Compare squared distances to avoid costly sqrt() per candidate.
                     if (distSq <= radiusSq) {
                         if (foundCount < maxResults) {
                             outIds[foundCount] = id;
@@ -203,8 +218,12 @@ int GridSwarmEnemy::findNearbyDrones(double targetX, double targetY, double sear
     return std::min(foundCount, maxResults);
 }
 
+// [TOPIC: GridSwarmEnemy] [TOPIC: Radial Dispersion]
+// Purpose: Places up to 8 scatter mines around (originX, originY) at 45-degree intervals into grid sectors.
+// Game Role: Populates neighboring spatial cells with debris hazards when a Swarm Carrier splits.
 int GridSwarmEnemy::disperseScatterMines(double originX, double originY, int count, int outMineIds[]) {
     int spawnedCount = 0;
+    // WHY: Precomputed radian offsets every 45 deg disperse mines evenly across neighboring cells.
     double angles[] = {0.0, 1.5708, 3.14159, 4.71239, 0.7854, 2.3562, 3.9270, 5.4978};
     double scatterDistance = 45.0;
 

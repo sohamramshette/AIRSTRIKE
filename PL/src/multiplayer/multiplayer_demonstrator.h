@@ -1,20 +1,18 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_demonstrator.h
+// Subject   : PL-CO1..CO5 | Multiplayer Data Structures
+// Topics    : [TOPIC: MultiplayerDemonstrator] [TOPIC: Spatial Grid] [TOPIC: Doubly Linked List] [TOPIC: Circular Queue] [TOPIC: QuickSort] [TOPIC: Binary Search] [TOPIC: Hash Table]
+// Game Role : Orchestrates interactive console demonstrations for all 5 PL multiplayer structures.
+// ==============================================================================
+
 #ifndef AIRSTRIKE_MULTIPLAYER_DEMONSTRATOR_H
 #define AIRSTRIKE_MULTIPLAYER_DEMONSTRATOR_H
 
 namespace Airstrike::Multiplayer {
 
-/**
- * ==============================================================================
- * Master Demonstrator for PL Multiplayer Processing (PL-CO1 to PL-CO5)
- *
- * Demonstrates:
- * - PL-CO1: 2D Spatial Grid (Player 1, Player 2 & Fleet nearby spatial queries)
- * - PL-CO2: Doubly Linked List match event history with bi-directional traversal
- * - PL-CO3: Circular FIFO queue for multiplayer network packet stream
- * - PL-CO4: QuickSort and Binary Search for match score rankings
- * - PL-CO5: Open-addressing Hash Table for player session lookup with tombstones
- * ==============================================================================
- */
+// [TOPIC: MultiplayerDemonstrator] [TOPIC: PL-CO1..CO5]
+// Purpose: Groups standalone CLI walkthroughs for grid partitioning, event history, packet queue, ranking, and sessions.
+// Game Role: Showcases how PL data structures power two-player AirStrike telemetry and matchmaking.
 class MultiplayerDemonstrator {
 public:
     static void runAllDemonstrations();

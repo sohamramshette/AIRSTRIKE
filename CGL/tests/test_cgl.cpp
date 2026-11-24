@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/tests/test_cgl.cpp
+// Subject   : Tests | Automated CGL Mathematical & Asset Test Suite
+// Topics    : [TOPIC: Automated Assertions] [TOPIC: BMP Loader] [TOPIC: CO1-CO6 Mathematical Verification]
+// Game Role : Executes headless CGL_ASSERT checks across CO1-CO6 math, all 6 enemies, and multiplayer telemetry.
+// ==============================================================================
+
 #include "test_cgl.hpp"
 #include "common/gl_common.h"
 #include "common/image_loader.hpp"
@@ -24,6 +31,9 @@ namespace CGL {
 static int testsPassed = 0;
 static int testsTotal = 0;
 
+// [TOPIC: Automated Assertions]
+// Purpose: Evaluates a boolean invariant, increments pass/total counters, and logs [PASS]/[FAIL].
+// Game Role: Core assertion macro powering headless verification across all AIRSTRIKE CGL tests.
 #define CGL_ASSERT(cond, name) \
     do { \
         testsTotal++; \
@@ -36,6 +46,7 @@ static int testsTotal = 0;
     } while (0)
 
 static bool approxEqual(float a, float b, float eps = 0.005f) {
+    // WHY: Floating-point tolerance accounts for trig/matrix rounding in coordinate proofs
     return std::fabs(a - b) <= eps;
 }
 
@@ -46,6 +57,9 @@ static bool vec3ApproxEqual(const Vec3& a, const Vec3& b, float eps = 0.005f) {
 // -------------------------------------------------------------
 // CO1: Primitives Tests
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / CO1 Primitives]
+// Purpose: Validates Point2D equality, Vec2 tolerance equality, and Color4 channel initialization.
+// Game Role: Verifies foundational CO1 geometry/color types used by all primitives.
 void testCO1Primitives() {
     std::cout << "\n--- Testing CGL-CO1: OpenGL Graphics Primitives ---" << std::endl;
 
@@ -66,6 +80,9 @@ void testCO1Primitives() {
 // -------------------------------------------------------------
 // CO2: Transformations Tests (Matrix & Transformed Coordinates)
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / CO2 Affine Matrices (T*R != R*T)]
+// Purpose: Verifies 4x4 translation, rotation, scale, reflection, arbitrary pivot rotation, and T*R != R*T.
+// Game Role: Proves coordinate correctness for CO2 homogeneous matrix math.
 void testCO2Transformations() {
     std::cout << "\n--- Testing CGL-CO2: Geometric Transformations ---" << std::endl;
 
@@ -152,6 +169,7 @@ void testCO2Transformations() {
                "TC_CGL_02J: Order A (T * R) coordinates match (2, 1, 0)");
     CGL_ASSERT(vec3ApproxEqual(pB, Vec3(0.0f, 3.0f, 0.0f)),
                "TC_CGL_02K: Order B (R * T) coordinates match (0, 3, 0)");
+    // WHY: Distinct outputs (2, 1) vs (0, 3) prove affine matrix multiplication is non-commutative
     CGL_ASSERT(!vec3ApproxEqual(pA, pB),
                "TC_CGL_02L: Non-commutative coordinate difference proved: (2, 1) != (0, 3)");
 }
@@ -159,6 +177,9 @@ void testCO2Transformations() {
 // -------------------------------------------------------------
 // CO3: Line Drawing Algorithms Across All 8 Octants
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / CO3 DDA & Bresenham 8-Octant Tests]
+// Purpose: Validates DDA endpoints and Bresenham pixel counts/endpoints across all 8 octants plus H/V/reverse lines.
+// Game Role: Ensures integer beam rasterization works regardless of slope or direction.
 void testCO3LineAlgorithms() {
     std::cout << "\n--- Testing CGL-CO3: Line Drawing Algorithms (All 8 Octants) ---" << std::endl;
 
@@ -169,6 +190,7 @@ void testCO3LineAlgorithms() {
                "TC_CGL_03B: DDA line endpoints match exactly");
 
     // Bresenham Octant 1: 0 <= m <= 1, dx > 0, dy > 0
+    // WHY: Each octant test checks exact start/end pixels and max(|dx|,|dy|)+1 = 9 rasterized pixels
     auto bres1 = RasterAlgorithmsDemo::bresenhamLine(0, 0, 8, 4);
     CGL_ASSERT(bres1.front() == Point2D(0, 0) && bres1.back() == Point2D(8, 4) && bres1.size() == 9,
                "TC_CGL_03C: Bresenham Octant 1 (0 <= m <= 1): (0,0)->(8,4)");
@@ -225,6 +247,9 @@ void testCO3LineAlgorithms() {
 // -------------------------------------------------------------
 // CO3: Curve Algorithms & Symmetry Tests
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / CO3 Midpoint Circle, Ellipse & Scanline Fill]
+// Purpose: Validates circle equation bound, ellipse axis intercepts, and scanline polygon fill pixel count.
+// Game Role: Confirms curve and polygon rasterization accuracy in CO3.
 void testCO3CurveAlgorithms() {
     std::cout << "\n--- Testing CGL-CO3: Curve Drawing Algorithms ---" << std::endl;
 
@@ -236,6 +261,7 @@ void testCO3CurveAlgorithms() {
     bool allPointsOnCircle = true;
     for (const auto& pt : circle) {
         int distSq = pt.x * pt.x + pt.y * pt.y;
+        // WHY: Integer pixel discretization limits squared-radius deviation to at most 2r + 1
         if (std::abs(distSq - r * r) > 2 * r + 1) {
             allPointsOnCircle = false;
             break;
@@ -267,6 +293,9 @@ void testCO3CurveAlgorithms() {
 // -------------------------------------------------------------
 // CO3: 3D Mesh & Rotation Calculations
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / CO3 3D Mesh Transformations]
+// Purpose: Verifies 3D cube centroid after S+T and 90-degree Euler rotations Rx and Ry.
+// Game Role: Confirms 3D homogeneous mesh transforms match analytical geometry.
 void testCO33DMeshTransformations() {
     std::cout << "\n--- Testing CGL-CO3: 3D Mesh Vertex Transformations ---" << std::endl;
 
@@ -311,6 +340,9 @@ void testCO33DMeshTransformations() {
 // -------------------------------------------------------------
 // CO4: Projection and Viewing Tests
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / CO4 Orthographic vs Perspective & Viewport Mapping]
+// Purpose: Proves ortho depth invariance, perspective 1/Z foreshortening, LookAt mapping, and NDC-to-pixel bounds.
+// Game Role: Verifies the full World -> Eye -> Clip -> NDC -> Viewport pipeline in CO4.
 void testCO4Projection() {
     std::cout << "\n--- Testing CGL-CO4: Projection and Viewing ---" << std::endl;
 
@@ -333,6 +365,7 @@ void testCO4Projection() {
     Vec3 ndcZ10 = ViewingDemo::projectPoint(perspM, pZ10);
     CGL_ASSERT(approxEqual(ndcZ2.x, 1.0f) && approxEqual(ndcZ10.x, 0.2f),
                "TC_CGL_04B: Perspective Projection NDC foreshortening (1.0 vs 0.2)");
+    // WHY: 5x depth increase (-2 to -10) yields exact 5x NDC reduction via 1/Z perspective division
     CGL_ASSERT(approxEqual(ndcZ2.x / ndcZ10.x, 5.0f),
                "TC_CGL_04C: Perspective foreshortening ratio matches depth ratio Z2/Z1 (5.0x)");
 
@@ -356,6 +389,9 @@ void testCO4Projection() {
 // -------------------------------------------------------------
 // CO5: Clipping Algorithms Tests
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / CO5 Cohen-Sutherland, Liang-Barsky & Sutherland-Hodgman]
+// Purpose: Validates 4-bit TBRL outcodes, Cohen-Sutherland/Liang-Barsky agreement, and polygon corner clipping.
+// Game Role: Confirms clipping boundary fidelity across all three CO5 algorithms.
 void testCO5Clipping() {
     std::cout << "\n--- Testing CGL-CO5: Clipping Algorithms ---" << std::endl;
 
@@ -389,6 +425,7 @@ void testCO5Clipping() {
     bool lbAcc = ClippingAlgorithmsDemo::liangBarskyClip(lineCrossing, win, lbOut, u1, u2);
     CGL_ASSERT(lbAcc && approxEqual(lbOut.p1.x, -10.0f) && approxEqual(lbOut.p2.x, 10.0f),
                "TC_CGL_05G: Liang-Barsky parametric clipping yields identical boundary points");
+    // WHY: Segment [-20, 20] clipped to [-10, 10] spans exact parameter subinterval [0.25, 0.75]
     CGL_ASSERT(approxEqual(u1, 0.25f) && approxEqual(u2, 0.75f),
                "TC_CGL_05H: Liang-Barsky parametric range u1=0.25, u2=0.75 verified");
 
@@ -407,6 +444,9 @@ void testCO5Clipping() {
 // -------------------------------------------------------------
 // CO6: Texture, Lighting & Color Tests
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / BMP Loader / CO6 Lighting & Color]
+// Purpose: Verifies HSV-to-RGB, 24-bit BMP texture loading, missing-file safety, procedural buffers, Phong math, and Gouraud blend.
+// Game Role: Validates CO6 rendering equations and BMP asset integrity headlessly.
 void testCO6Appearance() {
     std::cout << "\n--- Testing CGL-CO6: Texture, Lighting, and Color Models ---" << std::endl;
 
@@ -428,6 +468,7 @@ void testCO6Appearance() {
     }
     CGL_ASSERT(loadSuccess && w == 256 && h == 256,
                "TC_CGL_06C: Actual local BMP texture loaded: space_hull.bmp (256x256)");
+    // WHY: Uncompressed 24-bit 256x256 RGB data must expand to exactly 256 * 256 * 3 = 196,608 bytes
     CGL_ASSERT(localTexData.size() == 256 * 256 * 3,
                "TC_CGL_06D: Local BMP byte buffer size verification (196,608 bytes)");
 
@@ -479,6 +520,9 @@ void testCO6Appearance() {
 // -------------------------------------------------------------
 // CGL Enemy Implementation Tests (CGL-CO1 to CGL-CO6)
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / CO1-CO6 Enemy Validation]
+// Purpose: Tests PolygonCruiser, OrbitalRotor, RasterSentinel, WarpCruiser, BoundarySkimmer, and PhongCruiser.
+// Game Role: Guarantees mathematical and asset correctness for all 6 AIRSTRIKE CGL enemy classes.
 void testCGLEnemies() {
     std::cout << "\n--- Testing CGL Enemy Implementations (CGL-CO1 to CGL-CO6) ---" << std::endl;
 
@@ -621,6 +665,9 @@ void testCGLEnemies() {
 // -------------------------------------------------------------
 // Multiplayer Battle Scene Tests (CGL-CO1 to CGL-CO6)
 // -------------------------------------------------------------
+// [TOPIC: Automated Assertions / Multiplayer Integration]
+// Purpose: Validates P1/P2 transforms, Bresenham laser links, Midpoint shields, split-screen toggle, clipping, and BMP loading.
+// Game Role: Covers all CO1-CO6 requirements inside MultiplayerBattleScene.
 void testCGLMultiplayer() {
     std::cout << "\n--- Testing CGL Multiplayer Dual-Player Visualizer (CO1-CO6) ---" << std::endl;
 
@@ -686,6 +733,9 @@ void testCGLMultiplayer() {
                "TC_CGL_MP6B: Space hull texture loaded into memory (196,608 bytes)");
 }
 
+// [TOPIC: Automated Assertions Runner]
+// Purpose: Resets counters, runs all 10 CGL test suites, prints summary, and returns 0 iff all pass.
+// Game Role: Entry point invoked by `cgl_runner --test` for automated CI verification.
 int runAllCGLTests() {
     testsPassed = 0;
     testsTotal = 0;

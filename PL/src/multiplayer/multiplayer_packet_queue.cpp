@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_packet_queue.cpp
+// Subject   : PL-CO3 | Stack and Queue Applications
+// Topics    : [TOPIC: MultiplayerPacketQueue] [TOPIC: Circular Queue] [TOPIC: Modulo Wrap-Around]
+// Game Role : Implements O(1) FIFO ring-buffer packet enqueue/dequeue with overflow protection.
+// ==============================================================================
+
 #include "multiplayer_packet_queue.h"
 
 namespace Airstrike::Multiplayer {
@@ -25,6 +32,7 @@ bool MultiplayerPacketQueue::enqueue(const MatchEvent& packet) {
     }
 
     buffer_[rear_] = packet;
+    // WHY: Modulo wrap-around advances rear_ circularly in O(1); count_ disambiguates full vs empty.
     rear_ = (rear_ + 1) % capacity_;
     count_++;
     return true;
@@ -36,6 +44,7 @@ bool MultiplayerPacketQueue::dequeue(MatchEvent& outPacket) {
     }
 
     outPacket = buffer_[front_];
+    // WHY: Wrap front_ via modulo instead of shifting remaining packets left in O(N).
     front_ = (front_ + 1) % capacity_;
     count_--;
     return true;

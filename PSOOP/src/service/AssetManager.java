@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/service/AssetManager.java
+// Subject   : PSOOP-CO4 | Procedural Parallax Starfield & Space Renderer
+// Topics    : [TOPIC: Procedural Graphics] [TOPIC: 60 FPS Delta-Time] [TOPIC: Custom Swing Rendering]
+// Game Role : Generates and animates multi-layered scrolling starfields without disk assets.
+// ==============================================================================
 package service;
 
 import java.awt.Color;
@@ -7,8 +13,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Procedural asset manager generating multi-layered starfields and visual effects
- * without depending on external file assets.
+ * [TOPIC: Procedural Graphics]
+ * Procedural asset manager generating multi-layered starfields without external image files.
  */
 public class AssetManager {
 
@@ -36,6 +42,9 @@ public class AssetManager {
         initStarfield(initialWidth, initialHeight, starCount);
     }
 
+    /**
+     * [TOPIC: Procedural Graphics] Allocates three depth-sorted parallax star tiers.
+     */
     private void initStarfield(int width, int height, int count) {
         int w = Math.max(800, width);
         int h = Math.max(600, height);
@@ -49,6 +58,7 @@ public class AssetManager {
             int size;
             Color color;
 
+            // WHY: 60%/30%/10% speed-size split creates parallax depth without sprite sheets.
             if (layer < 0.6) {
                 // Background distant stars: slow, small, dim
                 speed = 25.0 + random.nextDouble() * 20.0;
@@ -72,7 +82,7 @@ public class AssetManager {
     }
 
     /**
-     * Updates star positions and wraps stars around the screen vertically.
+     * [TOPIC: 60 FPS Delta-Time] Updates star positions and wraps stars vertically.
      */
     public void update(double delta, int width, int height) {
         int h = Math.max(600, height);
@@ -88,7 +98,7 @@ public class AssetManager {
     }
 
     /**
-     * Renders space background and the parallax starfield.
+     * [TOPIC: Custom Swing Rendering] Paints deep-space void, nebulae, and stars.
      */
     public void renderBackground(Graphics2D g, int width, int height) {
         // Deep space void gradient

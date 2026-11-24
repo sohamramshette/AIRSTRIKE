@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/clipping/boundary_skimmer.cpp
+// Subject   : CGL-CO5 | BoundarySkimmer Perimeter Enemy
+// Topics    : [TOPIC: Cohen-Sutherland 4-bit TBRL Outcodes] [TOPIC: Sutherland-Hodgman Polygon Clipping] [TOPIC: BoundarySkimmer]
+// Game Role : Animates BoundarySkimmer along the arena edge, clips its laser sight, and provides clipping self-tests.
+// ==============================================================================
+
 #include "boundary_skimmer.hpp"
 #include <cmath>
 
@@ -23,9 +30,13 @@ void BoundarySkimmer::init() {
     targetingSensor = LineSegment(Vec2(-0.8f, 0.2f), Vec2(0.3f, 0.2f));
 }
 
+// [TOPIC: Perimeter Orbit Kinematics]
+// Purpose: Moves skimmerPos on radius 0.65 around the [-0.6, 0.6] arena and aims sensor at origin.
+// Game Role: Continuously alternates TBRL outcode bits across Top/Bottom/Left/Right boundaries.
 void BoundarySkimmer::update(float dt) {
     animTimer += dt;
     // Skim along perimeter of arena window
+    // WHY: Radius 0.65 exceeds the 0.60 half-width along axes, causing sensor rays to cross boundaries
     skimmerPos.x = 0.65f * std::cos(animTimer * 0.8f);
     skimmerPos.y = 0.65f * std::sin(animTimer * 0.8f);
 
@@ -33,16 +44,25 @@ void BoundarySkimmer::update(float dt) {
     targetingSensor = LineSegment(skimmerPos, Vec2(0.0f, 0.0f));
 }
 
+// [TOPIC: Cohen-Sutherland 4-bit TBRL Outcodes]
+// Purpose: Clips laser ray in against win via ClippingAlgorithmsDemo::cohenSutherlandClip.
+// Game Role: Returns visible interior laser segment and initial endpoint outcodes.
 bool BoundarySkimmer::clipLaserSight(const LineSegment& in, const RectWindow& win,
                                      LineSegment& out, int& outCode1, int& outCode2) const {
     return ClippingAlgorithmsDemo::cohenSutherlandClip(in, win, out, outCode1, outCode2);
 }
 
+// [TOPIC: Sutherland-Hodgman Polygon Clipping]
+// Purpose: Clips subjectPoly against win via ClippingAlgorithmsDemo::sutherlandHodgmanClip.
+// Game Role: Demonstrates 4-edge polygon clipping on BoundarySkimmer geometry.
 std::vector<Vec2> BoundarySkimmer::clipHullPolygon(const std::vector<Vec2>& subjectPoly,
                                                    const RectWindow& win) const {
     return ClippingAlgorithmsDemo::sutherlandHodgmanClip(subjectPoly, win);
 }
 
+// [TOPIC: Cohen-Sutherland Trivial Accept]
+// Purpose: Asserts an interior segment yields outcodes 0000 and identical endpoints.
+// Game Role: Verifies trivial-accept fast path in CO5 BoundarySkimmer tests.
 bool BoundarySkimmer::testTrivialAccept(const RectWindow& win) {
     // Line completely inside: (-0.2, -0.2) to (0.2, 0.2)
     LineSegment in(Vec2(-0.2f, -0.2f), Vec2(0.2f, 0.2f));
@@ -52,6 +72,9 @@ bool BoundarySkimmer::testTrivialAccept(const RectWindow& win) {
     return visible && (c1 == 0) && (c2 == 0) && (in.p1 == out.p1) && (in.p2 == out.p2);
 }
 
+// [TOPIC: Cohen-Sutherland Trivial Reject]
+// Purpose: Asserts an exterior segment sharing CODE_LEFT produces (c1 & c2) != 0 and false visibility.
+// Game Role: Verifies trivial-reject fast path in CO5 BoundarySkimmer tests.
 bool BoundarySkimmer::testTrivialReject(const RectWindow& win) {
     // Line completely outside to the left: (-0.9, -0.2) to (-0.7, 0.4)
     LineSegment in(Vec2(-0.9f, -0.2f), Vec2(-0.7f, 0.4f));
@@ -62,6 +85,9 @@ bool BoundarySkimmer::testTrivialReject(const RectWindow& win) {
     return (!visible) && ((c1 & c2) != 0);
 }
 
+// [TOPIC: Cohen-Sutherland Single-Edge Clip]
+// Purpose: Clips a segment crossing win.xmin and verifies exact intersection coordinate.
+// Game Role: Validates single-boundary intersection math in CO5 BoundarySkimmer tests.
 bool BoundarySkimmer::testSingleBoundaryCross(const RectWindow& win) {
     // Line crosses left boundary (x = -0.6): from (-0.8, 0.0) to (0.0, 0.0)
     LineSegment in(Vec2(-0.8f, 0.0f), Vec2(0.0f, 0.0f));
@@ -72,6 +98,9 @@ bool BoundarySkimmer::testSingleBoundaryCross(const RectWindow& win) {
     return visible && std::fabs(out.p1.x - win.xmin) < 0.005f && std::fabs(out.p2.x - 0.0f) < 0.005f;
 }
 
+// [TOPIC: Cohen-Sutherland Multi-Edge Clip]
+// Purpose: Clips a chord spanning both win.xmin and win.xmax and verifies both clipped endpoints.
+// Game Role: Validates iterative outcode refinement across two boundaries.
 bool BoundarySkimmer::testMultipleBoundariesCross(const RectWindow& win) {
     // Line crosses left boundary (x = -0.6) and right boundary (x = +0.6): (-0.8, 0.0) to (+0.8, 0.0)
     LineSegment in(Vec2(-0.8f, 0.0f), Vec2(0.8f, 0.0f));
@@ -81,6 +110,9 @@ bool BoundarySkimmer::testMultipleBoundariesCross(const RectWindow& win) {
     return visible && std::fabs(out.p1.x - win.xmin) < 0.005f && std::fabs(out.p2.x - win.xmax) < 0.005f;
 }
 
+// [TOPIC: Sutherland-Hodgman Polygon Clipping]
+// Purpose: Clips a square straddling win.ymax and verifies vertex count and clamped top edge.
+// Game Role: Validates polygon boundary clipping in CO5 BoundarySkimmer tests.
 bool BoundarySkimmer::testPolygonClipping(const RectWindow& win) {
     // Convex polygon overlapping top boundary of window (ymin=-0.6, ymax=+0.6, xmin=-0.6, xmax=+0.6)
     // Square: (-0.3, 0.3) to (0.3, 0.9)
@@ -100,6 +132,9 @@ bool BoundarySkimmer::testPolygonClipping(const RectWindow& win) {
     return std::fabs(maxClippedY - win.ymax) < 0.005f;
 }
 
+// [TOPIC: BoundarySkimmer Visual Rendering]
+// Purpose: Draws the yellow arena frame, faint unclipped vs bright green clipped beam, and orange skimmer hull.
+// Game Role: Renders CGL-CO5 BoundarySkimmer inside EnemyDemoScene.
 void BoundarySkimmer::render(int screenW, int screenH) {
     (void)screenW;
     (void)screenH;
@@ -120,6 +155,7 @@ void BoundarySkimmer::render(int screenW, int screenH) {
     bool beamVisible = clipLaserSight(targetingSensor, arenaWindow, clippedBeam, c1, c2);
 
     // Draw unclipped segment in faint red
+    // WHY: Contrast faint unclipped ray against bright clipped interior segment to visualize clipping
     glColor4f(0.8f, 0.2f, 0.2f, 0.3f);
     glLineWidth(1.0f);
     glBegin(GL_LINES);

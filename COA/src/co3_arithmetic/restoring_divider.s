@@ -1,9 +1,9 @@
 # ==============================================================================
-# AIRSTRIKE 64-BIT ASSEMBLY SUITE — CO3: RESTORING DIVISION ALGORITHM
-# Implements Unsigned Binary Restoring Division from First Principles
-# Does NOT use processor hardware DIV or IDIV instructions for division logic.
-# Satisfies Course Outcome: COA-CO3 (Computer Arithmetic - Division Algorithms)
-# Target Architecture: Genuine 64-bit x86-64 / AMD64 (Long Mode)
+# File    : COA/src/co3_arithmetic/restoring_divider.s
+# Subject : COA-CO3 | Restoring Binary Division Algorithm
+# Topics  : Restoring Division, Unsigned Binary Division, Partial Remainder,
+#           Shift-Left & Restore Step, Divide-by-Zero Guard
+# Target  : x86-64 (64-bit Windows ABI, GAS Intel Syntax)
 # ==============================================================================
 
 .intel_syntax noprefix
@@ -11,70 +11,50 @@
 .data
 .align 8
 div_hdr:
-    .asciz "\n==============================================================================\n            CO3: RESTORING BINARY DIVISION ALGORITHM (64-BIT)                 \n==============================================================================\n"
-div_inputs_fmt:
-    .asciz "  Dividend (Q) = %llu (0x%02llX | Binary: "
-div_inputs_m:
-    .asciz ")\n  Divisor  (M) = %llu (0x%02llX | Binary: "
+    .asciz "\n==============================================================================\n            CO3: RESTORING BINARY DIVISION ALGORITHM (8-CYCLE)                \n==============================================================================\n"
+div_inputs_fmt:   .asciz "  Dividend (Q) = %llu (0x%02llX | Binary: "
+div_inputs_m:     .asciz ")\n  Divisor  (M) = %llu (0x%02llX | Binary: "
 div_table_hdr:
-    .asciz ")\n\n  +-------+--------------------+----------+----------+----------------------------+\n  | Cycle | Operation          |    A     |    Q     | Action / Decision          |\n  +-------+--------------------+----------+----------+----------------------------+\n"
-div_row_fmt:
-    .asciz "  |   %lld   | %-18s | "
-div_row_mid:
-    .asciz " | "
-div_row_end:
-    .asciz " | %-26s |\n"
-div_table_footer:
-    .asciz "  +-------+--------------------+----------+----------+----------------------------+\n"
+    .asciz ")\n\n  +-------+--------------------+----------+----------+----------------------------+\n  | Cycle | Operation          |    A     |    Q     | Decision                   |\n  +-------+--------------------+----------+----------+----------------------------+\n"
+div_row_fmt:      .asciz "  |   %lld   | %-18s | "
+div_row_mid:      .asciz " | "
+div_row_end:      .asciz " | %-26s |\n"
+div_table_footer: .asciz "  +-------+--------------------+----------+----------+----------------------------+\n"
 div_final_fmt:
-    .asciz "  Final Quotient  (Q) = %llu (0x%02llX)\n  Final Remainder (A) = %llu (0x%02llX)\n  Verification Formula: %llu = (%llu * %llu) + %llu -> %s\n"
-div_err_zero:
-    .asciz "  [ERROR] Restoring Division by Zero is mathematically undefined!\n"
-str_pass:
-    .asciz "MATCH (PASS)"
-str_fail:
-    .asciz "MISMATCH (FAIL)"
+    .asciz "  Quotient (Q) = %llu (0x%02llX) | Remainder (A) = %llu (0x%02llX)\n  Verify: %llu = (%llu * %llu) + %llu -> %s\n"
+div_err_zero:     .asciz "  [ERROR] Division by zero is undefined!\n"
 
-str_div_init:
-    .asciz "Initial State"
-str_div_restore:
-    .asciz "A < 0: Restore A, Q0=0"
-str_div_norestore:
-    .asciz "A >= 0: Keep A, Q0=1"
-str_shift_sub:
-    .asciz "SHL(A,Q), A=A-M"
+str_pass:         .asciz "MATCH (PASS)"
+str_fail:         .asciz "MISMATCH (FAIL)"
+str_div_init:     .asciz "Initial State"
+str_div_restore:  .asciz "A < 0: Restore A, Q0=0"
+str_div_keep:     .asciz "A >= 0: Keep A, Q0=1"
+str_shift_sub:    .asciz "SHL(A,Q), A=A-M"
 
-prompt_div_q:
-    .asciz "  Enter unsigned Dividend Q (0 to 255): "
-prompt_div_m:
-    .asciz "  Enter unsigned Divisor  M (1 to 255): "
+prompt_div_q:     .asciz "  Enter unsigned Dividend Q (0..255): "
+prompt_div_m:     .asciz "  Enter unsigned Divisor  M (1..255): "
 
 .bss
 .align 8
-.lcomm div_out_rem, 8
+.global div_out_rem
+div_out_rem: .space 8
 
 .text
 
-# ==============================================================================
-# Routine: asm_restoring_divide
-# - Small Meaning: Executes 8-cycle restoring binary division algorithm.
-# - Long Form    : Assembly 64-Bit Restoring Binary Division
-# - Why We Used It: Computes fuel burn rate and orbital insertion delta-V ratios from logic gates.
-# Calling Convention (Microsoft x64 ABI):
-#   RCX = uint64_t dividend (Dividend Q, 0..255)
-#   RDX = uint64_t divisor  (Divisor  M, 1..255)
-#   R8  = uint64_t* out_rem (Pointer to store remainder quadword A)
-#   R9  = uint64_t verbose  (1 = print step-by-step table, 0 = silent)
-# Returns:
-#   RAX = 64-bit Quotient (Q)
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Restoring Binary Division Algorithm] asm_restoring_divide
+# Purpose   : Divides unsigned 8-bit dividend by divisor in 8 cycles using
+#             shift-left, trial subtract, and restore—without hardware DIV/IDIV.
+# Game Role : Computes fuel burn ratios & delta-V splits at ALU gate level.
+# Inputs    : RCX=dividend (0..255), RDX=divisor (1..255), R8=&out_rem, R9=verbose
+# Output    : RAX = quotient Q (returns 0 and *out_rem=0 if divisor == 0)
+# ------------------------------------------------------------------------------
 .global asm_restoring_divide
 .global _asm_restoring_divide
 asm_restoring_divide:
 _asm_restoring_divide:
     push rbp
-    mov rbp, rsp
-    sub rsp, 80                 # Local storage and shadow space
+    mov  rbp, rsp
     push rbx
     push rsi
     push rdi
@@ -82,247 +62,205 @@ _asm_restoring_divide:
     push r13
     push r14
     push r15
+    sub  rsp, 120               # WHY: 7 pushes (56) + 120 = 176 -> strictly 16-byte aligned for printf
 
-    # Register allocation:
-    # R12 = Dividend Q (initially Dividend & 0xFF)
-    # R13 = Divisor  M (Divisor & 0xFF)
-    # R14 = out_rem pointer
-    # R15 = verbose flag
-    # RBX = Accumulator A (signed 64-bit, initially 0)
-    # [rbp - 8]  = Cycle counter (1..8)
-    # [rbp - 16] = action_str pointer
+    movzx r12, cl               # WHY: Mask to 8-bit unsigned Dividend Q (also holds final Quotient)
+    movzx r13, dl               # WHY: Mask to 8-bit unsigned Divisor M
+    mov  r14, r8
+    mov  r15, r9
+    mov  [rsp + 96], r12        # WHY: Preserve initial dividend to verify Q*M + A == Dividend at end
 
-    movzx r12, cl               # R12 = Dividend Q
-    movzx r13, dl               # R13 = Divisor M
-    mov r14, r8                 # R14 = out_rem pointer
-    mov r15, r9                 # R15 = verbose flag
+    test r13, r13               # WHY: Guard against division by zero (undefined & infinite loop otherwise)
+    jnz  .L_div_valid
 
-    # Division by zero check
-    test r13, r13
-    jnz .L_div_valid
-
-    # Zero divisor handler
     test r14, r14
-    jz .L_div_zero_no_rem
-    mov qword ptr [r14], 0
-.L_div_zero_no_rem:
+    jz   .L_div_zero_msg
+    mov  qword ptr [r14], 0
+.L_div_zero_msg:
     test r15, r15
-    jz .L_div_zero_silent
-    lea rcx, [rip + div_err_zero]
+    jz   .L_div_zero_ret
+    lea  rcx, [rip + div_err_zero]
     call print_str
-.L_div_zero_silent:
-    xor rax, rax                # Return 0 on division by zero
-    jmp .L_rest_div_exit
+.L_div_zero_ret:
+    xor  rax, rax
+    jmp  .L_div_exit
 
 .L_div_valid:
-    xor rbx, rbx                # RBX = Accumulator A = 0
-    mov qword ptr [rbp - 8], 1  # Cycle = 1
+    xor  rbx, rbx               # WHY: Partial remainder A starts at 0
+    mov  qword ptr [rsp + 80], 1
 
     test r15, r15
-    jz .L_div_loop              # Silent mode skips table
+    jz   .L_div_loop
 
-    # Print Table Header
-    lea rcx, [rip + div_hdr]
+    lea  rcx, [rip + div_hdr]
+    call print_str
+    lea  rcx, [rip + div_inputs_fmt]
+    mov  rdx, r12
+    mov  r8,  r12
+    call printf
+    mov  rcx, r12
+    call print_bin8
+    lea  rcx, [rip + div_inputs_m]
+    mov  rdx, r13
+    mov  r8,  r13
+    call printf
+    mov  rcx, r13
+    call print_bin8
+    lea  rcx, [rip + div_table_hdr]
     call print_str
 
-    lea rcx, [rip + div_inputs_fmt]
-    mov rdx, r12
-    mov r8,  r12
+    lea  rcx, [rip + div_row_fmt]
+    xor  rdx, rdx
+    lea  r8,  [rip + str_div_init]
     call printf
-
-    mov rcx, r12
+    xor  rcx, rcx
     call print_bin8
-
-    lea rcx, [rip + div_inputs_m]
-    mov rdx, r13
-    mov r8,  r13
-    call printf
-
-    mov rcx, r13
-    call print_bin8
-
-    lea rcx, [rip + div_table_hdr]
+    lea  rcx, [rip + div_row_mid]
     call print_str
-
-    # Print Initial Row 0
-    lea rcx, [rip + div_row_fmt]
-    xor rdx, rdx                # Cycle 0
-    lea r8,  [rip + str_div_init]
-    call printf
-
-    xor rcx, rcx                # A = 0
+    mov  rcx, r12
     call print_bin8
-
-    lea rcx, [rip + div_row_mid]
-    call print_str
-
-    mov rcx, r12                # Q
-    call print_bin8
-
-    lea rcx, [rip + div_row_end]
-    lea rdx, [rip + str_div_init]
+    lea  rcx, [rip + div_row_end]
+    lea  rdx, [rip + str_div_init]
     call printf
 
 .L_div_loop:
-    # --------------------------------------------------------------------------
-    # 1. Shift Left combined pair [A : Q] by 1 bit
-    # --------------------------------------------------------------------------
-    # Extract MSB of Q (bit 7)
-    mov rax, r12
-    shr rax, 7
-    and rax, 1                  # RAX = bit 7 of Q
+    # Step 1: Shift [A : Q] left 1 bit so next dividend bit enters bottom of A
+    mov  rax, r12
+    shr  rax, 7
+    and  rax, 1                 # WHY: Grab top bit (MSB) of Q before shifting Q left
+    shl  r12, 1
+    and  r12, 0xFF              # WHY: Keep Q within 8 bits (vacated bit 0 becomes next quotient bit)
+    shl  rbx, 1
+    or   rbx, rax               # WHY: Bring Q's old MSB into bit 0 of Accumulator A
 
-    # Shift Q left by 1 (bounded to 8 bits)
-    shl r12, 1
-    and r12, 0xFF
+    # Step 2: Trial subtraction A = A - M
+    sub  rbx, r13               # WHY: Test whether Divisor M fits into partial remainder A
 
-    # --------------------------------------------------------------------------
-    # SHL RBX, 1 / OR RBX, RAX:
-    # - Small Meaning: Shift Accumulator A left by 1 and insert MSB of Q into bit 0
-    # - Long Form    : Shift Logical Left Accumulator / Bitwise OR Shifted MSB
-    # - Why We Used It: Transfers the highest remaining dividend bit into active partial remainder.
-    # --------------------------------------------------------------------------
-    shl rbx, 1
-    or  rbx, rax
+    # Step 3: Check sign of A -> Restore if negative, set Q0=1 if non-negative
+    cmp  rbx, 0
+    jl   .L_div_restore
 
-    # --------------------------------------------------------------------------
-    # 2. Subtract Divisor: A = A - M
-    # --------------------------------------------------------------------------
-    sub rbx, r13
+    or   r12, 1                 # WHY: A >= 0 means M fit -> keep A and record quotient bit Q0 = 1
+    lea  rax, [rip + str_div_keep]
+    mov  [rsp + 88], rax
+    jmp  .L_div_print_row
 
-    # --------------------------------------------------------------------------
-    # 3. Check Sign of Accumulator A (Restoring Decision)
-    # --------------------------------------------------------------------------
-    cmp rbx, 0
-    jl .L_div_negative
-
-    # A >= 0: Subtraction succeeded! Keep A, set Q0 = 1
-    or  r12, 1
-    lea rax, [rip + str_div_norestore]
-    mov [rbp - 16], rax
-    jmp .L_div_print_row
-
-.L_div_negative:
-    # A < 0: Subtraction went negative! Restore A = A + M, leave Q0 = 0
-    add rbx, r13
-    lea rax, [rip + str_div_restore]
-    mov [rbp - 16], rax
+.L_div_restore:
+    add  rbx, r13               # WHY: A < 0 means we subtracted too much -> RESTORE A = A + M (Q0 stays 0)
+    lea  rax, [rip + str_div_restore]
+    mov  [rsp + 88], rax
 
 .L_div_print_row:
     test r15, r15
-    jz .L_div_loop_next
+    jz   .L_div_next
 
-    lea rcx, [rip + div_row_fmt]
-    mov rdx, [rbp - 8]          # Cycle index
-    lea r8,  [rip + str_shift_sub]
+    lea  rcx, [rip + div_row_fmt]
+    mov  rdx, [rsp + 80]
+    lea  r8,  [rip + str_shift_sub]
     call printf
-
-    movzx rcx, bl               # A byte
+    movzx rcx, bl
     call print_bin8
-
-    lea rcx, [rip + div_row_mid]
+    lea  rcx, [rip + div_row_mid]
     call print_str
-
-    movzx rcx, r12b             # Q byte
+    movzx rcx, r12b
     call print_bin8
-
-    lea rcx, [rip + div_row_end]
-    mov rdx, [rbp - 16]         # Action string
+    lea  rcx, [rip + div_row_end]
+    mov  rdx, [rsp + 88]
     call printf
 
-.L_div_loop_next:
-    inc qword ptr [rbp - 8]
-    cmp qword ptr [rbp - 8], 8
-    jle .L_div_loop
+.L_div_next:
+    inc  qword ptr [rsp + 80]
+    cmp  qword ptr [rsp + 80], 8 # WHY: Run 8 cycles for 8-bit unsigned dividend
+    jle  .L_div_loop
 
-    # Store Remainder A via output pointer
     test r14, r14
-    jz .L_div_skip_rem_store
-    mov [r14], rbx
-
-.L_div_skip_rem_store:
+    jz   .L_div_skip_rem
+    mov  [r14], rbx             # WHY: Final Accumulator A holds the exact Remainder
+.L_div_skip_rem:
     test r15, r15
-    jz .L_div_ret
+    jz   .L_div_done
 
-    lea rcx, [rip + div_table_footer]
+    lea  rcx, [rip + div_table_footer]
     call print_str
 
-    # Verification: Dividend == (Quotient * Divisor) + Remainder
-    mov rax, r12                # Q
-    imul rax, r13               # Q * M
-    add rax, rbx                # (Q * M) + A
-
-    mov rdx, [rsp + 120]        # Load original dividend or compare with RAX
-    lea rdi, [rip + str_pass]
-    cmp rax, [rsp + 120]
-    # Note: verification check
-    mov rdi, offset str_pass
-
-    lea rcx, [rip + div_final_fmt]
-    mov rdx, r12                # Quotient dec
-    mov r8,  r12                # Quotient hex
-    mov r9,  rbx                # Remainder dec
-    mov [rsp + 32], rbx         # Remainder hex on stack
-    mov rax, r12
+    mov  rax, r12
     imul rax, r13
-    add rax, rbx                # Verified Dividend
-    mov [rsp + 40], rax         # Dividend on stack
-    mov [rsp + 48], r12         # Quotient
-    mov [rsp + 56], r13         # Divisor
-    mov [rsp + 64], rbx         # Remainder
-    lea r10, [rip + str_pass]
-    mov [rsp + 72], r10         # PASS
+    add  rax, rbx               # WHY: Verify (Quotient * Divisor + Remainder) == Original Dividend
+    mov  rsi, [rsp + 96]
+    lea  rdi, [rip + str_pass]
+    cmp  rax, rsi
+    je   .L_div_print_final
+    lea  rdi, [rip + str_fail]
+
+.L_div_print_final:
+    lea  rcx, [rip + div_final_fmt]
+    mov  rdx, r12
+    mov  r8,  r12
+    mov  r9,  rbx
+    mov  [rsp + 32], rbx
+    mov  [rsp + 40], rsi
+    mov  [rsp + 48], r12
+    mov  [rsp + 56], r13
+    mov  [rsp + 64], rbx
+    mov  [rsp + 72], rdi
     call printf
 
-.L_div_ret:
-    mov rax, r12                # RAX = Final Quotient
+.L_div_done:
+    mov  rax, r12               # WHY: Return Quotient Q in RAX
 
-.L_rest_div_exit:
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop rdi
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+.L_div_exit:
+    add  rsp, 120
+    pop  r15
+    pop  r14
+    pop  r13
+    pop  r12
+    pop  rdi
+    pop  rsi
+    pop  rbx
+    pop  rbp
     ret
 
-# ==============================================================================
-# Routine: co3_demo_restoring_div
-# - Small Meaning: Interactive demonstration runner for Restoring Division.
-# - Long Form    : CO3 Demonstration Driver for Restoring Binary Division
-# - Why We Used It: Accepts user dividend and divisor and prints step-by-step table.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# [TOPIC: Interactive Restoring Division Demo] co3_demo_restoring_div
+# Purpose   : Reads Q and M (defaults 29 / 5) and displays step-by-step trace.
+# Game Role : Interactive trace of Restoring Division steps (shift, sub, restore).
+# ------------------------------------------------------------------------------
 .global co3_demo_restoring_div
 .global _co3_demo_restoring_div
 co3_demo_restoring_div:
 _co3_demo_restoring_div:
     push rbp
-    mov rbp, rsp
-    sub rsp, 48
+    mov  rbp, rsp
     push rbx
     push rsi
+    sub  rsp, 32
 
-    lea rcx, [rip + prompt_div_q]
+    lea  rcx, [rip + prompt_div_q]
     call print_str
     call read_int
-    mov rbx, rax                # RBX = Dividend Q
+    cmp  rax, 0
+    jge  .L_q_ok
+    mov  rax, 29
+.L_q_ok:
+    mov  rbx, rax
 
-    lea rcx, [rip + prompt_div_m]
+    lea  rcx, [rip + prompt_div_m]
     call print_str
     call read_int
-    mov rsi, rax                # RSI = Divisor M
+    cmp  rax, 1
+    jge  .L_m_ok
+    mov  rax, 5
+.L_m_ok:
+    mov  rsi, rax
 
-    mov rcx, rbx                # 1st: Dividend
-    mov rdx, rsi                # 2nd: Divisor
-    lea r8,  [rip + div_out_rem] # 3rd: out_rem
-    mov r9,  1                  # 4th: verbose = 1
+    mov  rcx, rbx
+    mov  rdx, rsi
+    lea  r8,  [rip + div_out_rem]
+    mov  r9,  1
     call asm_restoring_divide
 
-    pop rsi
-    pop rbx
-    mov rsp, rbp
-    pop rbp
+    add  rsp, 32
+    pop  rsi
+    pop  rbx
+    pop  rbp
     ret

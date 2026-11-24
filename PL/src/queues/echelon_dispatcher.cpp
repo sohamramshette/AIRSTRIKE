@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/queues/echelon_dispatcher.cpp
+// Subject   : PL-CO3 | Stack and Queue Applications
+// Topics    : [TOPIC: EchelonDispatcher] [TOPIC: Circular Queue] [TOPIC: Modulo Wrap-Around] [TOPIC: FIFO]
+// Game Role : Implements circular FIFO echelon scheduling with wrap-around state detection.
+// ==============================================================================
+
 #include "echelon_dispatcher.h"
 #include <iomanip>
 
@@ -11,11 +18,15 @@ QueueWaveEchelon::~QueueWaveEchelon() {
     delete[] buffer;
 }
 
+// [TOPIC: Circular Buffer Copy]
+// Purpose: Unrolls wrapped circular echelon slots in FIFO order into a fresh buffer.
+// Game Role: Preserves exact echelon launch order across copied dispatchers.
 QueueWaveEchelon::QueueWaveEchelon(const QueueWaveEchelon& other)
     : frontIndex(0), rearIndex(other.currentCount - 1), currentCount(other.currentCount),
       maxCapacity(other.maxCapacity) {
     buffer = new EchelonWaveUnit[maxCapacity];
     for (int i = 0; i < other.currentCount; ++i) {
+        // WHY: Translate wrapped offset i relative to other.frontIndex using modulo capacity.
         int idx = (other.frontIndex + i) % other.maxCapacity;
         buffer[i] = other.buffer[idx];
     }
@@ -30,6 +41,7 @@ QueueWaveEchelon& QueueWaveEchelon::operator=(const QueueWaveEchelon& other) {
         maxCapacity = other.maxCapacity;
         buffer = new EchelonWaveUnit[maxCapacity];
         for (int i = 0; i < other.currentCount; ++i) {
+            // WHY: Normalize wrapped buffer indices starting from 0 in the destination copy.
             int idx = (other.frontIndex + i) % other.maxCapacity;
             buffer[i] = other.buffer[idx];
         }
@@ -37,23 +49,31 @@ QueueWaveEchelon& QueueWaveEchelon::operator=(const QueueWaveEchelon& other) {
     return *this;
 }
 
+// [TOPIC: EchelonDispatcher] [TOPIC: Modulo Wrap-Around] [TOPIC: FIFO Enqueue]
+// Purpose: Adds an echelon unit to rearIndex with modulo wrap-around in O(1).
+// Game Role: Queues incoming enemy echelon formations up to maxCapacity.
 bool QueueWaveEchelon::enqueue(const EchelonWaveUnit& unit) {
     if (isFull()) {
         std::cerr << "[Queue Overflow] Echelon queue full (" << maxCapacity << " max)!\n";
         return false;
     }
+    // WHY: Modulo wrap-around lets rearIndex loop back to slot 0 after frontIndex advances -> Game: Zero array drift.
     rearIndex = (rearIndex + 1) % maxCapacity;
     buffer[rearIndex] = unit;
     currentCount++;
     return true;
 }
 
+// [TOPIC: EchelonDispatcher] [TOPIC: Modulo Wrap-Around] [TOPIC: FIFO Dequeue]
+// Purpose: Marks the front echelon deployed and advances frontIndex circularly in O(1).
+// Game Role: Launches the earliest queued enemy echelon into the combat arena.
 bool QueueWaveEchelon::dequeue(EchelonWaveUnit& outUnit) {
     if (isEmpty()) {
         std::cerr << "[Queue Underflow] Echelon queue is empty!\n";
         return false;
     }
     outUnit = buffer[frontIndex];
+    // WHY: Flag unit deployed upon launch while wrapping frontIndex in O(1).
     outUnit.deployed = true;
     frontIndex = (frontIndex + 1) % maxCapacity;
     currentCount--;

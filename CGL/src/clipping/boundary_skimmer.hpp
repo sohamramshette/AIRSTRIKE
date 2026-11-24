@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/clipping/boundary_skimmer.hpp
+// Subject   : CGL-CO5 | BoundarySkimmer Perimeter Enemy
+// Topics    : [TOPIC: Cohen-Sutherland 4-bit TBRL Outcodes] [TOPIC: Sutherland-Hodgman Polygon Clipping] [TOPIC: BoundarySkimmer]
+// Game Role : Declares the BoundarySkimmer enemy that skims the arena border to verify line/polygon clipping.
+// ==============================================================================
+
 #ifndef BOUNDARY_SKIMMER_HPP
 #define BOUNDARY_SKIMMER_HPP
 
@@ -7,15 +14,9 @@
 
 namespace CGL {
 
-/**
- * @brief Boundary Phase Skimmer Enemy (CGL-CO5).
- *
- * Demonstrates:
- * - 2D Point and Line Clipping via Cohen-Sutherland Algorithm
- * - 4-bit Region Outcodes (Top, Bottom, Right, Left)
- * - Trivial Acceptance (code1 | code2 == 0) and Trivial Rejection (code1 & code2 != 0)
- * - Sutherland-Hodgman Polygon Clipping pipeline against 4 boundary edges
- */
+// [TOPIC: BoundarySkimmer / Cohen-Sutherland 4-bit TBRL Outcodes / Sutherland-Hodgman Polygon Clipping]
+// Purpose: Patrols the viewport border while clipping its laser sight and hull polygon against arenaWindow.
+// Game Role: Represents CGL-CO5 enemy type [5] in AIRSTRIKE's Enemy Demonstrator and CO5 test suite.
 class BoundarySkimmer {
 public:
     BoundarySkimmer();
@@ -25,14 +26,18 @@ public:
     void update(float dt);
     void render(int screenW, int screenH);
 
-    // Mathematical Clipping Algorithms (Pure C++ for automated unit testing)
+    // [TOPIC: Cohen-Sutherland 4-bit TBRL Outcodes / Sutherland-Hodgman Polygon Clipping]
+    // Purpose: Clips the targeting ray and hull polygon against rectangular window win.
+    // Game Role: Links BoundarySkimmer sensor geometry directly to CO5 clipping algorithms.
     bool clipLaserSight(const LineSegment& in, const RectWindow& win,
                         LineSegment& out, int& outCode1, int& outCode2) const;
 
     std::vector<Vec2> clipHullPolygon(const std::vector<Vec2>& subjectPoly,
                                       const RectWindow& win) const;
 
-    // Test Scenarios
+    // [TOPIC: Clipping Case Verification]
+    // Purpose: Validates trivial accept, trivial reject, single/multi-edge line clipping, and polygon clipping.
+    // Game Role: Headless test predicates invoked by the CO5 BoundarySkimmer test suite.
     static bool testTrivialAccept(const RectWindow& win);
     static bool testTrivialReject(const RectWindow& win);
     static bool testSingleBoundaryCross(const RectWindow& win);

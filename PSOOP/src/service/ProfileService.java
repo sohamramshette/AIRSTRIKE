@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/service/ProfileService.java
+// Subject   : PSOOP-CO3 | Pilot Profile PostgREST Synchronization
+// Topics    : [TOPIC: REST Client] [TOPIC: Async CompletableFuture]
+// Game Role : Fetches and upserts authenticated pilot callsigns in public.profiles.
+// ==============================================================================
 package service;
 
 import database.SimpleJson;

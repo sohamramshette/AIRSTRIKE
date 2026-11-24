@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/objects/enemy_demo_scene.hpp
+// Subject   : Scene | Interactive CO1-CO6 Enemy Showcase
+// Topics    : [TOPIC: Scene Orchestration] [TOPIC: PolygonCruiser] [TOPIC: OrbitalRotor] [TOPIC: RasterSentinel] [TOPIC: WarpCruiser] [TOPIC: BoundarySkimmer] [TOPIC: PhongCruiser]
+// Game Role : Declares Screen 7's tabbed inspector switching among all six CO-specific AIRSTRIKE enemy craft.
+// ==============================================================================
+
 #ifndef ENEMY_DEMO_SCENE_HPP
 #define ENEMY_DEMO_SCENE_HPP
 
@@ -11,16 +18,9 @@
 
 namespace CGL {
 
-/**
- * @brief Dedicated Interactive Demonstration Scene for all Six CGL Enemy Types.
- *
- * Implements Phase 8.7 requirements:
- * - Integrates all 6 CGL enemy types into the active GLUT application.
- * - Allows user to select and switch between enemies ([1] through [6]).
- * - Displays on-screen HUD with enemy name, corresponding CGL CO, and syllabus concepts.
- * - Enables live inspection of graphics concepts via keyboard and arrow controls.
- * - Enforces strict OpenGL state cleanliness without state leakage.
- */
+// [TOPIC: Scene Orchestration / CO1-CO6 Enemy Demonstrator / HUD Font Renderer]
+// Purpose: Hosts all six CGL enemy instances, switches tabs [1]-[6], prevents OpenGL state leakage, and draws HUD telemetry.
+// Game Role: Interactive enemy inspection gallery (Screen 7) in AIRSTRIKE CGL.
 class EnemyDemoScene {
 public:
     EnemyDemoScene();
@@ -85,7 +85,9 @@ private:
     float co6ModelRotX;
     float co6ModelRotY;
 
-    // Internal Render Subroutines
+    // [TOPIC: Isolated Per-CO Enemy Renderers]
+    // Purpose: Configures dedicated projection, camera, and OpenGL state for each enemy tab.
+    // Game Role: Prevents state leakage across 2D primitive, pixel-space, and 3D lit enemies.
     void renderCO1PolygonCruiser(int width, int height);
     void renderCO2OrbitalRotor(int width, int height);
     void renderCO3RasterSentinel(int width, int height);
@@ -93,7 +95,9 @@ private:
     void renderCO5BoundarySkimmer(int width, int height);
     void renderCO6PhongCruiser(int width, int height);
 
-    // HUD and UI Overlay
+    // [TOPIC: HUD Font Renderer]
+    // Purpose: Draws top navigation tabs, syllabus telemetry bar, and bottom control hints.
+    // Game Role: Displays live parameters and CO annotations for the active enemy.
     void renderHUD(int width, int height);
 };
 

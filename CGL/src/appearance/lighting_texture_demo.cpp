@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/appearance/lighting_texture_demo.cpp
+// Subject   : CGL-CO6 | Lighting, Shading, Color & Texture Mapping
+// Topics    : [TOPIC: Blinn-Phong Illumination (Ambient + Diffuse + Specular)] [TOPIC: Gouraud Smooth Shading] [TOPIC: 24-bit BMP Texture Mapping] [TOPIC: HSV-to-RGB]
+// Game Role : Implements HSV-to-RGB math, BMP/procedural textures, Phong light setup, and UV-mapped meshes.
+// ==============================================================================
+
 #include "lighting_texture_demo.hpp"
 #include "common/font_renderer.hpp"
 #include "common/image_loader.hpp"
@@ -24,8 +31,12 @@ LightingTextureDemo::~LightingTextureDemo() {
     if (localAlienTextureId != 0) glDeleteTextures(1, &localAlienTextureId);
 }
 
+// [TOPIC: HSV-to-RGB]
+// Purpose: Maps Hue [0,1], Saturation [0,1], Value [0,1] through the 6-sector hexcone model to RGB.
+// Game Role: Supports color-space conversion tests and color generation in CO6.
 Color4 LightingTextureDemo::hsvToRgb(float h, float s, float v, float a) {
     float r = 0.0f, g = 0.0f, b = 0.0f;
+    // WHY: Partition hue circle [0, 1) into six 60-degree sectors (i = 0..5) with fractional offset f
     int i = static_cast<int>(h * 6.0f);
     float f = h * 6.0f - i;
     float p = v * (1.0f - s);
@@ -43,6 +54,9 @@ Color4 LightingTextureDemo::hsvToRgb(float h, float s, float v, float a) {
     return Color4(r, g, b, a);
 }
 
+// [TOPIC: Procedural Texture Generation]
+// Purpose: Synthesizes a 24-bit RGB hull plating bitmap with seams, rivets, and hazard stripes.
+// Game Role: Serves as in-memory fallback texture for spacecraft hulls when BMP files are absent.
 void LightingTextureDemo::generateHullTexture(int width, int height, std::vector<unsigned char>& data) {
     data.resize(width * height * 3);
     for (int y = 0; y < height; ++y) {
@@ -73,6 +87,9 @@ void LightingTextureDemo::generateHullTexture(int width, int height, std::vector
     }
 }
 
+// [TOPIC: Procedural Texture Generation]
+// Purpose: Generates banded blue-cyan planetary cloud swirls via trigonometric RGB modulation.
+// Game Role: Textures the CO6 planet sphere and the background celestial planet in SpaceCombatScene.
 void LightingTextureDemo::generatePlanetTexture(int width, int height, std::vector<unsigned char>& data) {
     data.resize(width * height * 3);
     for (int y = 0; y < height; ++y) {
@@ -93,9 +110,13 @@ void LightingTextureDemo::generatePlanetTexture(int width, int height, std::vect
     }
 }
 
+// [TOPIC: Texture Filtering & Wrapping]
+// Purpose: Applies GL_LINEAR/GL_NEAREST filtering and GL_REPEAT/GL_CLAMP wrapping to texId.
+// Game Role: Allows interactive comparison of texture sampling and UV edge clamping in CO6.
 void LightingTextureDemo::applyTextureParameters(GLuint texId) {
     if (texId == 0) return;
     glBindTexture(GL_TEXTURE_2D, texId);
+    // WHY: GL_LINEAR bilinearly interpolates 2x2 texels whereas GL_NEAREST picks the closest texel
     GLint filter = linearFilter ? GL_LINEAR : GL_NEAREST;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
@@ -104,6 +125,9 @@ void LightingTextureDemo::applyTextureParameters(GLuint texId) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
 }
 
+// [TOPIC: 24-bit BMP Texture Mapping]
+// Purpose: Loads space_hull.bmp and alien_surface.bmp from disk and uploads them to OpenGL textures.
+// Game Role: Provides real bitmap textures for the CO6 spacecraft and planet with procedural fallback.
 void LightingTextureDemo::loadLocalTextures() {
     int w = 0, h = 0;
     std::vector<unsigned char> hullData;
@@ -158,6 +182,9 @@ void LightingTextureDemo::loadLocalTextures() {
     }
 }
 
+// [TOPIC: Procedural Texture Upload]
+// Purpose: Generates 128x128 RGB buffers and uploads them as GPU GL_TEXTURE_2D objects.
+// Game Role: Ensures CO6 always has valid procedural hull/planet textures available.
 void LightingTextureDemo::createProceduralTextures() {
     int texDim = 128;
     std::vector<unsigned char> hullData;
@@ -246,6 +273,9 @@ void LightingTextureDemo::reset() {
     applyTextureParameters(localAlienTextureId);
 }
 
+// [TOPIC: Blinn-Phong Illumination (Ambient + Diffuse + Specular) / Gouraud Smooth Shading]
+// Purpose: Configures GL_LIGHT0 positional light, material shininess, and GL_SMOOTH/GL_FLAT shading.
+// Game Role: Controls live Ambient+Diffuse+Specular illumination on the CO6 planet and ship.
 void LightingTextureDemo::setupLighting() {
     if (!lightingEnabled) {
         glDisable(GL_LIGHTING);
@@ -257,6 +287,7 @@ void LightingTextureDemo::setupLighting() {
     glEnable(GL_LIGHT0);
 
     float lightRad = lightOrbitAngle * static_cast<float>(M_PI) / 180.0f;
+    // WHY: Homogeneous w = 1.0f specifies a finite positional point light orbiting at radius 5
     GLfloat lightPos[] = {
         std::cos(lightRad) * 5.0f,
         3.0f,
@@ -283,6 +314,7 @@ void LightingTextureDemo::setupLighting() {
     glMaterialfv(GL_FRONT, GL_SPECULAR, matSpec);
     glMaterialf(GL_FRONT, GL_SHININESS, matShininess);
 
+    // WHY: GL_SMOOTH interpolates per-vertex lighting (Gouraud) across triangles/quads; GL_FLAT uses one vertex
     glShadeModel(smoothShading ? GL_SMOOTH : GL_FLAT);
 
     // Render light source indicator sphere
@@ -295,6 +327,9 @@ void LightingTextureDemo::setupLighting() {
     glPopMatrix();
 }
 
+// [TOPIC: 24-bit BMP Texture Mapping / Surface Normals]
+// Purpose: Tessellates a UV sphere using lat/lon GL_QUAD_STRIP with unit outward normals and (u, v) texcoords.
+// Game Role: Renders the illuminated celestial planet on the left side of the CO6 demo.
 void LightingTextureDemo::renderTexturedSphere(float radius, int slices, int stacks) {
     GLuint activeTex = (useFileTexture && localAlienTextureId != 0) ? localAlienTextureId : procPlanetTextureId;
 
@@ -318,6 +353,7 @@ void LightingTextureDemo::renderTexturedSphere(float radius, int slices, int sta
             float u = static_cast<float>(j) / slices;
 
             // Vertex 1
+            // WHY: Unit sphere direction vector doubles directly as surface normal N for lighting calculations
             float nx1 = std::sin(phi1) * std::cos(theta);
             float ny1 = std::cos(phi1);
             float nz1 = std::sin(phi1) * std::sin(theta);
@@ -339,6 +375,9 @@ void LightingTextureDemo::renderTexturedSphere(float radius, int slices, int sta
     glDisable(GL_TEXTURE_2D);
 }
 
+// [TOPIC: 24-bit BMP Texture Mapping / Surface Normals]
+// Purpose: Renders a 3-triangle delta starfighter hull with UV coordinates and faceted normals.
+// Game Role: Displays hull BMP/procedural texturing and specular highlights on the right side of CO6.
 void LightingTextureDemo::renderTexturedShip(float size) {
     GLuint activeTex = (useFileTexture && localHullTextureId != 0) ? localHullTextureId : procHullTextureId;
 
@@ -373,6 +412,9 @@ void LightingTextureDemo::renderTexturedShip(float size) {
     glDisable(GL_TEXTURE_2D);
 }
 
+// [TOPIC: Appearance Pipeline & HUD Telemetry]
+// Purpose: Sets 3D perspective camera, enables lighting/textures, draws planet and ship, and renders state HUD.
+// Game Role: Orchestrates Screen 6 (CO6 Lighting, Texture & Color) in AIRSTRIKE.
 void LightingTextureDemo::render(int screenWidth, int screenHeight) {
     glClearColor(0.02f, 0.03f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -401,6 +443,7 @@ void LightingTextureDemo::render(int screenWidth, int screenHeight) {
     renderTexturedShip(1.0f);
     glPopMatrix();
 
+    // WHY: Disable lighting before HUD rendering so bitmap text keeps exact unlit colors
     glDisable(GL_LIGHTING);
 
     // HUD Status and Metrics

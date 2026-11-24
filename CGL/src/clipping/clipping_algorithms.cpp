@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/clipping/clipping_algorithms.cpp
+// Subject   : CGL-CO5 | 2D Line & Polygon Clipping
+// Topics    : [TOPIC: Cohen-Sutherland 4-bit TBRL Outcodes] [TOPIC: Liang-Barsky] [TOPIC: Sutherland-Hodgman Polygon Clipping]
+// Game Role : Implements TBRL outcode clipping, Liang-Barsky parametric bounds, and Sutherland-Hodgman pipelines.
+// ==============================================================================
+
 #include "clipping_algorithms.hpp"
 #include "common/font_renderer.hpp"
 #include <iomanip>
@@ -56,8 +63,12 @@ void ClippingAlgorithmsDemo::reset() {
 // Algorithm Implementations
 // -------------------------------------------------------------
 
+// [TOPIC: Cohen-Sutherland 4-bit TBRL Outcodes]
+// Purpose: Encodes endpoint (x, y) against win into a 4-bit Top/Bottom/Right/Left bitmask.
+// Game Role: Classifies laser endpoints against the arena bounds in O(1) bitwise checks.
 int ClippingAlgorithmsDemo::computeOutCode(float x, float y, const RectWindow& win) {
     int code = CODE_INSIDE;
+    // WHY: Encode bit 0 (L), bit 1 (R), bit 2 (B), bit 3 (T) -> 4-bit TBRL outcode
     if (x < win.xmin)      code |= CODE_LEFT;
     else if (x > win.xmax) code |= CODE_RIGHT;
     if (y < win.ymin)      code |= CODE_BOTTOM;
@@ -65,6 +76,9 @@ int ClippingAlgorithmsDemo::computeOutCode(float x, float y, const RectWindow& w
     return code;
 }
 
+// [TOPIC: Cohen-Sutherland 4-bit TBRL Outcodes]
+// Purpose: Iteratively applies trivial accept/reject bitwise tests and clips outside endpoints to win edges.
+// Game Role: Clips AIRSTRIKE laser beams and BoundarySkimmer targeting rays cleanly.
 bool ClippingAlgorithmsDemo::cohenSutherlandClip(const LineSegment& in, const RectWindow& win,
                                                 LineSegment& out, int& outCode1, int& outCode2) {
     float x1 = in.p1.x, y1 = in.p1.y;
@@ -80,10 +94,12 @@ bool ClippingAlgorithmsDemo::cohenSutherlandClip(const LineSegment& in, const Re
     while (true) {
         if ((code1 | code2) == 0) {
             // Trivial accept: both endpoints inside
+            // WHY: Bitwise OR == 0 proves all TBRL outcode bits are zero for both endpoints
             accept = true;
             break;
         } else if ((code1 & code2) != 0) {
             // Trivial reject: both endpoints share outside region
+            // WHY: Bitwise AND != 0 proves both endpoints lie on the outside of the same half-plane
             break;
         } else {
             // Calculate boundary intersection
@@ -122,11 +138,15 @@ bool ClippingAlgorithmsDemo::cohenSutherlandClip(const LineSegment& in, const Re
     return accept;
 }
 
+// [TOPIC: Liang-Barsky]
+// Purpose: Solves u * p_k <= q_k across all 4 window edges to narrow parameter interval [u1, u2].
+// Game Role: Parametric line clipper rendered in CO5 Mode 1 and verified in CO5 unit tests.
 bool ClippingAlgorithmsDemo::liangBarskyClip(const LineSegment& in, const RectWindow& win,
                                             LineSegment& out, float& u1, float& u2) {
     float dx = in.p2.x - in.p1.x;
     float dy = in.p2.y - in.p1.y;
 
+    // WHY: Formulate inequalities u * p[i] <= q[i] for Left, Right, Bottom, Top boundaries
     float p[4] = {-dx, dx, -dy, dy};
     float q[4] = {
         in.p1.x - win.xmin,
@@ -144,10 +164,12 @@ bool ClippingAlgorithmsDemo::liangBarskyClip(const LineSegment& in, const RectWi
             if (q[i] < 0.0f) return false; // Completely outside
         } else if (p[i] < 0.0f) {
             // Line directed outside to inside
+            // WHY: Entering edge tightens lower bound u1 = max(u1, q[i]/p[i])
             float r = q[i] / p[i];
             if (r > u1) u1 = r;
         } else {
             // Line directed inside to outside
+            // WHY: Leaving edge tightens upper bound u2 = min(u2, q[i]/p[i])
             float r = q[i] / p[i];
             if (r < u2) u2 = r;
         }
@@ -160,6 +182,9 @@ bool ClippingAlgorithmsDemo::liangBarskyClip(const LineSegment& in, const RectWi
     return true;
 }
 
+// [TOPIC: Sutherland-Hodgman Polygon Clipping]
+// Purpose: Passes polygon vertices through 4 sequential half-plane clippers (Left, Right, Bottom, Top).
+// Game Role: Clips rotating starfighter polygons in CO5 Mode 2 and BoundarySkimmer tests.
 std::vector<Vec2> ClippingAlgorithmsDemo::sutherlandHodgmanClip(const std::vector<Vec2>& poly, const RectWindow& win) {
     std::vector<Vec2> outputList = poly;
     if (outputList.empty()) return outputList;
@@ -210,6 +235,7 @@ std::vector<Vec2> ClippingAlgorithmsDemo::sutherlandHodgmanClip(const std::vecto
             bool currIn = isInside(curr);
             bool prevIn = isInside(prev);
 
+            // WHY: Apply the 4 Sutherland-Hodgman vertex emission cases along directed edge (prev -> curr)
             if (currIn) {
                 if (prevIn) {
                     outputList.push_back(curr); // In -> In
@@ -232,6 +258,9 @@ std::vector<Vec2> ClippingAlgorithmsDemo::sutherlandHodgmanClip(const std::vecto
 // Visual Screen Rendering
 // -------------------------------------------------------------
 
+// [TOPIC: Clipping Viewport Frame]
+// Purpose: Renders the translucent fill and bright cyan border of clipWin.
+// Game Role: Visualizes the active clipping rectangle in all three CO5 modes.
 void ClippingAlgorithmsDemo::drawClipWindow() {
     // Shaded clip window background
     glColor4f(0.05f, 0.15f, 0.25f, 0.35f);
@@ -254,6 +283,9 @@ void ClippingAlgorithmsDemo::drawClipWindow() {
     glLineWidth(1.0f);
 }
 
+// [TOPIC: Cohen-Sutherland 4-bit TBRL Outcodes]
+// Purpose: Draws unclipped lines in dim red, accepted clipped segments in neon green, and boundary vertices in yellow.
+// Game Role: Interactive CO5 Mode 0 visualizing Cohen-Sutherland line clipping.
 void ClippingAlgorithmsDemo::renderCohenSutherland(int screenWidth, int screenHeight) {
     drawClipWindow();
 
@@ -318,6 +350,9 @@ void ClippingAlgorithmsDemo::renderCohenSutherland(int screenWidth, int screenHe
     endHUD();
 }
 
+// [TOPIC: Liang-Barsky]
+// Purpose: Visualizes parametric [u1, u2] clipped line segments in gold over dim unclipped lines.
+// Game Role: Interactive CO5 Mode 1 demonstrating Liang-Barsky parametric clipping.
 void ClippingAlgorithmsDemo::renderLiangBarsky(int screenWidth, int screenHeight) {
     drawClipWindow();
 
@@ -374,6 +409,9 @@ void ClippingAlgorithmsDemo::renderLiangBarsky(int screenWidth, int screenHeight
     endHUD();
 }
 
+// [TOPIC: Sutherland-Hodgman Polygon Clipping]
+// Purpose: Rotates a starfighter silhouette, clips it via sutherlandHodgmanClip(), and highlights vertices.
+// Game Role: Interactive CO5 Mode 2 demonstrating 4-stage polygon boundary clipping.
 void ClippingAlgorithmsDemo::renderSutherlandHodgman(int screenWidth, int screenHeight) {
     drawClipWindow();
 
@@ -455,6 +493,9 @@ void ClippingAlgorithmsDemo::renderSutherlandHodgman(int screenWidth, int screen
     endHUD();
 }
 
+// [TOPIC: CO5 Clipping Showcase Dispatcher]
+// Purpose: Sets NDC [-1, 1] orthographic coordinates, renders the active clipper, and overlays HUD controls.
+// Game Role: Drives Screen 5 (CO5 Clipping Algorithms) in AIRSTRIKE.
 void ClippingAlgorithmsDemo::render(int screenWidth, int screenHeight) {
     glClearColor(0.02f, 0.03f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

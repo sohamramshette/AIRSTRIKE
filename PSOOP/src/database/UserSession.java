@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/UserSession.java
+// Subject   : PSOOP-CO1 / CO3 | Immutable Pilot Session Model
+// Topics    : [TOPIC: Encapsulation] [TOPIC: Security Guards]
+// Game Role : Stores pilot identity and JWT tokens with guest fallback and token redaction.
+// ==============================================================================
 package database;
 
 import java.util.Objects;
@@ -56,6 +62,7 @@ public class UserSession {
     }
 
     public boolean isExpired() {
+        // WHY: Guest sessions stay permanently active locally so offline play never expires mid-run.
         if (!isAuthenticated()) return false;
         return System.currentTimeMillis() >= expiresAt;
     }

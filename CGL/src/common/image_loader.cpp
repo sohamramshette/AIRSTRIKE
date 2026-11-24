@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/common/image_loader.cpp
+// Subject   : Common | BMP Loader & Writer
+// Topics    : [TOPIC: BMP Loader] [TOPIC: 24-bit BMP Texture Mapping] [TOPIC: 4-Byte Row Padding]
+// Game Role : Parses binary BMP headers, strips DWORD row padding, and converts BGR pixels to RGB for OpenGL.
+// ==============================================================================
+
 #include "image_loader.hpp"
 #include <fstream>
 #include <iostream>
@@ -6,6 +13,7 @@
 
 namespace CGL {
 
+// WHY: Pack structs to 1-byte boundaries so binary header fields match the exact on-disk BMP layout
 #pragma pack(push, 1)
 struct BMPFileHeader {
     uint16_t bfType{0x4D42}; // 'BM'
@@ -30,6 +38,9 @@ struct BMPInfoHeader {
 };
 #pragma pack(pop)
 
+// [TOPIC: BMP Loader / BGR-to-RGB Conversion]
+// Purpose: Validates BMP headers, reads BI_RGB pixel rows with padding, and outputs bottom-up RGB bytes.
+// Game Role: Feeds space_hull.bmp and alien_surface.bmp into glTexImage2D for CO6 and combat scenes.
 bool loadBMP(const std::string& filepath, int& width, int& height, std::vector<unsigned char>& rgbData) {
     std::ifstream file(filepath, std::ios::binary);
     if (!file.is_open()) {
@@ -60,9 +71,11 @@ bool loadBMP(const std::string& filepath, int& width, int& height, std::vector<u
 
     width = std::abs(infoHeader.biWidth);
     height = std::abs(infoHeader.biHeight);
-    bool flipY = (infoHeader.biHeight < 0); // Negative height means top-down
+    // WHY: Negative biHeight denotes top-down row storage; flip to match OpenGL bottom-up texcoords
+    bool flipY = (infoHeader.biHeight < 0);
 
     int bytesPerPixel = infoHeader.biBitCount / 8;
+    // WHY: Windows BMP scanlines are padded up to the next 4-byte (DWORD) multiple
     int rowPadding = (4 - (width * bytesPerPixel) % 4) % 4;
     int rowStride = width * bytesPerPixel + rowPadding;
 
@@ -84,7 +97,7 @@ bool loadBMP(const std::string& filepath, int& width, int& height, std::vector<u
             int srcIdx = x * bytesPerPixel;
             int dstIdx = (targetY * width + x) * 3;
 
-            // BMP stores BGR(A)
+            // WHY: BMP stores pixels in BGR(A) order while glTexImage2D expects GL_RGB order
             uint8_t b = rowBuffer[srcIdx + 0];
             uint8_t g = rowBuffer[srcIdx + 1];
             uint8_t r = rowBuffer[srcIdx + 2];
@@ -100,11 +113,15 @@ bool loadBMP(const std::string& filepath, int& width, int& height, std::vector<u
     return true;
 }
 
+// [TOPIC: 24-bit BMP Export]
+// Purpose: Writes a 54-byte BMP header and DWORD-aligned BGR scanlines from an RGB buffer.
+// Game Role: Exports raw 24-bit RGB image buffers to disk in standard Windows BMP format.
 bool saveBMP(const std::string& filepath, int width, int height, const std::vector<unsigned char>& rgbData) {
     if (width <= 0 || height <= 0 || rgbData.size() < static_cast<size_t>(width * height * 3)) {
         return false;
     }
 
+    // WHY: Pad each 24-bit scanline to a 4-byte boundary per BMP specification
     int rowPadding = (4 - (width * 3) % 4) % 4;
     int rowStride = width * 3 + rowPadding;
     uint32_t imageSize = static_cast<uint32_t>(rowStride * height);
@@ -132,7 +149,7 @@ bool saveBMP(const std::string& filepath, int width, int height, const std::vect
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int srcIdx = (y * width + x) * 3;
-            // Write BGR order
+            // WHY: Swap RGB -> BGR because uncompressed 24-bit BMP stores Blue first
             rowBuffer[x * 3 + 0] = rgbData[srcIdx + 2]; // Blue
             rowBuffer[x * 3 + 1] = rgbData[srcIdx + 1]; // Green
             rowBuffer[x * 3 + 2] = rgbData[srcIdx + 0]; // Red

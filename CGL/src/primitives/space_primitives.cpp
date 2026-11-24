@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/primitives/space_primitives.cpp
+// Subject   : CGL-CO1 | OpenGL Graphics Primitives
+// Topics    : [TOPIC: GL_POINTS] [TOPIC: GL_LINES] [TOPIC: GL_TRIANGLE_FAN] [TOPIC: CCW Winding] [TOPIC: Gouraud color interpolation]
+// Game Role : Renders the 8-quadrant OpenGL primitive showcase (stars, lasers, paths, crafts, shields, blasts, panels).
+// ==============================================================================
+
 #include "space_primitives.hpp"
 #include "common/font_renderer.hpp"
 
@@ -6,16 +13,26 @@ namespace CGL {
 SpacePrimitivesDemo::SpacePrimitivesDemo()
     : wireframeMode(false), animTimer(0.0f) {}
 
+// [TOPIC: Gouraud color interpolation / Alpha Blending]
+// Purpose: Configures GL_BLEND and GL_SMOOTH vertex color shading in the OpenGL state machine.
+// Game Role: Ensures smooth gradients across primitive beams, shields, and spacecraft hulls.
 void SpacePrimitivesDemo::init() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // WHY: GL_SMOOTH enables Gouraud color interpolation across vertices inside each primitive
     glShadeModel(GL_SMOOTH);
 }
 
+// [TOPIC: glPolygonMode]
+// Purpose: Toggles solid fill vs wireframe polygon rendering state.
+// Game Role: Allows interactive mesh inspection in the CO1 showcase.
 void SpacePrimitivesDemo::toggleWireframe() {
     wireframeMode = !wireframeMode;
 }
 
+// [TOPIC: GL_POINTS]
+// Purpose: Plots discrete 2D particle vertices around concentric polar rings.
+// Game Role: Renders the starfield particle cluster in Quadrant 1.
 void SpacePrimitivesDemo::drawPoints(float cx, float cy, float size) {
     // 1. GL_POINTS: Starfield cluster and sparkling particles
     glPointSize(3.0f);
@@ -35,9 +52,13 @@ void SpacePrimitivesDemo::drawPoints(float cx, float cy, float size) {
     glColor4f(1.0f, 0.3f, 0.2f, 1.0f);
     glVertex2f(cx, cy);
     glEnd();
+    // WHY: Restore default point size so subsequent OpenGL draws are unaffected
     glPointSize(1.0f);
 }
 
+// [TOPIC: GL_LINES / Gouraud color interpolation]
+// Purpose: Connects independent vertex pairs with linear per-vertex color gradients.
+// Game Role: Renders twin laser beams and targeting crosshairs in Quadrant 2.
 void SpacePrimitivesDemo::drawLines(float cx, float cy, float size) {
     // 2. GL_LINES: Twin laser beams and reticle crosshairs
     glLineWidth(2.5f);
@@ -45,6 +66,7 @@ void SpacePrimitivesDemo::drawLines(float cx, float cy, float size) {
     // Left laser beam with gradient
     glColor4f(1.0f, 0.1f, 0.1f, 1.0f);
     glVertex2f(cx - size * 0.5f, cy - size * 0.6f);
+    // WHY: Varying endpoint colors triggers Gouraud color interpolation along the rasterized line
     glColor4f(1.0f, 0.8f, 0.2f, 1.0f);
     glVertex2f(cx - size * 0.5f, cy + size * 0.6f);
 
@@ -64,6 +86,9 @@ void SpacePrimitivesDemo::drawLines(float cx, float cy, float size) {
     glLineWidth(1.0f);
 }
 
+// [TOPIC: GL_LINE_STRIP]
+// Purpose: Draws an open polyline connecting sequential sampled points along a sine wave.
+// Game Role: Renders a continuous missile flight trajectory in Quadrant 3.
 void SpacePrimitivesDemo::drawLineStrip(float cx, float cy, float size) {
     // 3. GL_LINE_STRIP: Continuous flight trajectory / missile curve
     glLineWidth(2.0f);
@@ -79,6 +104,9 @@ void SpacePrimitivesDemo::drawLineStrip(float cx, float cy, float size) {
     glLineWidth(1.0f);
 }
 
+// [TOPIC: GL_LINE_LOOP / CCW Winding]
+// Purpose: Automatically closes the final vertex back to the first vertex in CCW order.
+// Game Role: Renders a jagged closed asteroid wireframe boundary in Quadrant 4.
 void SpacePrimitivesDemo::drawLineLoop(float cx, float cy, float size) {
     // 4. GL_LINE_LOOP: Closed asteroid bounding polygon wireframe
     glLineWidth(2.0f);
@@ -97,10 +125,14 @@ void SpacePrimitivesDemo::drawLineLoop(float cx, float cy, float size) {
     glLineWidth(1.0f);
 }
 
+// [TOPIC: GL_TRIANGLES / CCW Winding / Gouraud color interpolation]
+// Purpose: Assembles three independent triangles with CCW winding and shaded hull gradients.
+// Game Role: Renders the starfighter fuselage and delta wings in Quadrant 5.
 void SpacePrimitivesDemo::drawTriangles(float cx, float cy, float size) {
     // 5. GL_TRIANGLES: Space fighter spacecraft hull & delta wings
     glBegin(GL_TRIANGLES);
     // Fuselage / Center Hull
+    // WHY: Vertices are ordered Top -> Bottom-Left -> Bottom-Right for standard CCW Winding
     glColor4f(0.2f, 0.6f, 1.0f, 1.0f); // Cockpit top cyan
     glVertex2f(cx, cy + size * 0.8f);
     glColor4f(0.05f, 0.15f, 0.4f, 1.0f); // Left rear dark blue
@@ -126,6 +158,9 @@ void SpacePrimitivesDemo::drawTriangles(float cx, float cy, float size) {
     glEnd();
 }
 
+// [TOPIC: GL_TRIANGLE_STRIP / Gouraud color interpolation]
+// Purpose: Generates a connected arc mesh reusing consecutive vertices between inner/outer radii.
+// Game Role: Renders the translucent energy deflector shield ribbon in Quadrant 6.
 void SpacePrimitivesDemo::drawTriangleStrip(float cx, float cy, float size) {
     // 6. GL_TRIANGLE_STRIP: Deflector shield barrier / energy ribbon
     glBegin(GL_TRIANGLE_STRIP);
@@ -137,6 +172,7 @@ void SpacePrimitivesDemo::drawTriangleStrip(float cx, float cy, float size) {
         float rOuter = size * 0.75f;
 
         // Inner vertex (bright core)
+        // WHY: Alternating inner/outer vertices forms a seamless radial strip with Gouraud alpha fade
         glColor4f(0.3f, 1.0f, 0.8f, 0.85f);
         glVertex2f(cx + std::cos(angle) * rInner, cy + std::sin(angle) * rInner);
 
@@ -147,6 +183,9 @@ void SpacePrimitivesDemo::drawTriangleStrip(float cx, float cy, float size) {
     glEnd();
 }
 
+// [TOPIC: GL_TRIANGLE_FAN / CCW Winding]
+// Purpose: Shares one central apex vertex across all radial slices swept counterclockwise.
+// Game Role: Renders the circular radial plasma blast wave in Quadrant 7.
 void SpacePrimitivesDemo::drawTriangleFan(float cx, float cy, float size) {
     // 7. GL_TRIANGLE_FAN: Circular energy blast / alien scout saucer
     glBegin(GL_TRIANGLE_FAN);
@@ -155,6 +194,7 @@ void SpacePrimitivesDemo::drawTriangleFan(float cx, float cy, float size) {
     glVertex2f(cx, cy);
 
     int slices = 16;
+    // WHY: i <= slices closes the fan back at angle 0 while incrementing counterclockwise
     for (int i = 0; i <= slices; ++i) {
         float angle = i * 2.0f * static_cast<float>(M_PI) / slices;
         float r = size * 0.7f;
@@ -165,6 +205,9 @@ void SpacePrimitivesDemo::drawTriangleFan(float cx, float cy, float size) {
     glEnd();
 }
 
+// [TOPIC: GL_QUADS / Gouraud color interpolation]
+// Purpose: Assembles four independent 4-vertex panels with per-corner color gradients.
+// Game Role: Renders the Space Station solar panel array and mounting spar in Quadrant 8.
 void SpacePrimitivesDemo::drawQuads(float cx, float cy, float size) {
     // 8. GL_QUADS: Space Station solar panel array with metallic seams
     glBegin(GL_QUADS);
@@ -219,6 +262,9 @@ void SpacePrimitivesDemo::drawQuads(float cx, float cy, float size) {
     glLineWidth(1.0f);
 }
 
+// [TOPIC: OpenGL Graphics Primitives / HUD Font Renderer]
+// Purpose: Clears buffers, draws the 8 primitive quadrants in NDC [-1, 1], and overlays HUD labels.
+// Game Role: Orchestrates the CO1 OpenGL Graphics Primitives screen in AIRSTRIKE.
 void SpacePrimitivesDemo::render(int screenWidth, int screenHeight) {
     animTimer += 0.016f;
 
@@ -270,6 +316,7 @@ void SpacePrimitivesDemo::render(int screenWidth, int screenHeight) {
     drawQuads(colX[3], rowY[1], cellSize);
 
     // Switch to HUD mode to render raster labels
+    // WHY: Restore GL_FILL before HUD rendering so text quads/bitmaps are never left in wireframe mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Ensure text is always filled
     beginHUD(screenWidth, screenHeight);
 
@@ -304,6 +351,7 @@ void SpacePrimitivesDemo::render(int screenWidth, int screenHeight) {
     };
 
     for (int i = 0; i < 8; ++i) {
+        // WHY: Map normalized [-1, 1] cell coordinates to pixel HUD coordinates
         float px = (labels[i].normX + 1.0f) * 0.5f * screenWidth - 65.0f;
         float py = (labels[i].normY + 1.0f) * 0.5f * screenHeight;
 

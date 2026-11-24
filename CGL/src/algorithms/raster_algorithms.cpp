@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/algorithms/raster_algorithms.cpp
+// Subject   : CGL-CO3 | 2D Rasterization & 3D Mesh Algorithms
+// Topics    : [TOPIC: DDA Line] [TOPIC: Bresenham Integer Line (8 Octants)] [TOPIC: Midpoint Circle (8-Way Symmetry)] [TOPIC: Scanline Polygon Fill]
+// Game Role : Implements software DDA/Bresenham/Midpoint/Scanline rasterizers and 3D wireframe mesh modes.
+// ==============================================================================
+
 #include "raster_algorithms.hpp"
 #include "common/font_renderer.hpp"
 #include <algorithm>
@@ -37,10 +44,14 @@ void RasterAlgorithmsDemo::toggleGrid() {
 // Pure Mathematical Algorithm Implementations
 // -------------------------------------------------------------
 
+// [TOPIC: DDA Line]
+// Purpose: Steps along the dominant axis with floating-point increments and rounds to integer pixels.
+// Game Role: Generates comparison line rays in CO3 Mode 0 and validates DDA unit tests.
 std::vector<Point2D> RasterAlgorithmsDemo::ddaLine(int x1, int y1, int x2, int y2) {
     std::vector<Point2D> points;
     int dx = x2 - x1;
     int dy = y2 - y1;
+    // WHY: Dominant axis count guarantees unit steps along the faster axis so no gaps appear
     int steps = std::max(std::abs(dx), std::abs(dy));
 
     if (steps == 0) {
@@ -63,10 +74,14 @@ std::vector<Point2D> RasterAlgorithmsDemo::ddaLine(int x1, int y1, int x2, int y
     return points;
 }
 
+// [TOPIC: Bresenham Integer Line (8 Octants)]
+// Purpose: Rasterizes lines across all 8 octants using purely integer decision parameter updates.
+// Game Role: Drives RasterSentinel targeting beams, multiplayer lasers, and CO3 8-octant tests.
 std::vector<Point2D> RasterAlgorithmsDemo::bresenhamLine(int x1, int y1, int x2, int y2) {
     std::vector<Point2D> points;
     int dx = std::abs(x2 - x1);
     int dy = std::abs(y2 - y1);
+    // WHY: Unit sign increments sx, sy generalize the loop cleanly across all four quadrants
     int sx = (x1 < x2) ? 1 : -1;
     int sy = (y1 < y2) ? 1 : -1;
 
@@ -75,12 +90,14 @@ std::vector<Point2D> RasterAlgorithmsDemo::bresenhamLine(int x1, int y1, int x2,
 
     if (dx >= dy) {
         // Octants with |m| <= 1
+        // WHY: Scaled integer decision parameter p0 = 2*dy - dx avoids floating-point division
         int err = 2 * dy - dx;
         while (true) {
             points.emplace_back(x, y);
             if (x == x2 && y == y2) break;
             if (err >= 0) {
                 y += sy;
+                // WHY: Stepping minor axis Y shifts midpoint error by -2*dx before adding +2*dy
                 err -= 2 * dx;
             }
             err += 2 * dy;
@@ -88,6 +105,7 @@ std::vector<Point2D> RasterAlgorithmsDemo::bresenhamLine(int x1, int y1, int x2,
         }
     } else {
         // Octants with |m| > 1
+        // WHY: Swap roles of X and Y for steep slopes so Y becomes the unit-stepped driving axis
         int err = 2 * dx - dy;
         while (true) {
             points.emplace_back(x, y);
@@ -104,6 +122,9 @@ std::vector<Point2D> RasterAlgorithmsDemo::bresenhamLine(int x1, int y1, int x2,
     return points;
 }
 
+// [TOPIC: Midpoint Circle (8-Way Symmetry)]
+// Purpose: Plots circle octant x in [0, y] using integer decision parameter pk and mirrors 8 ways.
+// Game Role: Generates pixel-exact force shields for RasterSentinel and MultiplayerBattleScene.
 std::vector<Point2D> RasterAlgorithmsDemo::midpointCircle(int xc, int yc, int radius) {
     std::vector<Point2D> points;
     if (radius <= 0) {
@@ -113,8 +134,10 @@ std::vector<Point2D> RasterAlgorithmsDemo::midpointCircle(int xc, int yc, int ra
 
     int x = 0;
     int y = radius;
+    // WHY: Initial integer decision parameter p0 = 5/4 - r rounded to 1 - r for integer radius
     int p = 1 - radius;
 
+    // WHY: Exploits 8-way circle symmetry so evaluating 1/8th of the perimeter emits all 8 octants
     auto add8Points = [&](int cx, int cy, int px, int py) {
         points.emplace_back(cx + px, cy + py);
         points.emplace_back(cx - px, cy + py);
@@ -130,9 +153,11 @@ std::vector<Point2D> RasterAlgorithmsDemo::midpointCircle(int xc, int yc, int ra
         add8Points(xc, yc, x, y);
         x++;
         if (p < 0) {
+            // WHY: Midpoint is inside circle; keep y unchanged and update pk+1 = pk + 2x + 1
             p += 2 * x + 1;
         } else {
             y--;
+            // WHY: Midpoint is on/outside circle; step y inward and update pk+1 = pk + 2x - 2y + 1
             p += 2 * x - 2 * y + 1;
         }
     }
@@ -140,6 +165,9 @@ std::vector<Point2D> RasterAlgorithmsDemo::midpointCircle(int xc, int yc, int ra
     return points;
 }
 
+// [TOPIC: Midpoint Ellipse]
+// Purpose: Evaluates first-quadrant ellipse across slope-1 boundary (Region 1 & Region 2) with 4-way symmetry.
+// Game Role: Renders elliptical radar contours in CO3 Curves mode.
 std::vector<Point2D> RasterAlgorithmsDemo::midpointEllipse(int xc, int yc, int rx, int ry) {
     std::vector<Point2D> points;
     if (rx <= 0 || ry <= 0) return points;
@@ -157,10 +185,12 @@ std::vector<Point2D> RasterAlgorithmsDemo::midpointEllipse(int xc, int yc, int r
     // Region 1: dy/dx >= -1
     int x = 0;
     int y = ry;
+    // WHY: Evaluate f_ellipse(1, ry - 0.5) at start point (0, ry)
     double p1 = ry2 - rx2 * ry + 0.25 * rx2;
     long long dx = 2 * ry2 * x;
     long long dy = 2 * rx2 * y;
 
+    // WHY: Stay in Region 1 while tangent slope magnitude |dy/dx| < 1 (i.e., 2*ry^2*x < 2*rx^2*y)
     while (dx < dy) {
         add4Points(xc, yc, x, y);
         x++;
@@ -175,6 +205,7 @@ std::vector<Point2D> RasterAlgorithmsDemo::midpointEllipse(int xc, int yc, int r
     }
 
     // Region 2: dy/dx < -1
+    // WHY: Re-initialize decision parameter p2 at midpoint (x + 0.5, y - 1) where Y becomes driving axis
     double p2 = ry2 * (x + 0.5) * (x + 0.5) + rx2 * (y - 1.0) * (y - 1.0) - rx2 * ry2;
     while (y >= 0) {
         add4Points(xc, yc, x, y);
@@ -192,6 +223,9 @@ std::vector<Point2D> RasterAlgorithmsDemo::midpointEllipse(int xc, int yc, int r
     return points;
 }
 
+// [TOPIC: Scanline Polygon Fill]
+// Purpose: Builds a bucketed Edge Table (ET), maintains a sorted Active Edge Table (AET), and fills parity spans.
+// Game Role: Fills irregular polygon asteroid interiors in CO3 Scanline mode and unit tests.
 std::vector<Point2D> RasterAlgorithmsDemo::scanlineFill(const std::vector<Point2D>& vertices) {
     std::vector<Point2D> filledPixels;
     if (vertices.size() < 3) return filledPixels;
@@ -221,6 +255,7 @@ std::vector<Point2D> RasterAlgorithmsDemo::scanlineFill(const std::vector<Point2
         Point2D lower = (p1.y < p2.y) ? p1 : p2;
         Point2D upper = (p1.y < p2.y) ? p2 : p1;
 
+        // WHY: Inverse slope dx/dy enables incremental X stepping per scanline without per-row division
         float invM = static_cast<float>(upper.x - lower.x) / static_cast<float>(upper.y - lower.y);
         ScanEdge edge{upper.y, static_cast<float>(lower.x), invM};
         edgeTable[lower.y - yMin].push_back(edge);
@@ -235,6 +270,7 @@ std::vector<Point2D> RasterAlgorithmsDemo::scanlineFill(const std::vector<Point2
         }
 
         // Remove edges that end at y
+        // WHY: Dropping edges at y == yUpper avoids double-counting shared vertices across adjacent edges
         activeEdgeList.erase(
             std::remove_if(activeEdgeList.begin(), activeEdgeList.end(),
                            [y](const ScanEdge& e) { return e.yUpper <= y; }),
@@ -245,6 +281,7 @@ std::vector<Point2D> RasterAlgorithmsDemo::scanlineFill(const std::vector<Point2
                   [](const ScanEdge& a, const ScanEdge& b) { return a.xIntersect < b.xIntersect; });
 
         // Fill horizontal spans between parity pairs
+        // WHY: Odd-even parity pairs (2k, 2k+1) bound interior pixel spans cleanly even for concave shapes
         for (size_t k = 0; k + 1 < activeEdgeList.size(); k += 2) {
             int xStart = static_cast<int>(std::ceil(activeEdgeList[k].xIntersect));
             int xEnd = static_cast<int>(std::floor(activeEdgeList[k + 1].xIntersect));
@@ -266,6 +303,9 @@ std::vector<Point2D> RasterAlgorithmsDemo::scanlineFill(const std::vector<Point2
 // Screen Visualizations
 // -------------------------------------------------------------
 
+// [TOPIC: Pixel Buffer Plotting]
+// Purpose: Draws software-rasterized Point2D lists as discrete GL_POINTS.
+// Game Role: Visualizes pure C++ raster output directly in screen pixel space.
 void RasterAlgorithmsDemo::drawPixelPoints(const std::vector<Point2D>& points, float r, float g, float b) {
     glColor3f(r, g, b);
     glBegin(GL_POINTS);
@@ -275,6 +315,9 @@ void RasterAlgorithmsDemo::drawPixelPoints(const std::vector<Point2D>& points, f
     glEnd();
 }
 
+// [TOPIC: DDA Line vs Bresenham Integer Line (8 Octants)]
+// Purpose: Plots a 16-ray radial fan side-by-side using DDA (left) and Bresenham (right).
+// Game Role: Demonstrates identical 8-octant line geometry without floats on the Bresenham side.
 void RasterAlgorithmsDemo::renderLinesMode(int screenWidth, int screenHeight) {
     // Left: DDA Line Drawing, Right: Bresenham's Integer Line Drawing
     int halfW = screenWidth / 2;
@@ -335,6 +378,9 @@ void RasterAlgorithmsDemo::renderLinesMode(int screenWidth, int screenHeight) {
     endHUD();
 }
 
+// [TOPIC: Midpoint Circle (8-Way Symmetry) / Midpoint Ellipse]
+// Purpose: Visualizes Midpoint Circle and Midpoint Ellipse pixel contours side-by-side.
+// Game Role: Interactive CO3 Curves mode showing symmetry-accelerated curve rasterization.
 void RasterAlgorithmsDemo::renderCurvesMode(int screenWidth, int screenHeight) {
     int halfW = screenWidth / 2;
     int cx1 = halfW / 2;
@@ -379,6 +425,9 @@ void RasterAlgorithmsDemo::renderCurvesMode(int screenWidth, int screenHeight) {
     endHUD();
 }
 
+// [TOPIC: Scanline Polygon Fill]
+// Purpose: Constructs a 7-vertex asteroid polygon, fills its interior via scanlineFill(), and outlines its edges.
+// Game Role: Interactive CO3 Mode 2 visualizing ET/AET interior pixel coverage.
 void RasterAlgorithmsDemo::renderScanlineMode(int screenWidth, int screenHeight) {
     int cx = screenWidth / 2;
     int cy = screenHeight / 2;
@@ -422,6 +471,9 @@ void RasterAlgorithmsDemo::renderScanlineMode(int screenWidth, int screenHeight)
     endHUD();
 }
 
+// [TOPIC: 3D Mesh Generation]
+// Purpose: Switches temporarily to 3D perspective to render a rotating wireframe cube and UV sphere.
+// Game Role: Interactive CO3 Mode 3 illustrating 3D polyhedral and parametric asteroid meshes.
 void RasterAlgorithmsDemo::render3DMeshMode(int screenWidth, int screenHeight) {
     // 3D Wireframe Cube & UV Sphere Asteroid
     glMatrixMode(GL_PROJECTION);
@@ -465,6 +517,7 @@ void RasterAlgorithmsDemo::render3DMeshMode(int screenWidth, int screenHeight) {
     glutWireSphere(1.0, 16, 12);
     glPopMatrix();
 
+    // WHY: Disable depth test before returning so subsequent 2D HUD rendering is not depth-culled
     glDisable(GL_DEPTH_TEST);
 
     beginHUD(screenWidth, screenHeight);
@@ -476,12 +529,16 @@ void RasterAlgorithmsDemo::render3DMeshMode(int screenWidth, int screenHeight) {
     endHUD();
 }
 
+// [TOPIC: CO3 Algorithm Workbench Dispatcher]
+// Purpose: Sets 2D screen pixel coordinates for modes 0-2, dispatches the active mode, and draws the HUD.
+// Game Role: Renders the CGL-CO3 Algorithms screen in AIRSTRIKE.
 void RasterAlgorithmsDemo::render(int screenWidth, int screenHeight) {
     glClearColor(0.02f, 0.03f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (currentMode != 3) {
         // Set 2D pixel coordinate space [0, width] x [0, height]
+        // WHY: Software rasterizers output integer pixel coordinates directly matching screen pixels
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         gluOrtho2D(0.0, static_cast<double>(screenWidth), 0.0, static_cast<double>(screenHeight));

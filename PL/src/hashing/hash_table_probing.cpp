@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/hashing/hash_table_probing.cpp
+// Subject   : PL-CO5 | Hashing Techniques
+// Topics    : [TOPIC: HashTableProbing] [TOPIC: Linear Probing] [TOPIC: Tombstone Deletion] [TOPIC: Rehashing]
+// Game Role : Implements linear probing, tombstone deletion, and dynamic rehashing for asset cache.
+// ==============================================================================
+
 #include "hash_table_probing.h"
 #include <iomanip>
 
@@ -37,16 +44,22 @@ HashTableProbing& HashTableProbing::operator=(const HashTableProbing& other) {
     return *this;
 }
 
-// Polynomial rolling hash: hash = (hash * 31 + c) % capacity
+// [TOPIC: Polynomial Rolling Hash]
+// Purpose: Computes (hash * 31 + c) % tableCapacity per character to distribute keys across slots.
+// Game Role: Maps ship asset keys to initial probe slots in the upgrade cache.
 size_t HashTableProbing::hashFunction(const std::string& key) const {
     unsigned long hash = 0;
     const unsigned long p = 31;
     for (char c : key) {
+        // WHY: Reduce modulo tableCapacity at every step to prevent unsigned integer overflow.
         hash = (hash * p + static_cast<unsigned char>(c)) % tableCapacity;
     }
     return hash;
 }
 
+// [TOPIC: Rehashing] [TOPIC: Tombstone Cleanup]
+// Purpose: Allocates a larger slot table and re-inserts only OCCUPIED entries.
+// Game Role: Eliminates accumulated tombstones and reduces primary clustering in the upgrade cache.
 void HashTableProbing::rehash(size_t newCapacity) {
     size_t oldCapacity = tableCapacity;
     ProbeEntry* oldTable = table;
@@ -57,6 +70,7 @@ void HashTableProbing::rehash(size_t newCapacity) {
     totalProbeSteps = 0;
 
     for (size_t i = 0; i < oldCapacity; ++i) {
+        // WHY: Skip DELETED tombstones during rehash so stale markers are purged cleanly.
         if (oldTable[i].status == SlotStatus::OCCUPIED) {
             insert(oldTable[i].key, oldTable[i].item);
         }
@@ -65,7 +79,11 @@ void HashTableProbing::rehash(size_t newCapacity) {
     delete[] oldTable;
 }
 
+// [TOPIC: Linear Probing] [TOPIC: Tombstone Reuse] [TOPIC: Load Factor]
+// Purpose: Rehashes at alpha >= 0.70, probes (baseHash + step) % M, updates or reuses first tombstone.
+// Game Role: Inserts or updates cached ship assets while avoiding duplicate keys across tombstones.
 bool HashTableProbing::insert(const std::string& key, const InventoryItem& item) {
+    // WHY: Trigger rehash at load >= 0.70 before linear probing suffers severe primary clustering.
     if (getLoadFactor() >= MAX_LOAD_FACTOR) {
         rehash(tableCapacity * 2 + 1);
     }
@@ -74,6 +92,7 @@ bool HashTableProbing::insert(const std::string& key, const InventoryItem& item)
     int firstTombstone = -1;
 
     for (size_t step = 0; step < tableCapacity; ++step) {
+        // WHY: Modulo wrap-around steps sequentially across the circular probe table.
         size_t idx = (baseHash + step) % tableCapacity;
         totalProbeSteps++;
 
@@ -83,6 +102,7 @@ bool HashTableProbing::insert(const std::string& key, const InventoryItem& item)
                 return true;
             }
         } else if (table[idx].status == SlotStatus::DELETED) {
+            // WHY: Remember first tombstone but keep scanning to ensure key isn't already further down chain.
             if (firstTombstone == -1) {
                 firstTombstone = static_cast<int>(idx);
             }
@@ -112,6 +132,9 @@ bool HashTableProbing::insert(const std::string& key, const InventoryItem& item)
     return false;
 }
 
+// [TOPIC: Linear Probing Search] [TOPIC: Tombstone Deletion]
+// Purpose: Probes linearly from baseHash, skipping DELETED slots and stopping only on match or EMPTY.
+// Game Role: Looks up ship upgrade specs and measures probe-step distance.
 bool HashTableProbing::search(const std::string& key, InventoryItem& outItem, int& outProbes) const {
     size_t baseHash = hashFunction(key);
     outProbes = 0;
@@ -120,6 +143,7 @@ bool HashTableProbing::search(const std::string& key, InventoryItem& outItem, in
         size_t idx = (baseHash + step) % tableCapacity;
         outProbes++;
 
+        // WHY: Only EMPTY guarantees key cannot exist further along probe sequence; DELETED must continue.
         if (table[idx].status == SlotStatus::EMPTY) {
             return false; // Terminate search on empty slot
         }
@@ -136,6 +160,9 @@ bool HashTableProbing::search(const std::string& key, InventoryItem& outItem) co
     return search(key, outItem, dummy);
 }
 
+// [TOPIC: Tombstone Deletion]
+// Purpose: Transitions matched slot to DELETED instead of EMPTY so probe chains remain intact.
+// Game Role: Removes a retired ship upgrade without breaking lookups for later colliding keys.
 bool HashTableProbing::remove(const std::string& key) {
     size_t baseHash = hashFunction(key);
 
@@ -145,7 +172,8 @@ bool HashTableProbing::remove(const std::string& key) {
             return false;
         }
         if (table[idx].status == SlotStatus::OCCUPIED && table[idx].key == key) {
-            table[idx].status = SlotStatus::DELETED; // Mark tombstone
+            // WHY: Tombstone marker (DELETED) preserves probe continuity for keys hashed earlier to same slot.
+            table[idx].status = SlotStatus::DELETED;
             table[idx].key = "";
             activeCount--;
             return true;

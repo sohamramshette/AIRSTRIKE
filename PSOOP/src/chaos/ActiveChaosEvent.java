@@ -1,9 +1,14 @@
+// ==============================================================================
+// File      : PSOOP/src/chaos/ActiveChaosEvent.java
+// Subject   : PSOOP-CO1 / CO2 | Active Chaos Event Lifecycle Tracker
+// Topics    : [TOPIC: Encapsulation] [TOPIC: State Lifecycle]
+// Game Role : Tracks warning/active timers and cached player stats for safe restoration.
+// ==============================================================================
 package chaos;
 
 /**
  * Tracks the live lifecycle of a single triggered Chaos Protocol event.
- * Manages the 3-second warning phase, active duration progression,
- * and encapsulates state restoration parameters.
+ * Manages the warning phase, active duration, and state restoration cache.
  */
 public class ActiveChaosEvent {
 
@@ -16,7 +21,7 @@ public class ActiveChaosEvent {
     private boolean activationAnnounced;
     private ChaosEventType dualPartnerType;
 
-    // Encapsulated restore cache to guarantee state safety
+    // WHY: Cache original player stats before mutation so overlapping or expired anomalies restore cleanly.
     private double cachedPlayerSpeed = -1.0;
     private long cachedShootCooldown = -1;
     private double cachedDamageMultiplier = 1.0;

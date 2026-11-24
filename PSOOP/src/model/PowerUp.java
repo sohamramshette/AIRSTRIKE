@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/PowerUp.java
+// Subject   : PSOOP-CO1 | Collectible Power-Up Capsule
+// Topics    : [TOPIC: Inheritance] [TOPIC: Composition] [TOPIC: Kinematics] [TOPIC: Method Overriding]
+// Game Role : Descends with a pulsing sway to grant health, shield, weapon, or speed upgrades.
+// ==============================================================================
 package model;
 
 import java.awt.BasicStroke;
@@ -14,6 +20,10 @@ public class PowerUp extends Entity {
     private double pulseTimer;
     private final double initialX;
 
+    /**
+     * [TOPIC: Inheritance] [TOPIC: Composition]
+     * Game Role: Spawns a 26x26 typed upgrade capsule descending at constant drift speed.
+     */
     public PowerUp(double x, double y, PowerUpType type) {
         super(x, y, 26, 26);
         this.type = type;
@@ -22,13 +32,22 @@ public class PowerUp extends Entity {
         this.pulseTimer = Math.random() * Math.PI * 2;
     }
 
+    /**
+     * [TOPIC: Method Overriding] [TOPIC: Kinematics]
+     * Game Role: Advances downward drift and sinusoidal lateral oscillation over delta seconds.
+     */
     @Override
     public void update(double delta) {
         pulseTimer += delta * 4.0;
         y += vy * delta;
+        // WHY: Computes position directly around initialX so lateral sway never drifts across the arena.
         x = initialX + Math.sin(pulseTimer) * 12.0;
     }
 
+    /**
+     * [TOPIC: Method Overriding]
+     * Game Role: Renders pulsing aura, capsule frame, and PowerUpType glyph.
+     */
     @Override
     public void render(Graphics2D g) {
         if (!active) return;

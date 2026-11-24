@@ -1,6 +1,16 @@
+// ==============================================================================
+// File      : PL/tests/test_searching.cpp
+// Subject   : PL-CO4 | Searching Unit Tests
+// Topics    : [TOPIC: Linear Search] [TOPIC: Binary Search] [TOPIC: Leaderboard Search]
+// Game Role : Verifies O(N) linear and O(log N) binary search accuracy and comparison counts.
+// ==============================================================================
+
 #include "test_searching.h"
 #include "../src/searching/search_algorithms.h"
 
+// [TOPIC: PL-CO4 Searching Unit Tests]
+// Purpose: Executes 6 automated checks covering hits, misses, boundaries, and PlayerScore lookups.
+// Game Role: Validates AirStrike leaderboard and telemetry query correctness.
 TestSummary runSearchingTests() {
     TestSummary summary;
     std::cout << "\n======================================================\n";

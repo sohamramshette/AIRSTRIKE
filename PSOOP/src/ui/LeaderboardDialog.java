@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/ui/LeaderboardDialog.java
+// Subject   : PSOOP-CO3 / CO4 | Global Top-10 Pilot Leaderboard Dialog
+// Topics    : [TOPIC: Threading/Swing EDT] [TOPIC: REST Client] [TOPIC: Custom Swing Rendering]
+// Game Role : Fetches global top-10 scores asynchronously and renders podium rankings on EDT.
+// ==============================================================================
 package ui;
 
 import model.LeaderboardEntry;
@@ -145,6 +151,7 @@ public class LeaderboardDialog extends JDialog {
         refreshBtn.setEnabled(false);
 
         matchService.fetchGlobalLeaderboard().thenAccept(entries -> {
+            // WHY: Populate JTable model on the Swing EDT after async PostgREST response returns.
             SwingUtilities.invokeLater(() -> {
                 refreshBtn.setEnabled(true);
                 tableModel.setRowCount(0);

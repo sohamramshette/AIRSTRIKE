@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/FailSafeEnemy.java
+// Subject   : PSOOP-CO3 | Defensive Programming & Fail-Safe Barrier
+// Topics    : [TOPIC: Defensive Programming] [TOPIC: Inheritance] [TOPIC: Method Overriding] [TOPIC: Encapsulation]
+// Game Role : Guards health/delta invariants and activates a one-time barrier below 30% HP.
+// ==============================================================================
 package model;
 
 import java.awt.BasicStroke;
@@ -7,14 +13,7 @@ import java.awt.Polygon;
 import java.util.List;
 
 /**
- * Fail-Safe Sentry (PSOOP-CO3).
- * Demonstrates: Critical Thinking & Problem Solving via Defensive Programming.
- *
- * Defensive Programming Features:
- * - Detects critical health (<= 30% of maxHealth) and activates a single-use emergency barrier.
- * - Latched boolean guard (`emergencyBarrierTriggered`) prevents repeated/infinite emergency activations.
- * - Defensive boundary clamping ensures coordinates remain safely inside screen limits.
- * - Invariant assertions prevent negative damage, NaN delta steps, and illegal health/shield overflows.
+ * Fail-Safe Sentry demonstrating invariant checks, boundary clamping, and one-shot recovery.
  */
 public class FailSafeEnemy extends Enemy {
 
@@ -24,6 +23,10 @@ public class FailSafeEnemy extends Enemy {
     private double emergencyBarrierTimer;
     private static final double BARRIER_DURATION = 3.0; // 3.0 second emergency safety barrier
 
+    /**
+     * [TOPIC: Inheritance]
+     * Game Role: Spawns a bastion sentry with unlatched emergency barrier state.
+     */
     public FailSafeEnemy(double x, double y) {
         // x, y, width 40, height 42, maxHealth 70, maxShield 15, speed 85.0, shootCooldown 1400ms, scoreValue 280
         super(x, y, 40, 42, 70, 15, 85.0, 1400, 280);
@@ -34,17 +37,18 @@ public class FailSafeEnemy extends Enemy {
     }
 
     /**
-     * Defensive damage handler enforcing object invariants.
+     * [TOPIC: Defensive Programming] [TOPIC: Method Overriding]
+     * Game Role: Protects health invariants, halves barrier damage, and triggers emergency shield at <= 30% HP.
      */
     @Override
     public void takeDamage(int amount, boolean bypassShield) {
-        // Defensive check: reject non-positive amounts or damage on inactive craft
+        // WHY: Reject invalid negative/zero damage or hits after destruction to protect invariants.
         if (amount <= 0 || !active) return;
 
-        // If emergency barrier is actively shielding the craft, dissipate incoming kinetic energy
+        // WHY: Active emergency barrier absorbs hits directly at 50% reduced shield drain while protecting hull.
         if (emergencyBarrierActive && !bypassShield) {
             if (shield > 0) {
-                shield = Math.max(0, shield - (amount / 2)); // 50% damage reduction under barrier
+                shield = Math.max(0, shield - (amount / 2));
             }
             return;
         }
@@ -69,7 +73,7 @@ public class FailSafeEnemy extends Enemy {
                 return;
             }
 
-            // Critical health boundary detection: Activate single-use emergency fail-safe barrier
+            // WHY: Latched boolean guard guarantees the emergency barrier triggers at most once per craft.
             int threshold = (int) Math.ceil(maxHealth * CRITICAL_HEALTH_RATIO);
             if (health <= threshold && !emergencyBarrierTriggered) {
                 activateEmergencyBarrier();
@@ -78,20 +82,25 @@ public class FailSafeEnemy extends Enemy {
     }
 
     /**
-     * Activates emergency barrier exactly once per lifetime.
+     * [TOPIC: Defensive Programming]
+     * Game Role: Latches the single-use emergency barrier and raises shield to at least 35.
      */
     private void activateEmergencyBarrier() {
         emergencyBarrierTriggered = true;
         emergencyBarrierActive = true;
         emergencyBarrierTimer = BARRIER_DURATION;
 
-        // Defensive invariant: recharge protective shield buffer safely up to cap
+        // WHY: Guarantees a minimum 35-point barrier buffer without lowering any higher existing shield.
         this.shield = Math.max(this.shield, 35);
     }
 
+    /**
+     * [TOPIC: Method Overriding] [TOPIC: Defensive Programming] [TOPIC: Kinematics]
+     * Game Role: Validates frame delta, clamps horizontal bounds, and ticks down barrier duration.
+     */
     @Override
     public void update(double delta) {
-        // Defensive check: guard against invalid frame deltas
+        // WHY: Rejects NaN or non-positive delta ticks so coordinates never corrupt into NaN.
         if (delta <= 0.0 || Double.isNaN(delta)) return;
 
         flightTimer += delta * 1.8;
@@ -100,7 +109,7 @@ public class FailSafeEnemy extends Enemy {
         // Smooth defensive weave
         x += Math.sin(flightTimer) * 35.0 * delta;
 
-        // Defensive boundary safety: clamp within arena margins
+        // WHY: Defensive boundary clamp prevents lateral weave from pushing the sentry off-screen.
         if (x < 10) x = 10;
         if (x > 750) x = 750;
 
@@ -113,6 +122,7 @@ public class FailSafeEnemy extends Enemy {
         }
     }
 
+    /** [TOPIC: Polymorphism] [TOPIC: Method Overriding] Game Role: Fires twin pulses within active vertical lane. */
     @Override
     public void performAttack(double delta, List<Projectile> projectileList, Player player) {
         attackTimer += delta;
@@ -121,6 +131,7 @@ public class FailSafeEnemy extends Enemy {
         }
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Launches twin slightly diverging containment pulses. */
     @Override
     public void shoot(List<Projectile> projectileList) {
         recordShot();
@@ -132,6 +143,7 @@ public class FailSafeEnemy extends Enemy {
         projectileList.add(new Projectile(x + width - 12, y + height - 4, 6, 14, 15.0, bulletSpeed, false, damage));
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Renders fortified emerald bastion and pulsing emergency barrier. */
     @Override
     public void render(Graphics2D g) {
         if (!active) return;

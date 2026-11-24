@@ -1,9 +1,19 @@
+// ==============================================================================
+// File      : PL/src/searching/search_algorithms.cpp
+// Subject   : PL-CO4 | Searching and Sorting Techniques
+// Topics    : [TOPIC: Linear Search] [TOPIC: Binary Search] [TOPIC: Mid Overflow Prevention]
+// Game Role : Implements O(N) linear and O(log N) binary search with empirical benchmarks.
+// ==============================================================================
+
 #include "search_algorithms.h"
 #include <chrono>
 #include <iomanip>
 
 namespace SearchAlgorithms {
 
+// [TOPIC: Linear Search]
+// Purpose: Scans an arbitrary array sequentially in O(N) time while counting comparisons.
+// Game Role: Searches unsorted integer telemetry without sorting overhead.
 SearchMetrics linearSearch(const int arr[], int size, int target) {
     SearchMetrics metrics;
     auto start = std::chrono::high_resolution_clock::now();
@@ -22,6 +32,9 @@ SearchMetrics linearSearch(const int arr[], int size, int target) {
     return metrics;
 }
 
+// [TOPIC: Binary Search] [TOPIC: Mid Overflow Prevention]
+// Purpose: Halves a sorted ascending search space iteratively in O(log N) time.
+// Game Role: Fast exact score/ID lookup on pre-sorted AirStrike tables.
 SearchMetrics binarySearch(const int arr[], int size, int target) {
     SearchMetrics metrics;
     auto start = std::chrono::high_resolution_clock::now();
@@ -30,6 +43,7 @@ SearchMetrics binarySearch(const int arr[], int size, int target) {
     int high = size - 1;
 
     while (low <= high) {
+        // WHY: Use low + (high - low) / 2 instead of (low + high) / 2 to avoid signed int overflow.
         int mid = low + (high - low) / 2;
         metrics.comparisons++;
         if (arr[mid] == target) {
@@ -37,6 +51,7 @@ SearchMetrics binarySearch(const int arr[], int size, int target) {
             metrics.found = true;
             break;
         } else if (arr[mid] < target) {
+            // WHY: Exclude mid (+1) so the remaining range strictly shrinks and guarantees termination.
             low = mid + 1;
         } else {
             high = mid - 1;
@@ -48,6 +63,9 @@ SearchMetrics binarySearch(const int arr[], int size, int target) {
     return metrics;
 }
 
+// [TOPIC: Linear Search] [TOPIC: Leaderboard Search]
+// Purpose: Finds a PlayerScore entry sequentially across unsorted leaderboard records in O(N).
+// Game Role: Queries pilot scores when leaderboard ordering is unavailable.
 SearchMetrics linearSearchScores(const PlayerScore scores[], int size, int targetScore) {
     SearchMetrics metrics;
     auto start = std::chrono::high_resolution_clock::now();
@@ -66,6 +84,9 @@ SearchMetrics linearSearchScores(const PlayerScore scores[], int size, int targe
     return metrics;
 }
 
+// [TOPIC: Binary Search] [TOPIC: Leaderboard Search]
+// Purpose: Finds targetScore in an ascending-sorted PlayerScore array in O(log N).
+// Game Role: Rapidly locates matching pilot ranks on sorted AirStrike leaderboards.
 SearchMetrics binarySearchScores(const PlayerScore scores[], int size, int targetScore) {
     SearchMetrics metrics;
     auto start = std::chrono::high_resolution_clock::now();
@@ -74,6 +95,7 @@ SearchMetrics binarySearchScores(const PlayerScore scores[], int size, int targe
     int high = size - 1;
 
     while (low <= high) {
+        // WHY: Overflow-safe midpoint prevents signed wrap-around on large datasets.
         int mid = low + (high - low) / 2;
         metrics.comparisons++;
         if (scores[mid].score == targetScore) {

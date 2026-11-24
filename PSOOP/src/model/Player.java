@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/Player.java
+// Subject   : PSOOP-CO1 | Player Spacecraft, Kinematics & Thermal Weapons
+// Topics    : [TOPIC: Inheritance] [TOPIC: Encapsulation] [TOPIC: Method Overriding] [TOPIC: Kinematics] [TOPIC: Defensive Programming]
+// Game Role : Drives player input kinematics, thermal weapon upgrades, i-frames, and ship rendering.
+// ==============================================================================
 package model;
 
 import java.awt.BasicStroke;
@@ -8,8 +14,6 @@ import java.util.List;
 
 /**
  * The player's combat spacecraft.
- * Manages multidirectional movement, keyboard input integration, weapon upgrades,
- * shield depletion, and invulnerability frames.
  */
 public class Player extends Ship {
 
@@ -33,6 +37,10 @@ public class Player extends Ship {
     private final double heatCoolRate = 32.0;
     private final double overheatCoolRate = 25.0;
 
+    /**
+     * [TOPIC: Inheritance]
+     * Game Role: Spawns the player fighter with baseline hull, shield, speed, and 2-life limit.
+     */
     public Player(double x, double y) {
         // Player stats: width 48, height 56, maxHealth 100, maxShield 100, speed 320, cooldown 180ms
         super(x, y, 48, 56, 100, 100, 320.0, 180);
@@ -49,10 +57,13 @@ public class Player extends Ship {
         this.damageMultiplier = 1.0;
     }
 
+    /**
+     * [TOPIC: Method Overriding] [TOPIC: Kinematics]
+     * Game Role: Integrates movement inputs, engine damage slowdown, weapon cooling, and i-frame timers.
+     */
     @Override
     public void update(double delta) {
-        // Kinematic vector calculation based on active inputs
-        // Damage-Induced Engine Degradation (PSOOP-CO4): speed slowed down by 30% when health <= 35%
+        // WHY: Engine damage degrades thrust by 30% once hull drops to critical <= 35%.
         double currentSpeed = speed;
         if (health <= maxHealth * 0.35) {
             currentSpeed *= 0.70;
@@ -71,17 +82,18 @@ public class Player extends Ship {
             vy = -vy;
         }
 
-        // Diagonal normalization to prevent faster speed on diagonal
+        // WHY: Scale diagonal velocity by 1/sqrt(2) so diagonal flight matches cardinal speed.
         if (vx != 0.0 && vy != 0.0) {
             double invSqrt2 = 0.70710678;
             vx *= invSqrt2;
             vy *= invSqrt2;
         }
 
+        // WHY: Frame-rate independent Euler integration over elapsed delta seconds.
         x += vx * delta;
         y += vy * delta;
 
-        // Weapon Heat Dissipation & Thermal Recovery (COA-CO4 / PSOOP-CO3)
+        // WHY: Overheated weapons must cool all the way to 0 before firing unlocks.
         if (isOverheated) {
             weaponHeat -= overheatCoolRate * delta;
             if (weaponHeat <= 0.0) {
@@ -101,22 +113,29 @@ public class Player extends Ship {
     }
 
     /**
-     * Enforces playfield boundaries, clamping coordinates strictly within viewport bounds.
+     * [TOPIC: Defensive Programming]
+     * Game Role: Clamps player coordinates strictly inside the active playfield boundaries.
      */
     public void clampToBounds(int minX, int maxX, int minY, int maxY) {
+        // WHY: Invariant clamping keeps the entire ship hitbox inside viewport walls.
         if (x < minX) x = minX;
         if (x + width > maxX) x = maxX - width;
         if (y < minY) y = minY;
         if (y + height > maxY) y = maxY - height;
     }
 
+    /**
+     * [TOPIC: Method Overriding] [TOPIC: Encapsulation]
+     * Game Role: Fires level-scaled laser volleys while enforcing cooldown and thermal overheat lockouts.
+     */
     @Override
     public void shoot(List<Projectile> projectileList) {
+        // WHY: Enforce fire-rate cooldown, active status, and thermal overheat guard before spawning bolts.
         if (!canShoot() || !active || isOverheated) return;
 
         recordShot();
 
-        // Weapon Heat Accumulation
+        // WHY: Accumulate thermal load per volley and latch overheat lockout at maxHeat.
         weaponHeat = Math.min(maxHeat, weaponHeat + heatPerShot);
         if (weaponHeat >= maxHeat) {
             isOverheated = true;
@@ -147,14 +166,20 @@ public class Player extends Ship {
         }
     }
 
+    /**
+     * [TOPIC: Method Overriding] [TOPIC: Defensive Programming]
+     * Game Role: Blocks incoming damage during invulnerability frames before delegating to Ship.
+     */
     @Override
     public void takeDamage(int amount, boolean bypassShield) {
-        if (invulnerable) return; // Immune during i-frames
+        // WHY: Respawn/hit i-frames grant temporary immunity before Ship's shield-before-hull reduction runs.
+        if (invulnerable) return;
         super.takeDamage(amount, bypassShield);
     }
 
     /**
-     * Activates invulnerability window (e.g. after respawn or hit).
+     * [TOPIC: Encapsulation]
+     * Game Role: Starts a timed invulnerability window (e.g., post-respawn protection).
      */
     public void triggerInvulnerability(long durationMs) {
         this.invulnerable = true;
@@ -162,7 +187,8 @@ public class Player extends Ship {
     }
 
     /**
-     * Deducts one life and resets player status.
+     * [TOPIC: Encapsulation]
+     * Game Role: Decrements lives and restores full combat state at spawn, or deactivates on 0 lives.
      * @return True if player still has lives remaining; false if Game Over.
      */
     public boolean loseLifeAndRespawn(int respawnX, int respawnY) {
@@ -175,19 +201,22 @@ public class Player extends Ship {
             this.weaponHeat = 0.0;
             this.isOverheated = false;
             this.active = true;
-            triggerInvulnerability(2500); // 2.5 seconds safe respawn
+            // WHY: Grants 2.5s safe respawn window to avoid immediate spawn-camp damage.
+            triggerInvulnerability(2500);
             return true;
         }
         active = false;
         return false;
     }
 
+    /** [TOPIC: Encapsulation] Game Role: Increments weapon tier up to level 3. */
     public void upgradeWeapon() {
         if (weaponLevel < 3) {
             weaponLevel++;
         }
     }
 
+    /** [TOPIC: Encapsulation] Game Role: Restores initial stats, position, and inputs for a new run. */
     public void resetFull(int startX, int startY) {
         this.x = startX;
         this.y = startY;
@@ -207,11 +236,15 @@ public class Player extends Ship {
         this.moveDown = false;
     }
 
+    /**
+     * [TOPIC: Method Overriding]
+     * Game Role: Draws thruster flame, hull polygon, canopy, and proportional shield aura.
+     */
     @Override
     public void render(Graphics2D g) {
         if (!active) return;
 
-        // Blinking effect during invulnerability
+        // WHY: 100ms parity toggle creates visual i-frame blink feedback without extra state timers.
         if (invulnerable && (System.currentTimeMillis() / 100) % 2 == 0) {
             return;
         }

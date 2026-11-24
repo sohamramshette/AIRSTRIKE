@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/InterceptorEnemy.java
+// Subject   : PSOOP-CO1 | Polymorphic Pursuit & Dynamic Dispatch
+// Topics    : [TOPIC: Polymorphism] [TOPIC: Method Overriding] [TOPIC: Inheritance] [TOPIC: Kinematics]
+// Game Role : Tracks player alignment to launch high-speed dashes and staggered twin lasers.
+// ==============================================================================
 package model;
 
 import java.awt.BasicStroke;
@@ -7,19 +13,7 @@ import java.awt.Polygon;
 import java.util.List;
 
 /**
- * Interceptor Fighter (PSOOP-CO1).
- * Demonstrates: Polymorphism and Dynamic Dispatch.
- *
- * Polymorphism & Dynamic Dispatch:
- * - Extends the abstract Enemy superclass and overrides update() and performAttack().
- * - When GameEngine invokes `e.performAttack(delta, projectiles, player)` and `e.update(delta)`
- *   via the superclass reference `Enemy e`, dynamic method dispatch at runtime resolves and
- *   executes Interceptor's specialized alignment-detection, dash kinematics, and staggered twin attacks.
- *
- * Distinct Behaviour:
- * - Actively scans for player horizontal alignment (|player.x - x| <= 75px).
- * - On alignment, triggers a high-speed forward dash with accelerated velocity.
- * - Discharges staggered twin micro-darts (left cannon fires, followed by right cannon with a stagger delay).
+ * Interceptor Fighter demonstrating runtime polymorphism via Enemy dynamic dispatch.
  */
 public class InterceptorEnemy extends Enemy {
 
@@ -34,6 +28,10 @@ public class InterceptorEnemy extends Enemy {
     private double staggerTimer;
     private static final double STAGGER_DELAY = 0.14; // 140ms between left and right shots
 
+    /**
+     * [TOPIC: Inheritance]
+     * Game Role: Spawns an agile interceptor initialized at normal cruise speed.
+     */
     public InterceptorEnemy(double x, double y) {
         // x, y, width 38, height 40, maxHealth 45, maxShield 10, speed 170.0, shootCooldown 1100ms, scoreValue 200
         super(x, y, 38, 40, 45, 10, 170.0, 1100, 200);
@@ -45,13 +43,14 @@ public class InterceptorEnemy extends Enemy {
     }
 
     /**
-     * Polymorphic kinematic update overridden from Entity/Enemy.
+     * [TOPIC: Method Overriding] [TOPIC: Kinematics]
+     * Game Role: Switches between forward dash bursts and cosine serpentine cruising.
      */
     @Override
     public void update(double delta) {
         flightTimer += delta * 3.0;
 
-        // Dynamic dash state resolution
+        // WHY: Dashing overrides lateral weave with straight high-speed descent until dashTimer expires.
         if (dashing) {
             dashTimer -= delta;
             vy = DASH_VY;
@@ -69,13 +68,14 @@ public class InterceptorEnemy extends Enemy {
     }
 
     /**
-     * Polymorphic attack logic dynamically dispatched via Enemy superclass reference.
+     * [TOPIC: Polymorphism] [TOPIC: Method Overriding]
+     * Game Role: Detects horizontal player lock (<= 75px) to trigger pursuit dashes and staggered twin volleys.
      */
     @Override
     public void performAttack(double delta, List<Projectile> projectileList, Player player) {
         attackTimer += delta;
 
-        // Process pending staggered twin shot
+        // WHY: Completes delayed right-wing shot 140ms after left-wing discharge independently of alignment.
         if (pendingStaggerShot) {
             staggerTimer -= delta;
             if (staggerTimer <= 0.0) {
@@ -87,7 +87,7 @@ public class InterceptorEnemy extends Enemy {
 
         if (player == null || !player.isActive()) return;
 
-        // Detect player alignment across horizontal combat plane
+        // WHY: Triggers dash and staggered burst only when player aligns within a +/-75px firing lane.
         double dx = Math.abs(player.getCenterX() - getCenterX());
         boolean isAligned = (dx <= 75.0);
 
@@ -110,6 +110,7 @@ public class InterceptorEnemy extends Enemy {
         }
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Fallback simultaneous dual-dart discharge. */
     @Override
     public void shoot(List<Projectile> projectileList) {
         // Standard fallback firing implementation satisfying Ship contract
@@ -117,6 +118,7 @@ public class InterceptorEnemy extends Enemy {
         projectileList.add(new Projectile(x + width - 8, y + height - 6, 4, 12, 0, 360.0, false, 12));
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Renders delta hull, dash afterburner trail, and shield aura. */
     @Override
     public void render(Graphics2D g) {
         if (!active) return;

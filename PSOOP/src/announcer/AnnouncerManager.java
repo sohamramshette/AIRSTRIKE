@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/announcer/AnnouncerManager.java
+// Subject   : PSOOP-CO1 / CO2 / CO4 | Context-Aware Tactical Announcer Engine
+// Topics    : [TOPIC: Singleton Pattern] [TOPIC: Resource Loading] [TOPIC: Rate Limiting] [TOPIC: HUD Rendering]
+// Game Role : Loads commentary packs, evaluates combat telemetry, and renders HUD banners.
+// ==============================================================================
 package announcer;
 
 import database.SimpleJson;
@@ -66,13 +72,13 @@ public class AnnouncerManager {
     }
 
     /**
-     * Loads dialogues from JSON file or resource stream with embedded fallback.
+     * [TOPIC: Resource Loading] Loads dialogues from filesystem or classpath with embedded fallback.
      */
     public void loadDialogues() {
         dialogues.clear();
         String jsonContent = null;
 
-        // 1. Try relative filesystem path
+        // WHY: Probe both root-relative and module-relative paths before classpath stream so JAR and IDE runs both work.
         String[] possiblePaths = {
             "config/announcer_dialogues.json",
             "../config/announcer_dialogues.json",
@@ -161,7 +167,8 @@ public class AnnouncerManager {
     }
 
     /**
-     * Attempts to trigger an announcer comment for a given gameplay event.
+     * [TOPIC: Rate Limiting] [TOPIC: Event-Driven Commentary]
+     * Selects a fresh dialogue matching the event and respects cooldown/anti-repetition rules.
      */
     public boolean trigger(AnnouncerEvent event, boolean forcePriority) {
         AnnouncerSettings settings = AnnouncerSettings.getInstance();
@@ -173,8 +180,8 @@ public class AnnouncerManager {
         if (!forcePriority && cooldownTimer > 0.0) {
             return false;
         }
+        // WHY: Even priority events keep a 1.5s gap so consecutive banners remain readable.
         if (forcePriority && cooldownTimer > (settings.getFrequency().getMinCooldown() - 1.5)) {
-            // Even priority events have a brief 1.5s separation
             return false;
         }
 
@@ -243,12 +250,14 @@ public class AnnouncerManager {
         // Chaos Protocol telemetry is rendered exclusively via the top Cyber HUD badges.
     }
 
+    /**
+     * [TOPIC: HUD Rendering] Scales banner display time to message length (8s–12s) and starts fade-in.
+     */
     public void showBanner(String text, DialogueCategory category, boolean highPriority) {
         this.activeText = text;
         this.activeCategory = category != null ? category : DialogueCategory.GENERAL_ROAST;
 
-        // Extended display duration between 8.0 and 12.0 seconds based on letters
-        // ensuring players have ample time to read the funny dialogues and memes
+        // WHY: Scale display window with character count so longer Hinglish lines stay legible without blocking HUD long-term.
         int letters = text != null ? text.length() : 0;
         double dynamicDuration = Math.min(12.0, Math.max(8.0, 8.0 + (letters - 30) * 0.06));
         this.bannerDuration = highPriority ? Math.max(dynamicDuration, 9.0) : dynamicDuration;
@@ -257,7 +266,7 @@ public class AnnouncerManager {
     }
 
     /**
-     * Evaluates live game state and triggers context-aware announcer reactions.
+     * [TOPIC: Event-Driven Commentary] Evaluates live combat telemetry and triggers reactions.
      */
     public void update(double delta, GameEngine engine) {
         // Cooldown timer progression
@@ -401,13 +410,14 @@ public class AnnouncerManager {
     }
 
     /**
-     * Renders the glassmorphic futuristic announcer banner in the top center HUD.
+     * [TOPIC: HUD Rendering] Paints the glassmorphic announcer banner with fade alpha and word-wrap.
      */
     public void renderHUD(Graphics2D g, int screenWidth, int screenHeight) {
         if (bannerAlpha <= 0.01f || activeText == null || activeText.isEmpty()) {
             return;
         }
 
+        // WHY: Work on a disposed Graphics2D copy so hint/stroke/paint mutations never bleed into subsequent HUD layers.
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);

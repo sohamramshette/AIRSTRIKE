@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/database/SupabaseConfig.java
+// Subject   : PSOOP-CO3 | Externalized Supabase Configuration & Key Guard
+// Topics    : [TOPIC: Singleton Pattern] [TOPIC: Security Guards] [TOPIC: Resource Loading]
+// Game Role : Loads Supabase URL/anon key externally and rejects privileged service-role keys.
+// ==============================================================================
 package database;
 
 import java.io.File;
@@ -29,7 +35,7 @@ public class SupabaseConfig {
         this.supabaseKey = (key != null) ? key.trim() : "";
         this.timeoutMs = timeoutMs > 0 ? timeoutMs : 8000;
 
-        // Security check: Never permit service_role key
+        // WHY: Client builds must never embed or accept service_role keys that bypass Row Level Security.
         if (this.supabaseKey.toLowerCase().contains("service_role")) {
             throw new SecurityException("CRITICAL: Attempted to configure Supabase service-role secret key! " +
                     "Only anonymous/publishable keys are permitted in client applications.");

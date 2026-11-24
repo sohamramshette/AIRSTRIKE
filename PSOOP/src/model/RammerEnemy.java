@@ -1,3 +1,9 @@
+// ==============================================================================
+// File      : PSOOP/src/model/RammerEnemy.java
+// Subject   : PSOOP-CO4 | Delta-Time Acceleration & Kinetic Ramming
+// Topics    : [TOPIC: Kinematics] [TOPIC: Method Overriding] [TOPIC: Inheritance] [TOPIC: Defensive Programming]
+// Game Role : Accelerates along a locked player corridor to inflict heavy kinetic collision damage.
+// ==============================================================================
 package model;
 
 import java.awt.BasicStroke;
@@ -7,14 +13,7 @@ import java.awt.Polygon;
 import java.util.List;
 
 /**
- * Kinetic Battering Ram (PSOOP-CO4).
- * Demonstrates: Logic-Building for Real-Life Problems via Kinematics Simulation and OOP Collision Response.
- *
- * OOP & Problem-Solving Design:
- * - Encapsulates mass-inertia parameters, acceleration rates, and prow durability.
- * - Simulates real-time 60 FPS non-uniform accelerating motion: v(t + dt) = min(v_max, v(t) + a * dt).
- * - Implements controlled class methods (`lockAndCharge`, `applyKineticKinematics`, `resolveKineticImpact`)
- *   to decouple physics simulation and collision response from game loop coordinators.
+ * Kinetic Battering Ram modeling non-uniform delta-time acceleration and ramming lock-on.
  */
 public class RammerEnemy extends Enemy {
 
@@ -25,6 +24,10 @@ public class RammerEnemy extends Enemy {
     private boolean charging;
     private double targetLockX;
 
+    /**
+     * [TOPIC: Inheritance]
+     * Game Role: Spawns a heavy-prow rammer configured with acceleration and max-speed limits.
+     */
     public RammerEnemy(double x, double y) {
         // x, y, width 38, height 46, maxHealth 85, maxShield 0, speed 70.0, shootCooldown 99999ms, scoreValue 320
         super(x, y, 38, 46, 85, 0, 70.0, 99999, 320);
@@ -37,24 +40,27 @@ public class RammerEnemy extends Enemy {
     }
 
     /**
-     * Executes real-time kinematics integration over delta time (PSOOP-CO4).
+     * [TOPIC: Method Overriding] [TOPIC: Defensive Programming] [TOPIC: Kinematics]
+     * Game Role: Validates frame delta before delegating Euler acceleration integration.
      */
     @Override
     public void update(double delta) {
+        // WHY: Reject invalid/NaN time steps so acceleration never corrupts velocity or position.
         if (delta <= 0.0 || Double.isNaN(delta)) return;
 
         applyKineticKinematics(delta);
     }
 
     /**
-     * Controlled class method updating kinematics simulation.
+     * [TOPIC: Kinematics]
+     * Game Role: Integrates capped forward acceleration and corridor homing while charging, else gentle sweep.
      */
     public void applyKineticKinematics(double delta) {
         if (charging) {
-            // Non-uniform acceleration: v_y += a * dt
+            // WHY: Semi-implicit Euler velocity step capped at maxRamSpeed keeps ramming velocity bounded.
             vy = Math.min(maxRamSpeed, vy + currentAcceleration * delta);
 
-            // Subtle homing trim towards locked corridor
+            // WHY: Bounded lateral trim steers smoothly onto targetLockX without snapping.
             double dx = targetLockX - getCenterX();
             x += Math.signum(dx) * Math.min(Math.abs(dx), 80.0 * delta);
         } else {
@@ -67,13 +73,14 @@ public class RammerEnemy extends Enemy {
     }
 
     /**
-     * Detects player target alignment and triggers kinetic thrust ignition.
+     * [TOPIC: Polymorphism] [TOPIC: Method Overriding]
+     * Game Role: Locks onto player X and ignites ramming thrusters once player enters 110px forward lane.
      */
     @Override
     public void performAttack(double delta, List<Projectile> projectileList, Player player) {
         if (player == null || !player.isActive()) return;
 
-        // Detect player presence in forward ramming corridor
+        // WHY: Trigger only while Rammer is above the player (y < playerY - 40) so it never charges backward.
         double dx = Math.abs(player.getCenterX() - getCenterX());
         if (!charging && dx <= 110.0 && y < player.getCenterY() - 40.0) {
             lockAndCharge(player.getCenterX());
@@ -81,7 +88,8 @@ public class RammerEnemy extends Enemy {
     }
 
     /**
-     * Controlled method to engage prow thrusters.
+     * [TOPIC: Encapsulation]
+     * Game Role: Latches charging mode and captures the horizontal ramming target coordinate.
      */
     public void lockAndCharge(double targetX) {
         this.charging = true;
@@ -89,13 +97,15 @@ public class RammerEnemy extends Enemy {
     }
 
     /**
-     * Rammers do not fire projectiles; all reactor energy is channeled into kinetic acceleration.
+     * [TOPIC: Method Overriding]
+     * Game Role: Intentional no-op because Rammers channel all output into hull-to-hull impact.
      */
     @Override
     public void shoot(List<Projectile> projectileList) {
-        // No projectile weapons
+        // WHY: No projectile weapons; threat comes strictly from prowImpactDamage on collision.
     }
 
+    /** [TOPIC: Method Overriding] Game Role: Renders armored tungsten wedge, chevrons, and charge thrusters. */
     @Override
     public void render(Graphics2D g) {
         if (!active) return;

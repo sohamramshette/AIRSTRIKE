@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/linked_lists/singly_linked_list.cpp
+// Subject   : PL-CO2 | Suitable Linked Lists
+// Topics    : [TOPIC: Singly Linked List] [TOPIC: Pointer Relinking] [TOPIC: Leak-Free Destruction]
+// Game Role : Implements dynamic flight-log node insertion, deletion, search, and cleanup.
+// ==============================================================================
+
 #include "singly_linked_list.h"
 #include <iomanip>
 
@@ -28,6 +35,7 @@ SinglyLinkedList& SinglyLinkedList::operator=(const SinglyLinkedList& other) {
 }
 
 void SinglyLinkedList::insertAtHead(int id, double timestampSec, const std::string& desc) {
+    // WHY: Pass current head as next pointer so prepend executes in O(1) -> Game: Fast latest-first logging.
     head = new FlightLogNode(id, timestampSec, desc, head);
     count++;
 }
@@ -37,6 +45,7 @@ void SinglyLinkedList::insertAtTail(int id, double timestampSec, const std::stri
     if (!head) {
         head = newNode;
     } else {
+        // WHY: Walk until curr->next == nullptr because SLL maintains only a head pointer.
         FlightLogNode* curr = head;
         while (curr->next != nullptr) {
             curr = curr->next;
@@ -53,6 +62,7 @@ bool SinglyLinkedList::insertAt(size_t index, int id, double timestampSec, const
         return true;
     }
     FlightLogNode* curr = head;
+    // WHY: Stop at predecessor (index - 1) to splice newNode->next cleanly into chain.
     for (size_t i = 0; i < index - 1; ++i) {
         curr = curr->next;
     }
@@ -79,6 +89,7 @@ bool SinglyLinkedList::deleteTail() {
         return true;
     }
     FlightLogNode* curr = head;
+    // WHY: Stop at second-to-last node so its next pointer can be nulled after deleting tail.
     while (curr->next->next != nullptr) {
         curr = curr->next;
     }
@@ -110,6 +121,7 @@ bool SinglyLinkedList::deleteById(int id) {
         return deleteHead();
     }
     FlightLogNode* curr = head;
+    // WHY: Look ahead via curr->next since SLL has no prev pointer to bridge the gap.
     while (curr->next != nullptr && curr->next->eventId != id) {
         curr = curr->next;
     }
@@ -166,6 +178,7 @@ void SinglyLinkedList::traverse() const {
 
 void SinglyLinkedList::clear() {
     while (head != nullptr) {
+        // WHY: Advance head before deleting temp to prevent dangling-pointer traversal leaks.
         FlightLogNode* temp = head;
         head = head->next;
         delete temp;

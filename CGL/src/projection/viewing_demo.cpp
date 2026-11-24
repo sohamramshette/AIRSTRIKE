@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/projection/viewing_demo.cpp
+// Subject   : CGL-CO4 | Projection & Viewing Pipeline
+// Topics    : [TOPIC: Orthographic (glOrtho)] [TOPIC: Perspective (gluPerspective, 1/Z foreshortening)] [TOPIC: Camera Viewing]
+// Game Role : Renders split-screen Ortho Radar vs Perspective Cockpit views and implements LookAt/Projection math.
+// ==============================================================================
+
 #include "viewing_demo.hpp"
 #include "common/font_renderer.hpp"
 #include <iomanip>
@@ -48,6 +55,9 @@ void ViewingDemo::reset() {
     fov = 55.0f;
 }
 
+// [TOPIC: 3D Depth Comparison Scene]
+// Purpose: Renders identical-radius asteroids across Z in [5, -15] around a rotating starfighter.
+// Game Role: Exposes depth invariance in Orthographic view vs 1/Z foreshortening in Perspective view.
 void ViewingDemo::renderSceneObjects() {
     // 1. Sector Floor Grid (XZ plane)
     glLineWidth(1.0f);
@@ -120,8 +130,12 @@ void ViewingDemo::renderSceneObjects() {
     }
 }
 
+// [TOPIC: Orthographic (glOrtho) / Camera Viewing]
+// Purpose: Binds a scissored viewport with top-down parallel glOrtho and gluLookAt along -Y.
+// Game Role: Renders the left-hand Tactical Radar pane in CO4 Split View.
 void ViewingDemo::renderTacticalRadarView(int x, int y, int w, int h) {
     glViewport(x, y, w, h);
+    // WHY: Scissor test prevents geometry from spilling outside the split-screen viewport box
     glScissor(x, y, w, h);
     glEnable(GL_SCISSOR_TEST);
 
@@ -133,6 +147,7 @@ void ViewingDemo::renderTacticalRadarView(int x, int y, int w, int h) {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     // Look straight down from Y = 20 along negative Y axis
+    // WHY: Looking vertically down -Y requires up vector (0, 0, -1) to avoid collinear up/forward axes
     gluLookAt(0.0, 20.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0);
 
     renderSceneObjects();
@@ -150,6 +165,9 @@ void ViewingDemo::renderTacticalRadarView(int x, int y, int w, int h) {
     glDisable(GL_SCISSOR_TEST);
 }
 
+// [TOPIC: Perspective (gluPerspective, 1/Z foreshortening) / Camera Viewing]
+// Purpose: Binds a scissored viewport with gluPerspective and spherical-orbit gluLookAt camera.
+// Game Role: Renders the right-hand Cockpit Chase View in CO4 Split View.
 void ViewingDemo::renderPerspectiveView(int x, int y, int w, int h) {
     glViewport(x, y, w, h);
     glScissor(x, y, w, h);
@@ -167,6 +185,7 @@ void ViewingDemo::renderPerspectiveView(int x, int y, int w, int h) {
     float pitchRad = cameraPitch * static_cast<float>(M_PI) / 180.0f;
     float yawRad = cameraYaw * static_cast<float>(M_PI) / 180.0f;
 
+    // WHY: Convert spherical orbit coordinates (distance, pitch, yaw) into Cartesian eye position
     float eyeX = cameraDistance * std::cos(pitchRad) * std::sin(yawRad);
     float eyeY = cameraDistance * std::sin(pitchRad);
     float eyeZ = cameraDistance * std::cos(pitchRad) * std::cos(yawRad);
@@ -178,6 +197,9 @@ void ViewingDemo::renderPerspectiveView(int x, int y, int w, int h) {
     glDisable(GL_SCISSOR_TEST);
 }
 
+// [TOPIC: Projection & Viewing Pipeline]
+// Purpose: Dispatches Split, Fullscreen Ortho, or Fullscreen Perspective modes and draws HUD labels.
+// Game Role: Main CO4 interactive viewing pipeline screen in AIRSTRIKE.
 void ViewingDemo::render(int screenWidth, int screenHeight) {
     glClearColor(0.02f, 0.03f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -207,6 +229,7 @@ void ViewingDemo::render(int screenWidth, int screenHeight) {
     }
 
     // Reset full viewport for HUD
+    // WHY: Restore full-window viewport before HUD rendering after split-screen glViewport calls
     glViewport(0, 0, screenWidth, screenHeight);
 
     beginHUD(screenWidth, screenHeight);
@@ -255,6 +278,9 @@ void ViewingDemo::render(int screenWidth, int screenHeight) {
     endHUD();
 }
 
+// [TOPIC: Orthographic (glOrtho)]
+// Purpose: Constructs OpenGL's column-major orthographic matrix mapping [l,r]x[b,t]x[-n,-f] to NDC [-1,1]^3.
+// Game Role: Analytical reference for parallel projection size invariance in CO4 and WarpCruiser tests.
 void ViewingDemo::getOrthoMatrix(float l, float r, float b, float t, float n, float f, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = 0.0f;
     m[0]  = 2.0f / (r - l);
@@ -263,9 +289,13 @@ void ViewingDemo::getOrthoMatrix(float l, float r, float b, float t, float n, fl
     m[12] = -(r + l) / (r - l);
     m[13] = -(t + b) / (t - b);
     m[14] = -(f + n) / (f - n);
+    // WHY: w stays 1.0 in orthographic projection so X/Y never undergo 1/Z perspective division
     m[15] = 1.0f;
 }
 
+// [TOPIC: Perspective (gluPerspective, 1/Z foreshortening)]
+// Purpose: Constructs OpenGL's column-major symmetric frustum projection matrix from fovyDeg, aspect, zNear, zFar.
+// Game Role: Computes clip-space coordinates exhibiting 1/Z foreshortening in CO4 and WarpCruiser tests.
 void ViewingDemo::getPerspectiveMatrix(float fovyDeg, float aspect, float zNear, float zFar, float m[16]) {
     for (int i = 0; i < 16; ++i) m[i] = 0.0f;
     float rad = fovyDeg * 0.5f * static_cast<float>(M_PI) / 180.0f;
@@ -273,11 +303,15 @@ void ViewingDemo::getPerspectiveMatrix(float fovyDeg, float aspect, float zNear,
     m[0]  = f / aspect;
     m[5]  = f;
     m[10] = (zFar + zNear) / (zNear - zFar);
+    // WHY: Row 3, Col 2 = -1 copies -z_eye into clip w, producing 1/Z foreshortening upon w-divide
     m[11] = -1.0f;
     m[14] = (2.0f * zFar * zNear) / (zNear - zFar);
     m[15] = 0.0f;
 }
 
+// [TOPIC: Camera Viewing (gluLookAt)]
+// Purpose: Builds the world-to-eye viewing matrix from eye, center, and up vectors using basis (s, u, -f).
+// Game Role: Validates world-to-camera-space coordinate mapping in CO4 LookAt unit tests.
 void ViewingDemo::getLookAtMatrix(const Vec3& eye, const Vec3& center, const Vec3& up, float m[16]) {
     Vec3 f(center.x - eye.x, center.y - eye.y, center.z - eye.z);
     float lenF = std::sqrt(f.x * f.x + f.y * f.y + f.z * f.z);
@@ -287,6 +321,7 @@ void ViewingDemo::getLookAtMatrix(const Vec3& eye, const Vec3& center, const Vec
     float lenUp = std::sqrt(upNorm.x * upNorm.x + upNorm.y * upNorm.y + upNorm.z * upNorm.z);
     if (lenUp > 1e-7f) { upNorm.x /= lenUp; upNorm.y /= lenUp; upNorm.z /= lenUp; }
 
+    // WHY: Right axis s = normalize(forward x up), then recomputed orthogonal up u = s x forward
     Vec3 s(f.y * upNorm.z - f.z * upNorm.y,
            f.z * upNorm.x - f.x * upNorm.z,
            f.x * upNorm.y - f.y * upNorm.x);
@@ -297,24 +332,32 @@ void ViewingDemo::getLookAtMatrix(const Vec3& eye, const Vec3& center, const Vec
            s.z * f.x - s.x * f.z,
            s.x * f.y - s.y * f.x);
 
+    // WHY: Combine orthonormal basis rows with -dot(basis, eye) translation to move eye to origin
     m[0] = s.x;  m[4] = s.y;  m[8]  = s.z;  m[12] = -(s.x * eye.x + s.y * eye.y + s.z * eye.z);
     m[1] = u.x;  m[5] = u.y;  m[9]  = u.z;  m[13] = -(u.x * eye.x + u.y * eye.y + u.z * eye.z);
     m[2] = -f.x; m[6] = -f.y; m[10] = -f.z; m[14] =  (f.x * eye.x + f.y * eye.y + f.z * eye.z);
     m[3] = 0.0f; m[7] = 0.0f; m[11] = 0.0f; m[15] = 1.0f;
 }
 
+// [TOPIC: Perspective Divide (Clip -> NDC)]
+// Purpose: Multiplies a point by projMatrix and divides by homogeneous clip w to yield NDC [-1, 1]^3.
+// Game Role: Executes the clip-to-NDC stage for CO4 and WarpCruiser tests.
 Vec3 ViewingDemo::projectPoint(const float projMatrix[16], const Vec3& p) {
     float x = projMatrix[0] * p.x + projMatrix[4] * p.y + projMatrix[8]  * p.z + projMatrix[12];
     float y = projMatrix[1] * p.x + projMatrix[5] * p.y + projMatrix[9]  * p.z + projMatrix[13];
     float z = projMatrix[2] * p.x + projMatrix[6] * p.y + projMatrix[10] * p.z + projMatrix[14];
     float w = projMatrix[3] * p.x + projMatrix[7] * p.y + projMatrix[11] * p.z + projMatrix[15];
 
+    // WHY: Homogeneous perspective divide (x/w, y/w, z/w) introduces 1/Z foreshortening for perspective matrices
     if (std::fabs(w) > 1e-7f) {
         x /= w; y /= w; z /= w;
     }
     return Vec3(x, y, z);
 }
 
+// [TOPIC: Viewport Transformation (NDC -> Screen Pixels)]
+// Purpose: Affine-maps NDC [-1, 1]^2 coordinates to integer window pixels inside (vpX, vpY, vpW, vpH).
+// Game Role: Verifies screen-space pixel mapping in CO4 viewport tests.
 Point2D ViewingDemo::viewportMap(const Vec3& ndc, int vpX, int vpY, int vpW, int vpH) {
     float xs = vpX + (ndc.x + 1.0f) * 0.5f * vpW;
     float ys = vpY + (ndc.y + 1.0f) * 0.5f * vpH;

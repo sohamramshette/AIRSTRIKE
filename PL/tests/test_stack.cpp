@@ -1,6 +1,16 @@
+// ==============================================================================
+// File      : PL/tests/test_stack.cpp
+// Subject   : PL-CO3 | Stack Unit Tests
+// Topics    : [TOPIC: ActionStack] [TOPIC: Stack] [TOPIC: LIFO] [TOPIC: Overflow Underflow]
+// Game Role : Verifies LIFO combat history push/pop/peek, deep copy, and boundary guards.
+// ==============================================================================
+
 #include "test_stack.h"
 #include "../src/stacks/action_stack.h"
 
+// [TOPIC: PL-CO3 Stack Unit Tests]
+// Purpose: Executes 6 automated checks on ActionStack LIFO ordering, overflow/underflow, and deep copy.
+// Game Role: Guarantees safe combat-undo stack behavior under edge conditions.
 TestSummary runStackTests() {
     TestSummary summary;
     std::cout << "\n======================================================\n";

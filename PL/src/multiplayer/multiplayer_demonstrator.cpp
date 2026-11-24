@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : PL/src/multiplayer/multiplayer_demonstrator.cpp
+// Subject   : PL-CO1..CO5 | Multiplayer Data Structures
+// Topics    : [TOPIC: MultiplayerDemonstrator] [TOPIC: Broadphase Benchmark] [TOPIC: Wrap-Around] [TOPIC: Tombstone Lookup]
+// Game Role : Executes interactive demonstrations of multiplayer grid, list, queue, search/sort, and hash modules.
+// ==============================================================================
+
 #include "multiplayer_demonstrator.h"
 #include "multiplayer_spatial_grid.h"
 #include "multiplayer_event_history.h"
@@ -117,7 +124,7 @@ void MultiplayerDemonstrator::demoPacketQueue() {
     std::cout << "  Dequeued Packet: " << out2.eventType << "\n";
     std::cout << "  Queue size after 2 dequeues: " << queue.size() << "\n";
 
-    // Enqueue 2 new packets (Demonstrating circular modulo wraparound)
+    // WHY: Probe wrapped capacity-4 ring buffer after 2 dequeues to verify modulo reuse without shifts.
     MatchEvent ev5(5, "PACKET_5_WRAP", "p2", 1050, 250, 0.0f, 0.0f);
     MatchEvent ev6(6, "PACKET_6_WRAP", "p2", 1060, 300, 0.0f, 0.0f);
     queue.enqueue(ev5);
@@ -148,6 +155,7 @@ void MultiplayerDemonstrator::demoLeaderboardSearch() {
                   << " | Top Score: " << r.highestScore << " (Winner: " << r.winnerId << ")\n";
     }
 
+    // WHY: QuickSort establishes monotonic ascending score order required by Binary Search.
     MultiplayerLeaderboardSearch::quickSortByScore(records, 0, static_cast<int>(records.size()) - 1);
 
     std::cout << "\n  QuickSorted Records (Ascending by Top Score):\n";
@@ -203,7 +211,7 @@ void MultiplayerDemonstrator::demoSessionTable() {
     std::cout << "  Deletion result: " << (removed ? "SUCCESS" : "FAILED") << "\n";
     std::cout << "  Active Items: " << table.size() << " | Tombstones: " << table.tombstoneCount() << "\n";
 
-    // Verify lookup of subsequent key in probe sequence still succeeds across tombstone
+    // WHY: Probe downstream key 'student_04' after tombstone deletion to confirm probe chain stayed intact.
     const PlayerSession* foundAfter = table.find("student_04");
     std::cout << "  Lookup 'student_04' across tombstone: " 
               << (foundAfter ? "SUCCESS (Probe Chain Intact)" : "BROKEN CHAIN") << "\n";

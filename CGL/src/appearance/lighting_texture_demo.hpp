@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/appearance/lighting_texture_demo.hpp
+// Subject   : CGL-CO6 | Lighting, Shading, Color & Texture Mapping
+// Topics    : [TOPIC: Blinn-Phong Illumination (Ambient + Diffuse + Specular)] [TOPIC: Gouraud Smooth Shading] [TOPIC: 24-bit BMP Texture Mapping] [TOPIC: HSV-to-RGB]
+// Game Role : Declares the CO6 appearance workbench for lighting components, Gouraud shading, BMP textures, and HSV math.
+// ==============================================================================
+
 #ifndef LIGHTING_TEXTURE_DEMO_HPP
 #define LIGHTING_TEXTURE_DEMO_HPP
 
@@ -7,18 +14,9 @@
 
 namespace CGL {
 
-/**
- * @brief Class demonstrating CGL-CO6: Texture, Lighting, and Color.
- * Covers:
- * - Color Models: RGB, RGBA, HSV conversion
- * - Shading Models: Flat (GL_FLAT) vs Smooth Gouraud (GL_SMOOTH)
- * - Phong Illumination Model (Ambient, Diffuse, Specular reflection components)
- * - Positional vs Directional Light Sources
- * - Material Properties (Ambient, Diffuse, Specular, Shininess)
- * - Actual Local Image File Loading (.bmp from CGL/assets/textures/)
- * - Procedural 2D Texture Generation & UV Coordinate Mapping
- * - Texture Filtering (GL_LINEAR vs GL_NEAREST) and Wrapping (GL_REPEAT vs GL_CLAMP)
- */
+// [TOPIC: Blinn-Phong Illumination (Ambient + Diffuse + Specular) / Gouraud Smooth Shading / 24-bit BMP Texture Mapping / HSV-to-RGB]
+// Purpose: Demonstrates OpenGL fixed-function lighting, Flat vs Gouraud shading, BMP/procedural textures, filtering/wrapping, and HSV conversion.
+// Game Role: Interactive CO6 Appearance screen rendering a lit, UV-mapped planet and spacecraft hull in AIRSTRIKE.
 class LightingTextureDemo {
 public:
     LightingTextureDemo();
@@ -55,7 +53,9 @@ public:
     float getShininess() const { return matShininess; }
     std::string getLoadedFilePath() const { return loadedFilePath; }
 
-    // Color space math helpers
+    // [TOPIC: HSV-to-RGB / Procedural Texture Synthesis]
+    // Purpose: Converts HSV color space to RGBA and synthesizes 24-bit RGB hull and planet textures in memory.
+    // Game Role: Provides fallback textures for SpaceCombatScene and verifies CO6 color/texture tests.
     static Color4 hsvToRgb(float h, float s, float v, float a = 1.0f);
     static void generateHullTexture(int width, int height, std::vector<unsigned char>& data);
     static void generatePlanetTexture(int width, int height, std::vector<unsigned char>& data);

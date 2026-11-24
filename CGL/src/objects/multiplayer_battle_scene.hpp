@@ -1,3 +1,10 @@
+// ==============================================================================
+// File      : CGL/src/objects/multiplayer_battle_scene.hpp
+// Subject   : Scene | Dual-Player CO1-CO6 Combat Visualizer
+// Topics    : [TOPIC: Scene Orchestration] [TOPIC: Split-Screen Viewports] [TOPIC: BMP Loader] [TOPIC: HUD Font Renderer]
+// Game Role : Declares Screen 8's dual-player AIRSTRIKE battle arena with Ortho Overview and Split-Screen cameras.
+// ==============================================================================
+
 #ifndef MULTIPLAYER_BATTLE_SCENE_HPP
 #define MULTIPLAYER_BATTLE_SCENE_HPP
 
@@ -7,11 +14,17 @@
 
 namespace CGL {
 
+// [TOPIC: Viewport Projection Mode]
+// Purpose: Selects between single orthographic arena view and dual perspective split-screen viewports.
+// Game Role: Toggled via [V] in MultiplayerBattleScene to demonstrate CO4 multi-viewport rendering.
 enum class MPViewMode {
     ARENA_OVERVIEW, // Single wide-angle orthographic battlefield view
     SPLIT_SCREEN    // Dual viewports: Player 1 (Left) and Player 2 (Right)
 };
 
+// [TOPIC: Multiplayer Ship Telemetry]
+// Purpose: Stores spatial transform, shield state, health, and score for each player craft.
+// Game Role: Inspected by CO1-CO6 multiplayer tests and rendered in MultiplayerBattleScene.
 struct PlayerShipState {
     float x;
     float y;
@@ -25,19 +38,9 @@ struct PlayerShipState {
     bool shieldActive;
 };
 
-/**
- * ==============================================================================
- * Master Scene for CGL Multiplayer Demonstrations (CGL-CO1 to CGL-CO6)
- *
- * Demonstrates:
- * - CGL-CO1: Two distinct player craft geometries (Cyan Interceptor & Purple Cruiser)
- * - CGL-CO2: Independent matrix transformations (Translation, Rotation, Scaling)
- * - CGL-CO3: Bresenham laser paths and Midpoint Circle shield bubbles
- * - CGL-CO4: Arena Wide-Angle & Dual Split-Screen Viewport modes
- * - CGL-CO5: Cohen-Sutherland laser beam clipping against combat boundary
- * - CGL-CO6: Gouraud smooth shading, directional lighting, and hull texturing
- * ==============================================================================
- */
+// [TOPIC: Scene Orchestration / Split-Screen Viewports / BMP Loader / HUD Font Renderer]
+// Purpose: Integrates P1 Interceptor and P2 Heavy Cruiser with Bresenham lasers, Midpoint shields, clipped beams, and BMP textures.
+// Game Role: Renders Screen 8 Multiplayer Combat Visualizer and feeds CO1-CO6 multiplayer assertions.
 class MultiplayerBattleScene {
 public:
     MultiplayerBattleScene();
